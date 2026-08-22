@@ -480,29 +480,160 @@
 
         <!-- Main Content (Placeholder) -->
         <main class="max-w-3xl mx-auto px-4 space-y-8">
-            
-            <!-- Placeholder Section -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 md:p-12 neon-border relative overflow-hidden text-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
-                <div class="text-6xl mb-6">🏗️</div>
-                <h2 class="text-2xl font-semibold mb-4 text-slate-300">กำลังเตรียมเนื้อหา...</h2>
-                <p class="text-slate-500 max-w-md mx-auto">
-                    คู่มือการใช้งานเครื่องมือนี้กำลังอยู่ในระหว่างการจัดทำ<br>
-                    กรุณารอสักครู่ เนื้อหาจะถูกเพิ่มเข้ามาเร็วๆ นี้
+            <!-- ขั้นตอนที่ 1: การตั้งค่าพื้นฐาน (Setup) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 neon-border relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+                    <span class="text-3xl">⚙️</span> ขั้นตอนที่ 1: การตั้งค่าพื้นฐาน (Setup)
+                </h2>
+                <p class="text-slate-400 text-sm mb-5 bg-slate-800/50 px-4 py-2.5 rounded-xl border border-slate-700/50">
+                    เริ่มต้นที่แถบเครื่องมือด้านซ้ายมือในเมนู <strong class="text-white">"ตั้งค่า"</strong>
                 </p>
-                <div class="mt-8 flex justify-center gap-2">
-                    <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0s;"></div>
-                    <div class="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
-                    <div class="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                <div class="space-y-4 text-slate-300">
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-purple-400">1</div>
+                        <div class="pt-1">
+                            <p><strong>เลือกเครื่องมือการผลิต:</strong> เลือกโมเดลวิดีโอที่ต้องการ (เช่น <code class="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300 text-sm">Omni Flash</code> สำหรับงานด่วน หรือ <code class="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300 text-sm">Veo 3.1</code> สำหรับคุณภาพสูง) และตั้งเวลาความยาวของแต่ละฉาก</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-purple-400">2</div>
+                        <div class="pt-1">
+                            <p><strong>กำหนดสไตล์ตัวละคร:</strong></p>
+                            <ul class="mt-2 space-y-1.5 text-sm text-slate-400">
+                                <li class="flex gap-2 items-start">
+                                    <span class="text-purple-400 mt-0.5">▸</span>
+                                    พิมพ์รายละเอียดตัวละครในช่อง <strong class="text-white">สไตล์ตัวละคร</strong> (เช่น "หญิงสาวไทยสวมชุดไทยร่วมสมัย")
+                                </li>
+                                <li class="flex gap-2 items-start">
+                                    <span class="text-purple-400 mt-0.5">▸</span>
+                                    กด <strong class="text-white">"สร้างตัวละคร"</strong> เพื่อให้ AI ร่างภาพต้นแบบ หรือกดปุ่มอัปโหลดเพื่อใช้ภาพของคุณเอง
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-purple-400">3</div>
+                        <p class="pt-1"><strong>อัปโหลดข้อมูลสินค้า (ถ้ามี):</strong> หากทำวิดีโอรีวิวสินค้า ให้กด <strong>"อัปโหลดสินค้า"</strong> เพื่อใช้เป็นภาพอ้างอิงในการเจนภาพฉาก</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- 
-                ============================================================
-                TODO: เพิ่มเนื้อหาคู่มือเครื่องมือใหม่ตรงนี้
-                คัดลอก Phase sections จาก Tool 1 เป็นโครงสร้างตัวอย่างได้
-                ============================================================
-            -->
+            <!-- ขั้นตอนที่ 2: การสร้างบทและไอเดีย (Ideation) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 neon-border relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+                    <span class="text-3xl">💡</span> ขั้นตอนที่ 2: การสร้างบทและไอเดีย (Ideation)
+                </h2>
+                <div class="space-y-4 text-slate-300">
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-cyan-400">1</div>
+                        <p class="pt-1"><strong>เลือกประเภทเนื้อหา:</strong> เลือกระหว่าง <strong>"ไวรัล"</strong> (ไลฟ์สไตล์ทั่วไป) หรือ <strong>"โฆษณา"</strong> (เน้นขายสินค้า)</p>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-cyan-400">2</div>
+                        <p class="pt-1"><strong>ใส่หัวข้อ:</strong> พิมพ์หัวข้อวิดีโอที่คุณต้องการ (เช่น "รีวิวเซรั่มหน้าใสใน 30 วินาที")</p>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-cyan-400">3</div>
+                        <p class="pt-1"><strong>ระบุจำนวนฉาก:</strong> เลือกจำนวน Scene ที่ต้องการ (1-10 ฉาก)</p>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-cyan-400">4</div>
+                        <p class="pt-1"><strong>สร้างบท:</strong> กดปุ่ม <strong>"สร้างบทละคร"</strong> ระบบจะสลับไปที่หน้า "การผลิต" โดยอัตโนมัติพร้อมบทพูดและคำอธิบายภาพที่ AI ร่างไว้ให้</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ขั้นตอนที่ 3: กระบวนการผลิตรายฉาก (Production) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 neon-border relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+                    <span class="text-3xl">🎬</span> ขั้นตอนที่ 3: กระบวนการผลิตรายฉาก (Production)
+                </h2>
+                <p class="text-slate-400 text-sm mb-5 bg-slate-800/50 px-4 py-2.5 rounded-xl border border-slate-700/50">
+                    ในหน้า <strong class="text-white">"การผลิต"</strong> คุณจะเห็นการ์ดของแต่ละฉากเรียงกัน
+                </p>
+                <div class="space-y-6 text-slate-300">
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-purple-400">1</div>
+                        <p class="pt-1"><strong>ตรวจสอบบท:</strong> คุณสามารถแก้ไข <strong>คำอธิบายภาพ</strong> หรือ <strong>บทพูด</strong> ในแต่ละฉากได้เองตามต้องการ</p>
+                    </div>
+                    <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-700/50">
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-900 flex items-center justify-center font-bold text-cyan-400">2</div>
+                            <div class="pt-1 w-full">
+                                <p class="mb-2"><strong>สร้างภาพคีย์เฟรม (Step 1):</strong></p>
+                                <p class="text-sm text-slate-400">กดปุ่ม <strong class="text-white">"สร้างภาพ"</strong> ในแต่ละฉาก ระบบจะใช้สไตล์ตัวละครที่ตั้งไว้มาสร้างเป็นภาพนิ่งในท่าทางตามบท</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/50 p-4 rounded-xl border border-purple-900/30 relative overflow-hidden">
+                        <div class="absolute right-4 top-4 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-900 flex items-center justify-center font-bold text-purple-400">3</div>
+                            <div class="pt-1 w-full">
+                                <p class="mb-2"><strong>สร้างแอนิเมชัน (Step 2):</strong></p>
+                                <p class="text-sm text-slate-400">เมื่อได้ภาพแล้ว ให้กดปุ่ม <strong class="text-white">"สร้างวิดีโอ"</strong> ระบบจะเปลี่ยนภาพนิ่งนั้นให้เป็นวิดีโอที่มีการขยับปาก (Lip-sync) และท่าทางที่สมจริง</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ขั้นตอนที่ 4: การรวบรวมและส่งออก (Export) -->
+            <div class="bg-gradient-to-b from-slate-900 to-slate-800 border border-purple-500/30 rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+                    <span class="text-3xl">📦</span> ขั้นตอนที่ 4: การรวบรวมและส่งออก (Export)
+                </h2>
+                <p class="text-slate-400 text-sm mb-5 bg-slate-800/50 px-4 py-2.5 rounded-xl border border-slate-700/50">
+                    เมื่อผลิตครบทุกฉากแล้ว (ขึ้นสถานะ <strong class="text-green-400">สีเขียว ✅</strong>)
+                </p>
+                <div class="space-y-4 text-slate-300">
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-purple-400">▶</div>
+                        <p class="pt-1"><strong>ตรวจสอบทีละฉาก:</strong> คุณสามารถกดเล่นวิดีโอในแต่ละฉาก หรือกดดาวน์โหลดแยกไฟล์ได้</p>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-purple-400">⚡</div>
+                        <p class="pt-1"><strong>ผลิตอัตโนมัติ:</strong> หากต้องการประหยัดเวลา สามารถกดปุ่ม <strong>"ผลิตวิดีโออัตโนมัติ"</strong> ที่แถบซ้ายเพื่อให้ระบบรัน Step 1 และ 2 ต่อเนื่องกันทุกฉาก</p>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-900 flex items-center justify-center font-bold text-green-400">📥</div>
+                        <div class="pt-1">
+                            <p><strong>รวมไฟล์วิดีโอ:</strong> เมื่อเสร็จครบทุกฉาก ให้กด <strong>"ดาวน์โหลดวิดีโอรวม"</strong></p>
+                            <p class="text-sm text-slate-400 mt-1">ระบบจะใช้ FFmpeg รวมคลิปทั้งหมดเข้าเป็นไฟล์เดียว (<code class="bg-slate-800 px-1.5 py-0.5 rounded text-cyan-300 text-xs">StudioProject.mp4</code>) พร้อมให้คุณนำไปใช้งานได้ทันที 🎉</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- เคล็ดลับเพิ่มเติม -->
+            <div class="bg-gradient-to-r from-purple-900/20 to-cyan-900/20 border border-purple-500/20 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+                <h2 class="text-xl font-semibold mb-5 flex items-center gap-3">
+                    <span class="text-2xl">💡</span> เคล็ดลับเพิ่มเติม
+                </h2>
+                <div class="space-y-4 text-slate-300">
+                    <div class="flex gap-3 items-start bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                        <span class="text-xl mt-0.5">🎭</span>
+                        <div>
+                            <p class="font-semibold text-white mb-1">Character Consistency</p>
+                            <p class="text-sm text-slate-400">การมีภาพต้นแบบในเมนู "สไตล์ตัวละคร" จะช่วยให้ตัวละครในทุกฉากมีหน้าตาที่ใกล้เคียงกันมากที่สุด</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                        <span class="text-xl mt-0.5">🔄</span>
+                        <div>
+                            <p class="font-semibold text-white mb-1">Manual Adjustment</p>
+                            <p class="text-sm text-slate-400">หากฉากไหนเจนภาพออกมาไม่ถูกใจ คุณสามารถแก้ "คำอธิบายภาพ" เฉพาะฉากนั้นแล้วกด "สร้างภาพใหม่" ได้ทันทีครับ</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-sm text-slate-500 mt-8">
+                สงวนสิทธิ์การใช้งานสำหรับ VIP เท่านั้น
+            </div>
 
         </main>
         
