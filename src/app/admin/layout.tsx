@@ -1,27 +1,10 @@
-import { getSession } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 import AdminSidebar from '@/components/AdminSidebar'
-import { headers } from 'next/headers'
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getSession()
-  const headersList = await headers()
-  
-  const pathname = headersList.get('x-invoke-path') || ''
-  const isLoginPage = pathname === '/admin/login' || (headersList.get('referer') || '').includes('/admin/login')
-  
-  if (!session && !isLoginPage) {
-    redirect('/admin/login')
-  }
-
-  if (isLoginPage || !session) {
-    return <>{children}</>
-  }
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-slate-950 text-slate-200">
       <AdminSidebar />
