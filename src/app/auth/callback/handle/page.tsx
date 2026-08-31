@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 
 function HandleCallback() {
   const supabase = createClient()
@@ -13,56 +12,46 @@ function HandleCallback() {
   const [status, setStatus] = useState('กำลังเข้าสู่ระบบ...')
 
   useEffect(() => {
-    const handleAuth = async () => {
-      try {
-        // Try to get the session - the browser client automatically handles
-        // hash fragments (#access_token=...) from implicit/PKCE flows
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          console.error('Auth error:', error.message)
-          setStatus('เกิดข้อผิดพลาด กำลังลองใหม่...')
-        }
-
-        if (session) {
-          setStatus('เข้าสู่ระบบสำเร็จ! กำลังเปลี่ยนหน้า...')
-          // Small delay to ensure cookies are set
-          await new Promise(resolve => setTimeout(resolve, 500))
-          router.push(next)
-          router.refresh()
-          return
-        }
-
-        // If no session yet, wait a moment and check again 
-        // (tokens might still be processing from the hash)
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        const { data: { session: retrySession } } = await supabase.auth.getSession()
-        if (retrySession) {
-          setStatus('เข้าสู่ระบบสำเร็จ! กำลังเปลี่ยนหน้า...')
-          await new Promise(resolve => setTimeout(resolve, 500))
-          router.push(next)
-          router.refresh()
-          return
-        }
-
-        // Still no session - redirect to login
-        setStatus('ไม่สามารถเข้าสู่ระบบได้ กำลังกลับหน้าล็อกอิน...')
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        router.push('/login?error=no-session')
-      } catch (err) {
-        console.error('Auth callback error:', err)
-        router.push('/login?error=callback-error')
+    // Listen for auth state changes - this fires AFTER the browser client
+    // processes hash fragment tokens or PKCE codes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setStatus('เข้าสู่ระบบสำเร็จ! กำลังเปลี่ยนหน้า...')
+        // Use window.location for a full page reload to ensure server picks up new cookies
+        window.location.href = next
       }
-    }
+      if (event === 'TOKEN_REFRESHED' && session) {
+        setStatus('เข้าสู่ระบบสำเร็จ! กำลังเปลี่ยนหน้า...')
+        window.location.href = next
+      }
+    })
 
-    handleAuth()
+    // Fallback: if no auth event fires within 8 seconds, redirect to login
+    const timeout = setTimeout(() => {
+      // One last check before giving up
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          window.location.href = next
+        } else {
+          setStatus('ไม่สามารถเข้าสู่ระบบได้ กำลังกลับหน้าล็อกอิน...')
+          setTimeout(() => {
+            window.location.href = '/login?error=timeout'
+          }, 1500)
+        }
+      })
+    }, 8000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [])
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
       <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-6"></div>
       <p className="text-white text-lg">{status}</p>
+      <p className="text-slate-500 text-sm mt-2">กรุณารอสักครู่...</p>
     </div>
   )
 }
