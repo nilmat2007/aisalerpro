@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminSidebar from '@/components/AdminSidebar';
+
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -88,9 +88,8 @@ export default function AdminOrdersPage() {
   const filteredOrders = orders.filter(o => filter === 'all' || o.status === filter);
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-slate-950">
-      <AdminSidebar />
-      <div className="flex-1 p-4 md:p-8 overflow-auto">
+    <div className="w-full">
+      <div className="overflow-auto">
         <h1 className="text-3xl font-bold text-white mb-8">จัดการคำสั่งซื้อ (Orders)</h1>
 
         <div className="flex gap-2 mb-6">
