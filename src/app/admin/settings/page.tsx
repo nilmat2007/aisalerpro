@@ -31,10 +31,23 @@ export default function AdminSettingsPage() {
       
       const { data: { publicUrl } } = supabase.storage.from('tool-images').getPublicUrl(fileName)
       
+      const newSettings = { ...settings }
       if (type === 'logo') {
-        setSettings(prev => ({ ...prev, logo_url: publicUrl }))
+        newSettings.logo_url = publicUrl
       } else {
-        setSettings(prev => ({ ...prev, og_image_url: publicUrl }))
+        newSettings.og_image_url = publicUrl
+      }
+      setSettings(newSettings)
+      
+      // Auto-save after upload
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings)
+      })
+      if (res.ok) {
+        setToast('อัปโหลดและบันทึกสำเร็จ ✅')
+        setTimeout(() => setToast(''), 3000)
       }
     } catch (err: any) {
       alert('อัปโหลดไม่สำเร็จ: ' + (err.message || 'ลองใหม่'))

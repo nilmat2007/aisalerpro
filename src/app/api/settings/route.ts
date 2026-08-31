@@ -20,27 +20,44 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     
-    // Assuming we update the first row or the row with a specific ID
-    const { data, error } = await supabase
+    // Only send the fields we want to update (not id or other metadata)
+    const updateData = {
+      site_name: body.site_name || '',
+      tagline: body.tagline || '',
+      description: body.description || '',
+      logo_url: body.logo_url || '',
+      og_image_url: body.og_image_url || '',
+    };
+
+    // First try to get the existing record
+    const { data: existing } = await supabase
       .from('site_settings')
-      .update(body)
-      .eq('id', body.id || 1)
-      .select()
+      .select('id')
+      .limit(1)
       .single();
 
-    if (error) {
-      // Attempt insert/upsert if record doesn't exist
-      const { data: upsertData, error: upsertError } = await supabase
+    if (existing) {
+      // Update existing record
+      const { data, error } = await supabase
         .from('site_settings')
-        .upsert({ id: body.id || 1, ...body })
+        .update(updateData)
+        .eq('id', existing.id)
         .select()
         .single();
-      
-      if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 });
-      return NextResponse.json(upsertData);
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(data);
+    } else {
+      // Insert new record
+      const { data, error } = await supabase
+        .from('site_settings')
+        .insert(updateData)
+        .select()
+        .single();
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(data);
     }
-    
-    return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
