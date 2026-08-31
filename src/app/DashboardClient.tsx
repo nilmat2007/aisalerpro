@@ -28,7 +28,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
       const res = await fetch('/api/activate-license', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: licenseKey })
+        body: JSON.stringify({ keyCode: licenseKey })
       });
       const data = await res.json();
       if (res.ok && data.success) {
