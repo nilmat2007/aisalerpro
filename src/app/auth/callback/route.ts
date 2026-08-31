@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/'
 
   if (code) {
-    // Create a redirect response FIRST, then set cookies on it
+    // PKCE flow: exchange code for session
     const redirectUrl = new URL(next, origin)
     const response = NextResponse.redirect(redirectUrl)
 
@@ -32,6 +32,20 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return response
     }
+    // If code exchange fails, fall through to error
+    console.error('Auth callback code exchange failed:', error.message)
+  }
+
+  // Check for hash-based tokens (implicit/PKCE flow)
+  // Hash fragments aren't sent to the server, so we need client-side handling
+  // Redirect to a client-side handler page
+  const clientHandlerUrl = new URL('/auth/callback/handle', origin)
+  clientHandlerUrl.searchParams.set('next', next)
+  // Pass along any error info
+  if (!code) {
+    // No code param means tokens might be in the hash fragment
+    // Let client-side handle it
+    return NextResponse.redirect(clientHandlerUrl)
   }
 
   return NextResponse.redirect(new URL('/login?error=auth-code-error', origin))
