@@ -10,7 +10,7 @@ export default function AdminToolsPage() {
   
   const [formData, setFormData] = useState({
     name: '', slug: '', icon: '', description: '', price: '', password: '',
-    badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '',
+    badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '',
     is_active: true, is_coming_soon: false, sort_order: 0
   })
 
@@ -58,7 +58,7 @@ export default function AdminToolsPage() {
     setEditingTool(null)
     setFormData({
       name: '', slug: '', icon: '', description: '', price: '', password: '',
-      badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '',
+      badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '',
       is_active: true, is_coming_soon: false, sort_order: 0
     })
     setIsModalOpen(true)
@@ -163,6 +163,11 @@ export default function AdminToolsPage() {
                   <label className="block text-sm text-slate-400 mb-1">Logo URL</label>
                   <input type="text" value={formData.logo_url} onChange={(e) => setFormData({...formData, logo_url: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-amber-400 mb-1 font-semibold">🔗 ลิงก์เครื่องมือ (Flow URL) — อัปเดตลิงก์ Tool ใหม่ได้ตรงนี้</label>
+                <input type="text" value={formData.flow_url || ''} onChange={(e) => setFormData({...formData, flow_url: e.target.value})} placeholder="https://labs.google/fx/tools/flow/shared/tool/..." className="w-full bg-slate-800 border border-amber-500/50 rounded px-3 py-2 text-white" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
