@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic';
+
 export default async function StorePage() {
   const supabase = await createClient()
   const { data: tools } = await supabase.from('tools').select('*').order('sort_order')

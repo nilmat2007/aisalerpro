@@ -2,12 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import CheckoutClient from './CheckoutClient'
 
+export const dynamic = 'force-dynamic';
+
 export default async function CheckoutPage(props: { params: Promise<{ slug: string }> }) {
   const { slug } = await props.params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  if (!user) redirect('/login')
+  if (!user) redirect(`/login?next=/checkout/${slug}`)
   
   const { data: tool } = await supabase.from('tools').select('*').eq('slug', slug).single()
   if (!tool) redirect('/store')
