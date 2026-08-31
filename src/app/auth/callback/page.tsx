@@ -87,15 +87,6 @@ function CallbackHandler() {
       <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-6"></div>
       <p className="text-white text-lg mb-2">{status}</p>
       <p className="text-slate-500 text-sm">กรุณารอสักครู่...</p>
-      
-      {/* Debug info - visible to help diagnose */}
-      {debug && (
-        <div className="mt-8 max-w-lg w-full bg-slate-900 border border-slate-700 rounded-xl p-4">
-          <p className="text-amber-400 text-xs font-mono mb-2">🔧 Debug Info:</p>
-          <pre className="text-slate-400 text-xs whitespace-pre-wrap font-mono">{debug}</pre>
-          <p className="text-slate-500 text-xs mt-2">URL: {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
-        </div>
-      )}
     </div>
   )
 }
