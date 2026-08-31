@@ -3,11 +3,19 @@
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [settings, setSettings] = useState<any>(null)
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.from('site_settings').select('*').single()
+      .then(({ data }) => {
+        if (data) setSettings(data)
+      })
+  }, [])
 
   const handleLogin = async () => {
     setIsLoading(true)
@@ -25,14 +33,14 @@ export default function LoginPage() {
         <div className="relative w-32 h-32 mb-6">
           <div className="absolute inset-0 rounded-full bg-amber-500/20 blur-xl animate-pulse"></div>
           <Image
-            src="/images/logo-pheem-ai-toolkit.jpg"
-            alt="PHEEM AI TOOLKIT"
+            src={settings?.logo_url || "/images/logo-pheem-ai-toolkit.jpg"}
+            alt="Logo"
             fill
             className="rounded-full border-2 border-amber-500 object-cover shadow-[0_0_15px_rgba(245,158,11,0.5)]"
           />
         </div>
         
-        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">PHEEM AI TOOLKIT</h1>
+        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">{settings?.site_name || 'PHEEM AI TOOLKIT'}</h1>
         <p className="text-slate-400 mb-8">เข้าสู่ระบบเพื่อใช้งานเครื่องมือ AI</p>
 
         <button

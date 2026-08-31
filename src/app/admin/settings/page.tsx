@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState({
@@ -13,6 +14,34 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
+  const [uploading, setUploading] = useState<string | null>(null)
+  
+  const logoRef = useRef<HTMLInputElement>(null)
+  const ogRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (file: File, type: 'logo' | 'og') => {
+    setUploading(type)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const fileName = `site_${type}_${Date.now()}.${ext}`
+      
+      const { error } = await supabase.storage.from('tool-images').upload(fileName, file)
+      if (error) throw error
+      
+      const { data: { publicUrl } } = supabase.storage.from('tool-images').getPublicUrl(fileName)
+      
+      if (type === 'logo') {
+        setSettings(prev => ({ ...prev, logo_url: publicUrl }))
+      } else {
+        setSettings(prev => ({ ...prev, og_image_url: publicUrl }))
+      }
+    } catch (err: any) {
+      alert('อัปโหลดไม่สำเร็จ: ' + (err.message || 'ลองใหม่'))
+    } finally {
+      setUploading(null)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/settings')
@@ -81,18 +110,33 @@ export default function AdminSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-1">โลโก้ (Logo URL)</label>
-            <input type="text" value={settings.logo_url} onChange={e => setSettings({...settings, logo_url: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white mb-2" />
-            {settings.logo_url && (
-              <div className="mt-2 p-2 bg-slate-950 rounded inline-block">
-                <img src={settings.logo_url} alt="Logo Preview" className="h-10 object-contain" />
-              </div>
-            )}
+            <label className="block text-sm text-slate-400 mb-1">🎨 โลโก้ (Logo URL)</label>
+            <input type="file" ref={logoRef} accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'logo')} />
+            <div className="flex gap-4 items-center">
+              <button type="button" onClick={() => logoRef.current?.click()} disabled={uploading === 'logo'} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm border border-slate-700 disabled:opacity-50">
+                {uploading === 'logo' ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลดโลโก้'}
+              </button>
+              {settings.logo_url && (
+                <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                  <img src={settings.logo_url} alt="Logo Preview" className="h-10 object-contain" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-1">รูปภาพแชร์ (OG Image URL)</label>
-            <input type="text" value={settings.og_image_url} onChange={e => setSettings({...settings, og_image_url: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white" />
+            <label className="block text-sm text-slate-400 mb-1">🖼️ รูปภาพแชร์ (OG Image URL)</label>
+            <input type="file" ref={ogRef} accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'og')} />
+            <div className="flex gap-4 items-center">
+              <button type="button" onClick={() => ogRef.current?.click()} disabled={uploading === 'og'} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm border border-slate-700 disabled:opacity-50">
+                {uploading === 'og' ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลดรูปแชร์'}
+              </button>
+              {settings.og_image_url && (
+                <div className="p-2 bg-slate-950 rounded border border-slate-800">
+                  <img src={settings.og_image_url} alt="OG Preview" className="h-10 w-20 object-cover" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="pt-4 border-t border-slate-800">

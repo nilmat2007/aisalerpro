@@ -9,6 +9,7 @@ export default async function HomePage() {
   if (!user) {
     // Landing Page
     const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
+    const { data: settings } = await supabase.from('site_settings').select('*').single()
     
     return (
       <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col items-center">
@@ -16,17 +17,18 @@ export default async function HomePage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl -z-10"></div>
           
           <img 
-            src="/images/logo-pheem-ai-toolkit.jpg" 
-            alt="Pheem AI Toolkit Logo" 
+            src={settings?.logo_url || "/images/logo-pheem-ai-toolkit.jpg"} 
+            alt="Logo" 
             className="w-32 h-32 rounded-full object-cover border-2 border-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.5)] mb-8"
           />
           
           <h1 className="text-4xl md:text-6xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-400 to-amber-400 tracking-tight text-center">
-            PHEEM AI TOOLKIT <br/>
-            <span className="text-2xl md:text-3xl text-slate-300">MULTI-PROVIDER STUDIO</span>
+            {settings?.site_name || 'PHEEM AI TOOLKIT'} <br/>
+            <span className="text-3xl md:text-4xl text-slate-300 font-medium tracking-normal">MULTI-PROVIDER STUDIO</span>
           </h1>
+          
           <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 text-center">
-            ศูนย์รวมเครื่องมือ AI สำหรับสร้างคอนเทนต์วิดีโอระดับมืออาชีพ
+            {settings?.description || 'ศูนย์รวมเครื่องมือ AI สำหรับสร้างคอนเทนต์วิดีโอระดับมืออาชีพ'}
           </p>
           
           <Link href="/login" className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white rounded-2xl font-bold text-lg shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all hover:scale-105 active:scale-95 text-center">
