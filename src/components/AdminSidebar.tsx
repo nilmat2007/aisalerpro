@@ -13,6 +13,7 @@ export default function AdminSidebar() {
     { name: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
     { name: 'จัดการเครื่องมือ', href: '/admin/tools', icon: '🔧' },
     { name: 'License Keys', href: '/admin/licenses', icon: '🔑' },
+    { name: 'คำสั่งซื้อ', href: '/admin/orders', icon: '🛒' },
     { name: 'สมาชิก', href: '/admin/members', icon: '👥' },
     { name: 'ประกาศ', href: '/admin/announcements', icon: '📢' },
     { name: 'ตั้งค่าเว็บไซต์', href: '/admin/settings', icon: '⚙️' },

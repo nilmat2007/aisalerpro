@@ -134,8 +134,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-800/50">
                       <span className="text-slate-500 text-sm flex items-center gap-1">🔒 ยังไม่ได้ซื้อ</span>
                       <div className="flex gap-2">
-                        <Link href="/store" className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm">
-                          ดูราคา
+                        <Link href={`/checkout/${tool.slug}`} className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-semibold">
+                          🛒 สั่งซื้อ
                         </Link>
                         <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg text-sm font-semibold">
                           💬 สั่งซื้อ

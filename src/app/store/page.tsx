@@ -74,19 +74,27 @@ export default async function StorePage() {
                     </ul>
                   )}
                   
-                  <div className="flex flex-col sm:flex-row items-center justify-between mt-auto pt-6 border-t border-slate-800/50 gap-4">
-                    <div className="text-3xl font-bold text-amber-400">
-                      {tool.price ? `฿${tool.price.toLocaleString()}` : 'ฟรี'}
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-auto pt-6 border-t border-slate-800/50 gap-4">
+                      <div className="text-3xl font-bold text-amber-400">
+                        {tool.price ? `฿${tool.price.toLocaleString()}` : 'ฟรี'}
+                      </div>
+                      <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
+                        <Link 
+                          href={`/checkout/${tool.slug}`}
+                          className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] text-center transition-all"
+                        >
+                          🛒 สั่งซื้อในเว็บ
+                        </Link>
+                        <a 
+                          href={contactUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] text-center transition-all"
+                        >
+                          💬 สั่งซื้อผ่าน Messenger
+                        </a>
+                      </div>
                     </div>
-                    <a 
-                      href={contactUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] text-center transition-all"
-                    >
-                      💬 สั่งซื้อผ่าน Messenger
-                    </a>
-                  </div>
                 </div>
               </div>
             );
