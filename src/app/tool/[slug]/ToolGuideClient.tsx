@@ -93,67 +93,6 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
 
   if (!tool) return null;
 
-  // ===== LOGIN SCREEN =====
-  if (!isUnlocked) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md">
-        <div className={`bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full mx-4 relative overflow-hidden shadow-[0_0_40px_rgba(6,182,212,0.15)] text-center ${isShaking ? 'animate-shake' : ''}`}>
-          {/* BG Glow */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-cyan-500/20 rounded-full blur-3xl"></div>
-
-          <div className="relative z-10 flex flex-col items-center">
-            {tool.logo_url ? (
-              <img src={tool.logo_url} alt={tool.name} className="w-24 h-24 rounded-full object-cover border-2 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)] mb-5" />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center text-4xl mb-5">
-                {tool.icon}
-              </div>
-            )}
-
-            <h2 className="text-2xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
-              {tool.name}
-            </h2>
-            <p className="text-slate-400 text-sm mb-6">กรุณาใส่รหัสผ่านเพื่อเข้าสู่คู่มือสำหรับ VIP</p>
-
-            <form onSubmit={handleUnlock} className="w-full space-y-3">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter Access Code"
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-center text-white font-mono tracking-widest focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all"
-                autoFocus
-              />
-              
-              {error && <p className="text-red-400 text-xs">{error}</p>}
-
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-semibold py-3 rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all transform hover:scale-105 active:scale-95"
-              >
-                เข้าสู่ระบบ
-              </button>
-            </form>
-
-            {!loggedIn && (
-              <div className="mt-6 border-t border-slate-800 pt-4 w-full">
-                <p className="text-slate-400 text-sm mb-3">หรือ เข้าสู่ระบบด้วย Google เพื่อใช้งานสะดวกกว่า</p>
-                <Link href="/login" className="block w-full bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl transition-colors">
-                  เข้าสู่ระบบ
-                </Link>
-              </div>
-            )}
-
-            <Link href="/" className="mt-6 text-slate-500 hover:text-cyan-400 text-sm transition-colors inline-block">
-              ← กลับหน้าหลัก
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // ===== MAIN GUIDE CONTENT =====
   return (
     <div className="min-h-screen pb-12">
@@ -176,6 +115,38 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
         <div className="mt-4 inline-block bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 text-xs px-3 py-1 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.2)]">
           ⭐ Exclusive for VIP Members
         </div>
+
+        {/* Purchase Banner for non-unlocked users */}
+        {!isUnlocked && (
+          <div className="mt-6 w-full max-w-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/40 rounded-2xl p-5 text-center">
+            <p className="text-amber-300 font-semibold mb-3">🔒 ลิงก์เครื่องมือถูกซ่อนไว้ — ซื้อเพื่อปลดล็อก!</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href={`/checkout/${slug}`} className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-900 font-bold rounded-xl shadow-lg">
+                🛒 สั่งซื้อในเว็บ
+              </Link>
+              <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold rounded-xl shadow-lg">
+                💬 สั่งซื้อผ่าน Messenger
+              </a>
+            </div>
+            {/* Legacy password */}
+            <div className="mt-4 border-t border-slate-800 pt-4">
+              <p className="text-slate-500 text-xs mb-2">มีรหัสผ่านแล้ว?</p>
+              <form onSubmit={handleUnlock} className="flex gap-2 max-w-xs mx-auto">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="ใส่รหัสผ่าน"
+                  className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-center text-white text-sm font-mono focus:outline-none focus:border-cyan-400"
+                />
+                <button type="submit" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm">
+                  ปลดล็อก
+                </button>
+              </form>
+              {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Guide Sections */}
@@ -256,11 +227,24 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
 
                         {/* Code Block (Tool Link) */}
                         {step.code_block && !isVideo && (
-                          <div className="bg-slate-950 p-3 rounded-lg mt-2 text-sm text-slate-400 break-all border border-slate-800">
-                            <a href={step.code_block} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
-                              {step.code_block}
-                            </a>
-                          </div>
+                          isUnlocked ? (
+                            <div className="bg-slate-950 p-3 rounded-lg mt-2 text-sm text-slate-400 break-all border border-slate-800">
+                              <a href={step.code_block} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                                {step.code_block}
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="relative mt-2 rounded-lg overflow-hidden border border-amber-500/30">
+                              <div className="bg-slate-950 p-3 text-sm text-slate-600 blur-sm select-none">
+                                https://labs.google/fx/tools/flow/shared/tool/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60">
+                                <div className="text-center">
+                                  <span className="text-amber-400 text-sm font-semibold">🔒 ซื้อเพื่อปลดล็อกลิงก์</span>
+                                </div>
+                              </div>
+                            </div>
+                          )
                         )}
 
                         {/* Images */}
