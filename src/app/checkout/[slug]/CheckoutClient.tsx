@@ -12,9 +12,7 @@ export default function CheckoutClient({ tool, userEmail, userId }: { tool: any,
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
-  const posterImage = tool.slug === 'ugc-batch' ? '/images/poster-ugc-batch.jpg' 
-    : tool.slug === 'ai-content-factory' ? '/images/poster-ai-content-factory.jpg' 
-    : null;
+  const posterImage = tool.poster_url || null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

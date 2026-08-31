@@ -91,9 +91,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allTools?.map((tool: any) => {
               const hasTool = ownedToolIds.has(tool.id);
-              const posterImage = tool.slug === 'ugc-batch' ? '/images/poster-ugc-batch.jpg' 
-                                : tool.slug === 'ai-content-factory' ? '/images/poster-ai-content-factory.jpg' 
-                                : null;
+              const posterImage = tool.poster_url || null;
 
               if (hasTool) {
                 return (

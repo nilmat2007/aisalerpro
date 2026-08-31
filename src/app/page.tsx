@@ -41,9 +41,7 @@ export default async function HomePage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allTools?.map((tool: any) => {
-              const posterImage = tool.slug === 'ugc-batch' ? '/images/poster-ugc-batch.jpg' 
-                                : tool.slug === 'ai-content-factory' ? '/images/poster-ai-content-factory.jpg' 
-                                : null;
+              const posterImage = tool.poster_url || null;
               return (
                 <div key={tool.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 relative group overflow-hidden flex flex-col h-full">
                   {posterImage ? (

@@ -41,9 +41,7 @@ export default async function StorePage() {
           {tools?.map((tool: any) => {
             const features = tool.features || [];
             const contactUrl = tool.contact_url || 'https://m.me/100083126689322';
-            const posterImage = tool.slug === 'ugc-batch' ? '/images/poster-ugc-batch.jpg' 
-                              : tool.slug === 'ai-content-factory' ? '/images/poster-ai-content-factory.jpg' 
-                              : null;
+            const posterImage = tool.poster_url || null;
 
             return (
               <div key={tool.id} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden flex flex-col md:flex-row group hover:border-cyan-500/50 transition-colors">
