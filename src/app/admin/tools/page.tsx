@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminToolsPage() {
   const [tools, setTools] = useState<any[]>([])
@@ -13,6 +14,30 @@ export default function AdminToolsPage() {
     badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '',
     is_active: true, is_coming_soon: false, sort_order: 0
   })
+  const [uploading, setUploading] = useState<string | null>(null)
+  const posterRef = useRef<HTMLInputElement>(null)
+  const logoRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (file: File, type: 'poster' | 'logo') => {
+    setUploading(type)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const fileName = `${type}_${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('tool-images').upload(fileName, file)
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('tool-images').getPublicUrl(fileName)
+      if (type === 'poster') {
+        setFormData(prev => ({ ...prev, poster_url: publicUrl }))
+      } else {
+        setFormData(prev => ({ ...prev, logo_url: publicUrl }))
+      }
+    } catch (err: any) {
+      alert('อัปโหลดไม่สำเร็จ: ' + (err.message || 'ลองใหม่'))
+    } finally {
+      setUploading(null)
+    }
+  }
 
   useEffect(() => {
     fetchTools()
@@ -156,12 +181,26 @@ export default function AdminToolsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Poster URL (รูปหน้าปก)</label>
-                  <input type="text" value={formData.poster_url} onChange={(e) => setFormData({...formData, poster_url: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" />
+                  <label className="block text-sm text-slate-400 mb-1">🖼️ รูปหน้าปก (Poster)</label>
+                  <input type="file" ref={posterRef} accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'poster')} />
+                  <div className="flex gap-2 items-center">
+                    <button type="button" onClick={() => posterRef.current?.click()} disabled={uploading === 'poster'} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm disabled:opacity-50">
+                      {uploading === 'poster' ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลดรูป'}
+                    </button>
+                    {formData.poster_url && <img src={formData.poster_url} alt="poster" className="w-12 h-16 object-cover rounded border border-slate-700" />}
+                  </div>
+                  {formData.poster_url && <p className="text-xs text-slate-500 mt-1 truncate">{formData.poster_url}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Logo URL</label>
-                  <input type="text" value={formData.logo_url} onChange={(e) => setFormData({...formData, logo_url: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" />
+                  <label className="block text-sm text-slate-400 mb-1">🎨 โลโก้ (Logo)</label>
+                  <input type="file" ref={logoRef} accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'logo')} />
+                  <div className="flex gap-2 items-center">
+                    <button type="button" onClick={() => logoRef.current?.click()} disabled={uploading === 'logo'} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm disabled:opacity-50">
+                      {uploading === 'logo' ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลดรูป'}
+                    </button>
+                    {formData.logo_url && <img src={formData.logo_url} alt="logo" className="w-12 h-12 object-cover rounded-full border border-slate-700" />}
+                  </div>
+                  {formData.logo_url && <p className="text-xs text-slate-500 mt-1 truncate">{formData.logo_url}</p>}
                 </div>
               </div>
 
