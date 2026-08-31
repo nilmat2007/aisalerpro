@@ -21,7 +21,7 @@ export default function LicensesPage() {
       ])
       const toolsData = await toolsRes.json()
       const licensesData = await licensesRes.json()
-      setTools(toolsData.tools || [])
+      setTools(Array.isArray(toolsData) ? toolsData : toolsData.tools || [])
       setLicenses(licensesData.keys || [])
     } catch (error) {
       console.error(error)
