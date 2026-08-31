@@ -99,7 +99,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                 return (
                   <div key={tool.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-green-500/30 rounded-2xl p-5 hover:border-green-400 transition-colors flex flex-col h-full">
                     {posterImage ? (
-                      <div className="w-full h-40 mb-4 rounded-xl overflow-hidden">
+                      <div className="w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden">
                         <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
@@ -121,7 +121,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                 return (
                   <div key={tool.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 opacity-80 hover:opacity-100 transition-opacity flex flex-col h-full">
                     {posterImage ? (
-                      <div className="w-full h-40 mb-4 rounded-xl overflow-hidden opacity-50 grayscale">
+                      <div className="w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden opacity-50 grayscale">
                         <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
