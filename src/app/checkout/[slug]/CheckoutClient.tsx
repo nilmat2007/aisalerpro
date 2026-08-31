@@ -32,28 +32,40 @@ export default function CheckoutClient({ tool, userEmail, userId }: { tool: any,
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}_${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('slips').upload(fileName, file);
+      let slipUrl = '';
       
-      if (uploadError) throw uploadError;
+      // อัปโหลดสลิป
+      const { error: uploadError } = await supabase.storage.from('slips').upload(fileName, file);
+      
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        // ถ้า upload ไม่ได้ ให้ส่ง order โดยไม่มีรูป (แจ้ง admin ทีหลัง)
+        slipUrl = 'upload-failed';
+      } else {
+        const { data: { publicUrl } } = supabase.storage.from('slips').getPublicUrl(fileName);
+        slipUrl = publicUrl;
+      }
 
-      const { data: { publicUrl } } = supabase.storage.from('slips').getPublicUrl(fileName);
+      // แปลงราคาเป็นตัวเลข
+      const numericPrice = parseFloat(String(tool.price).replace(/[^0-9.]/g, '')) || 0;
 
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           toolId: tool.id,
-          amount: tool.price,
-          slipUrl: publicUrl
+          amount: numericPrice,
+          slipUrl: slipUrl
         })
       });
 
-      if (!res.ok) throw new Error('Failed to create order');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to create order');
 
       setStep(3);
-    } catch (error) {
-      console.error(error);
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      alert(`เกิดข้อผิดพลาด: ${error.message || 'กรุณาลองใหม่อีกครั้ง'}`);
     } finally {
       setIsUploading(false);
     }
