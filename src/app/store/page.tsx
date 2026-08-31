@@ -40,7 +40,7 @@ export default async function StorePage() {
           <h2 className="text-2xl font-bold mb-6 border-b border-slate-800 pb-4">เครื่องมือเดี่ยว</h2>
           {tools?.map((tool: any) => {
             const features = tool.features || [];
-            const contactUrl = tool.contact_url || 'https://www.facebook.com/messages/t/';
+            const contactUrl = tool.contact_url || 'https://m.me/100083126689322';
             const posterImage = tool.slug === 'ugc-batch' ? '/images/poster-ugc-batch.jpg' 
                               : tool.slug === 'ai-content-factory' ? '/images/poster-ai-content-factory.jpg' 
                               : null;
@@ -84,7 +84,7 @@ export default async function StorePage() {
                       rel="noopener noreferrer"
                       className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)] text-center transition-all"
                     >
-                      ติดต่อซื้อ
+                      💬 สั่งซื้อผ่าน Messenger
                     </a>
                   </div>
                 </div>
