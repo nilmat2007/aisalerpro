@@ -12,6 +12,9 @@ export default function AdminSidebar() {
   const links = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
     { name: 'จัดการเครื่องมือ', href: '/admin/tools', icon: '🔧' },
+    { name: 'License Keys', href: '/admin/licenses', icon: '🔑' },
+    { name: 'สมาชิก', href: '/admin/members', icon: '👥' },
+    { name: 'ประกาศ', href: '/admin/announcements', icon: '📢' },
     { name: 'ตั้งค่าเว็บไซต์', href: '/admin/settings', icon: '⚙️' },
   ]
 
