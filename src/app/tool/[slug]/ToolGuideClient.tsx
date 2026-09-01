@@ -226,11 +226,13 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
                         )}
 
                         {/* Code Block (Tool Link) */}
-                        {step.code_block && !isVideo && (
-                          isUnlocked ? (
+                        {step.code_block && !isVideo && (() => {
+                          // ใช้ flow_url จาก tool เป็นหลัก ถ้ามี ถ้าไม่มีใช้ code_block จาก step
+                          const displayUrl = tool?.flow_url || step.code_block;
+                          return isUnlocked ? (
                             <div className="bg-slate-950 p-3 rounded-lg mt-2 text-sm text-slate-400 break-all border border-slate-800">
-                              <a href={step.code_block} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
-                                {step.code_block}
+                              <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                                {displayUrl}
                               </a>
                             </div>
                           ) : (
@@ -244,8 +246,8 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
                                 </div>
                               </div>
                             </div>
-                          )
-                        )}
+                          );
+                        })()}
 
                         {/* Images */}
                         {step.image_urls && step.image_urls.length > 0 && (
