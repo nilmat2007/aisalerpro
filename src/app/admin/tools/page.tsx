@@ -69,11 +69,17 @@ export default function AdminToolsPage() {
     const url = editingTool ? `/api/tools/${editingTool.id}` : '/api/tools'
     const method = editingTool ? 'PUT' : 'POST'
     
-    await fetch(url, {
+    const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     })
+    
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      alert('บันทึกไม่สำเร็จ: ' + (err.error || 'ลองใหม่'))
+      return
+    }
     
     setIsModalOpen(false)
     fetchTools()
