@@ -21,9 +21,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try {
     const resolvedParams = await params;
     const body = await request.json();
+    
+    // Only include editable fields (exclude id, created_at, etc.)
+    const { id, created_at, ...updateData } = body;
+    
     const { data, error } = await supabase
       .from('tools')
-      .update(body)
+      .update(updateData)
       .eq('id', resolvedParams.id)
       .select()
       .single();
