@@ -5,6 +5,38 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
+function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = ann.content && ann.content.length > 150;
+
+  return (
+    <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl overflow-hidden">
+      <div className="p-4">
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 text-xs font-semibold rounded-full">
+              {ann.badge_text || 'ประกาศ'}
+            </span>
+            <h3 className="font-bold text-white">{ann.title}</h3>
+          </div>
+          <button onClick={() => onDismiss(ann.id)} className="text-slate-500 hover:text-white text-lg shrink-0">✕</button>
+        </div>
+        <div className={`text-slate-300 text-sm leading-relaxed whitespace-pre-line ${!expanded && isLong ? 'line-clamp-3' : ''}`}>
+          {ann.content}
+        </div>
+        {isLong && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-cyan-400 text-xs mt-2 hover:underline"
+          >
+            {expanded ? '▲ ย่อ' : '▼ อ่านเพิ่มเติม'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardClient({ user, profile, userTools, allTools, announcements }: any) {
   const router = useRouter();
   const supabase = createClient();
@@ -72,13 +104,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
         {activeAnnouncements.length > 0 && (
           <div className="space-y-3">
             {activeAnnouncements.map((ann: any) => (
-              <div key={ann.id} className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 flex justify-between items-start relative">
-                <div>
-                  <h3 className="font-semibold text-cyan-400 mb-1">{ann.title}</h3>
-                  <p className="text-slate-300 text-sm">{ann.content}</p>
-                </div>
-                <button onClick={() => dismissAnnouncement(ann.id)} className="text-slate-400 hover:text-white">✕</button>
-              </div>
+              <AnnouncementCard key={ann.id} ann={ann} onDismiss={dismissAnnouncement} />
             ))}
           </div>
         )}
