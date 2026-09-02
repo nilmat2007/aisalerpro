@@ -24,7 +24,8 @@ export default function AnnouncementsPage() {
       const toolsData = await toolsRes.json()
       const annData = await annRes.json()
       
-      setTools(toolsData.tools || [])
+      // API /api/tools returns array directly, not { tools: [...] }
+      setTools(Array.isArray(toolsData) ? toolsData : (toolsData.tools || []))
       setAnnouncements(annData.announcements || [])
     } catch (error) {
       console.error(error)
@@ -41,12 +42,15 @@ export default function AnnouncementsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
+      const data = await res.json()
       if (res.ok) {
         fetchData()
         setFormData({ title: '', content: '', tool_id: 'null', badge_text: 'ประกาศ', badge_color: 'bg-blue-500' })
+      } else {
+        alert('สร้างประกาศไม่สำเร็จ: ' + (data.error || 'ลองใหม่'))
       }
-    } catch (error) {
-      console.error(error)
+    } catch (error: any) {
+      alert('เกิดข้อผิดพลาด: ' + error.message)
     }
   }
 

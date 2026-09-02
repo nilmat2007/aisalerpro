@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { supabase } from '@/lib/supabase'
 import { cookies } from 'next/headers'
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
@@ -12,7 +12,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
   }
 
   const { status, title, content, tool_id, badge_text, badge_color } = await request.json()
-  const supabase = await createClient()
+
 
   const updateData: any = {}
   if (status !== undefined) updateData.status = status
@@ -44,7 +44,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = await createClient()
+
 
   const { error } = await supabase
     .from('announcements')
