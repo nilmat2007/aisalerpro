@@ -15,6 +15,9 @@ export default function AdminToolsPage() {
     is_active: true, is_coming_soon: false, sort_order: 0
   })
   const [uploading, setUploading] = useState<string | null>(null)
+  const [sendNotify, setSendNotify] = useState(false)
+  const [notifyNote, setNotifyNote] = useState('')
+  const [sending, setSending] = useState(false)
   const posterRef = useRef<HTMLInputElement>(null)
   const logoRef = useRef<HTMLInputElement>(null)
 
@@ -80,7 +83,36 @@ export default function AdminToolsPage() {
       alert('บันทึกไม่สำเร็จ: ' + (err.error || 'ลองใหม่'))
       return
     }
+
+    const savedTool = await res.json()
+
+    // Send email notification if checked
+    if (sendNotify && editingTool) {
+      setSending(true)
+      try {
+        const notifyRes = await fetch('/api/admin/notify-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            toolId: editingTool.id,
+            toolName: formData.name,
+            updateNote: notifyNote || undefined
+          })
+        })
+        const notifyData = await notifyRes.json()
+        if (notifyData.success) {
+          alert(`✅ บันทึกสำเร็จ + ${notifyData.message}`)
+        } else {
+          alert(`✅ บันทึกสำเร็จ แต่ส่งอีเมลไม่ได้: ${notifyData.error}`)
+        }
+      } catch (err) {
+        alert('✅ บันทึกสำเร็จ แต่ส่งอีเมลไม่ได้')
+      }
+      setSending(false)
+    }
     
+    setSendNotify(false)
+    setNotifyNote('')
     setIsModalOpen(false)
     fetchTools()
   }
@@ -242,9 +274,32 @@ export default function AdminToolsPage() {
                 </label>
               </div>
 
+              {/* Email Notification */}
+              {editingTool && (
+                <div className="mt-4 pt-4 border-t border-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer mb-3">
+                    <input type="checkbox" checked={sendNotify} onChange={(e) => setSendNotify(e.target.checked)} className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-green-500" />
+                    <span className="text-green-400 font-semibold text-sm">📧 ส่งอีเมลแจ้งลูกค้าที่ซื้อ Tool นี้</span>
+                  </label>
+                  {sendNotify && (
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">ข้อความแจ้ง (ไม่ใส่ก็ได้ ระบบจะใช้ข้อความเริ่มต้น)</label>
+                      <textarea
+                        value={notifyNote}
+                        onChange={(e) => setNotifyNote(e.target.value)}
+                        placeholder="เช่น อัปเดต UI ใหม่ เพิ่มฟีเจอร์ xxx..."
+                        className="w-full bg-slate-800 border border-green-500/30 rounded px-3 py-2 text-white text-sm h-20 resize-none"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-300 hover:text-white transition-colors">ยกเลิก</button>
-                <button type="submit" className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-purple-500 text-white rounded-lg hover:opacity-90 transition-opacity">บันทึก</button>
+                <button type="button" onClick={() => { setIsModalOpen(false); setSendNotify(false); setNotifyNote('') }} className="px-4 py-2 text-slate-300 hover:text-white transition-colors">ยกเลิก</button>
+                <button type="submit" disabled={sending} className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-purple-500 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50">
+                  {sending ? '⏳ กำลังส่งอีเมล...' : sendNotify ? '💾 บันทึก + ส่งอีเมล' : 'บันทึก'}
+                </button>
               </div>
             </form>
           </div>
