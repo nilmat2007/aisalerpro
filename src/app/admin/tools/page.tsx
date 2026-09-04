@@ -13,7 +13,7 @@ export default function AdminToolsPage() {
   
   const [formData, setFormData] = useState({
     name: '', slug: '', icon: '', description: '', price: '', password: '',
-    badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '',
+    badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
     is_active: true, is_coming_soon: false, sort_order: 0
   })
   const [uploading, setUploading] = useState<string | null>(null)
@@ -134,7 +134,7 @@ export default function AdminToolsPage() {
     setEditingTool(null)
     setFormData({
       name: '', slug: '', icon: '', description: '', price: '', password: '',
-      badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '',
+      badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
       is_active: true, is_coming_soon: false, sort_order: 0
     })
     setIsModalOpen(true)
@@ -262,6 +262,12 @@ export default function AdminToolsPage() {
               <div>
                 <label className="block text-sm text-amber-400 mb-1 font-semibold">🔗 ลิงก์เครื่องมือ (Flow URL) — อัปเดตลิงก์ Tool ใหม่ได้ตรงนี้</label>
                 <input type="text" value={formData.flow_url || ''} onChange={(e) => setFormData({...formData, flow_url: e.target.value})} placeholder="https://labs.google/fx/tools/flow/shared/tool/..." className="w-full bg-slate-800 border border-amber-500/50 rounded px-3 py-2 text-white" />
+              </div>
+
+              <div>
+                <label className="block text-sm text-red-400 mb-1 font-semibold">▶️ ลิงก์ YouTube ตัวอย่าง — วิดีโอสาธิตการใช้งาน Tool</label>
+                <input type="text" value={formData.youtube_url || ''} onChange={(e) => setFormData({...formData, youtube_url: e.target.value})} placeholder="https://www.youtube.com/embed/xxxxx" className="w-full bg-slate-800 border border-red-500/50 rounded px-3 py-2 text-white" />
+                <p className="text-xs text-slate-500 mt-1">ใช้ลิงก์ embed เช่น https://www.youtube.com/embed/VIDEO_ID</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

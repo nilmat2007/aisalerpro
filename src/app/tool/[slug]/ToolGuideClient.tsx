@@ -157,7 +157,8 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
           const isTip = section.style_variant === 'tip';
 
           // Video Section
-          if (isVideo && section.steps?.[0]?.code_block) {
+          const videoUrl = tool?.youtube_url || section.steps?.[0]?.code_block;
+          if (isVideo && videoUrl) {
             return (
               <div key={section.id || idx} className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 neon-border relative overflow-hidden flex flex-col items-center">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-purple-500"></div>
@@ -167,7 +168,7 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
                 <div className="w-full max-w-[320px] relative rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.2)] border-2 border-slate-700 hover:border-cyan-400 transition-colors duration-500">
                   <div className="relative w-full" style={{ paddingTop: '177.77%' }}>
                     <iframe
-                      src={`${section.steps[0].code_block}?rel=0&modestbranding=1`}
+                      src={`${videoUrl}?rel=0&modestbranding=1`}
                       className="absolute top-0 left-0 w-full h-full"
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
