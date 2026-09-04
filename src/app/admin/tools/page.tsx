@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { showSuccess, showError, showConfirmDelete, showLoading, closeLoading } from '@/lib/swal'
+import { LoadingSpinner } from '@/components/AdminUI'
 
 export default function AdminToolsPage() {
   const [tools, setTools] = useState<any[]>([])
@@ -36,7 +38,7 @@ export default function AdminToolsPage() {
         setFormData(prev => ({ ...prev, logo_url: publicUrl }))
       }
     } catch (err: any) {
-      alert('อัปโหลดไม่สำเร็จ: ' + (err.message || 'ลองใหม่'))
+      showError('อัปโหลดไม่สำเร็จ', err.message || 'ลองใหม่')
     } finally {
       setUploading(null)
     }
@@ -60,9 +62,13 @@ export default function AdminToolsPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (confirm('คุณต้องการลบเครื่องมือนี้ใช่หรือไม่?')) {
-      await fetch(`/api/tools/${id}`, { method: 'DELETE' })
+  const handleDelete = async (tool: any) => {
+    const confirmed = await showConfirmDelete(tool.name)
+    if (confirmed) {
+      showLoading()
+      await fetch(`/api/tools/${tool.id}`, { method: 'DELETE' })
+      closeLoading()
+      showSuccess('ลบเครื่องมือสำเร็จ')
       fetchTools()
     }
   }
@@ -72,6 +78,7 @@ export default function AdminToolsPage() {
     const url = editingTool ? `/api/tools/${editingTool.id}` : '/api/tools'
     const method = editingTool ? 'PUT' : 'POST'
     
+    showLoading()
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -80,7 +87,8 @@ export default function AdminToolsPage() {
     
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      alert('บันทึกไม่สำเร็จ: ' + (err.error || 'ลองใหม่'))
+      closeLoading()
+      showError('บันทึกไม่สำเร็จ', err.error || 'ลองใหม่')
       return
     }
 
@@ -100,15 +108,20 @@ export default function AdminToolsPage() {
           })
         })
         const notifyData = await notifyRes.json()
+        closeLoading()
         if (notifyData.success) {
-          alert(`✅ บันทึกสำเร็จ + ${notifyData.message}`)
+          showSuccess(`บันทึกสำเร็จ + ${notifyData.message}`)
         } else {
-          alert(`✅ บันทึกสำเร็จ แต่ส่งอีเมลไม่ได้: ${notifyData.error}`)
+          showError('บันทึกสำเร็จ แต่ส่งอีเมลไม่ได้', notifyData.error)
         }
       } catch (err) {
-        alert('✅ บันทึกสำเร็จ แต่ส่งอีเมลไม่ได้')
+        closeLoading()
+        showError('บันทึกสำเร็จ แต่ส่งอีเมลไม่ได้')
       }
       setSending(false)
+    } else {
+      closeLoading()
+      showSuccess('บันทึกสำเร็จ')
     }
     
     setSendNotify(false)
@@ -142,6 +155,9 @@ export default function AdminToolsPage() {
         </button>
       </div>
 
+      {loading ? (
+        <LoadingSpinner text='กำลังโหลดเครื่องมือ...' />
+      ) : (
       <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto">
         <table className="w-full text-left min-w-[800px]">
           <thead className="bg-slate-800/50 text-slate-300">
@@ -169,11 +185,11 @@ export default function AdminToolsPage() {
                 </td>
                 <td className="p-4 text-right space-x-3">
                   <button onClick={() => openEditModal(tool)} className="text-cyan-400 hover:text-cyan-300">แก้ไข</button>
-                  <button onClick={() => handleDelete(tool.id)} className="text-red-400 hover:text-red-300">ลบ</button>
+                  <button onClick={() => handleDelete(tool)} className="text-red-400 hover:text-red-300">ลบ</button>
                 </td>
               </tr>
             ))}
-            {tools.length === 0 && !loading && (
+            {tools.length === 0 && (
               <tr>
                 <td colSpan={6} className="p-8 text-center text-slate-400">ยังไม่มีเครื่องมือในระบบ</td>
               </tr>
@@ -181,6 +197,7 @@ export default function AdminToolsPage() {
           </tbody>
         </table>
       </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">

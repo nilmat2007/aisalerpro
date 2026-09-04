@@ -1,10 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { showSuccess, showError, showConfirm, showLoading, closeLoading } from '@/lib/swal'
+import { LoadingSpinner, Pagination, EmptyState } from '@/components/AdminUI'
 
 export default function MembersPage() {
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchData()
@@ -17,6 +21,7 @@ export default function MembersPage() {
       setMembers(data.members || [])
     } catch (error) {
       console.error(error)
+      showError('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลสมาชิกได้')
     } finally {
       setLoading(false)
     }
@@ -48,7 +53,14 @@ export default function MembersPage() {
     return `${maxTool} (${maxCount})`
   }
 
-  if (loading) return <div className="p-8 text-white text-center">กำลังโหลด...</div>
+  // Pagination logic
+  const totalPages = Math.ceil(members.length / itemsPerPage)
+  const paginatedMembers = members.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  if (loading) return <LoadingSpinner text='กำลังโหลดสมาชิก...' />
 
   return (
     <div className="p-8 min-h-screen bg-slate-950">
@@ -81,7 +93,7 @@ export default function MembersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {members.map(member => (
+              {paginatedMembers.map(member => (
                 <tr key={member.id} className="hover:bg-slate-800/50">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
@@ -114,12 +126,22 @@ export default function MembersPage() {
               ))}
               {members.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500">ไม่พบข้อมูลสมาชิก</td>
+                  <td colSpan={4} className="p-8 text-center">
+                    <EmptyState />
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
     </div>
   )

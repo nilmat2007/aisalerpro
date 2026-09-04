@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { showSuccess, showError, showConfirmDelete, showLoading, closeLoading } from '@/lib/swal'
+import { LoadingSpinner, EmptyState, Pagination } from '@/components/AdminUI'
 
 export default function AnnouncementsPage() {
   const [tools, setTools] = useState<any[]>([])
   const [announcements, setAnnouncements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   
   const [formData, setFormData] = useState({
     title: '', content: '', tool_id: 'null', badge_text: 'ประกาศ', badge_color: 'bg-blue-500'
@@ -37,48 +41,68 @@ export default function AnnouncementsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      showLoading()
       const res = await fetch('/api/admin/announcements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
       const data = await res.json()
+      closeLoading()
       if (res.ok) {
+        await showSuccess('สร้างประกาศสำเร็จ')
         fetchData()
         setFormData({ title: '', content: '', tool_id: 'null', badge_text: 'ประกาศ', badge_color: 'bg-blue-500' })
       } else {
-        alert('สร้างประกาศไม่สำเร็จ: ' + (data.error || 'ลองใหม่'))
+        await showError('สร้างประกาศไม่สำเร็จ', data.error || 'ลองใหม่')
       }
     } catch (error: any) {
-      alert('เกิดข้อผิดพลาด: ' + error.message)
+      closeLoading()
+      await showError('เกิดข้อผิดพลาด', error.message)
     }
   }
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
     try {
+      showLoading()
       await fetch(`/api/admin/announcements/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       })
+      closeLoading()
+      await showSuccess(newStatus === 'active' ? 'เปิดแสดงประกาศแล้ว' : 'ซ่อนประกาศแล้ว')
       fetchData()
     } catch (error) {
+      closeLoading()
       console.error(error)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('ยืนยันการลบประกาศนี้?')) return
+    const confirmed = await showConfirmDelete('ประกาศนี้')
+    if (!confirmed) return
     try {
+      showLoading()
       await fetch(`/api/admin/announcements/${id}`, { method: 'DELETE' })
+      closeLoading()
+      await showSuccess('ลบประกาศสำเร็จ')
       fetchData()
     } catch (error) {
+      closeLoading()
       console.error(error)
     }
   }
 
-  if (loading) return <div className="p-8 text-white text-center">กำลังโหลด...</div>
+  // Pagination
+  const totalPages = Math.ceil(announcements.length / itemsPerPage)
+  const paginatedAnnouncements = announcements.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  if (loading) return <LoadingSpinner text='กำลังโหลดประกาศ...' />
 
   return (
     <div className="p-8 min-h-screen bg-slate-950">
@@ -156,7 +180,7 @@ export default function AnnouncementsPage() {
 
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-white mb-4">รายการประกาศ</h2>
-        {announcements.map(ann => (
+        {paginatedAnnouncements.map(ann => (
           <div key={ann.id} className={`bg-slate-900 p-6 rounded-xl border ${ann.status === 'active' ? 'border-purple-500/30' : 'border-slate-800 opacity-60'}`}>
             <div className="flex justify-between items-start gap-4">
               <div>
@@ -197,9 +221,14 @@ export default function AnnouncementsPage() {
           </div>
         ))}
         {announcements.length === 0 && (
-          <div className="text-center p-8 text-slate-500 bg-slate-900 rounded-xl border border-slate-800">
-            ยังไม่มีประกาศ
-          </div>
+          <EmptyState icon='📢' title='ยังไม่มีประกาศ' />
+        )}
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
     </div>

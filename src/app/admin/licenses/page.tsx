@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { showSuccess, showError, showConfirm, showConfirmDelete, showLoading, closeLoading } from '@/lib/swal'
+import { LoadingSpinner, Pagination, EmptyState } from '@/components/AdminUI'
 
 export default function LicensesPage() {
   const [tools, setTools] = useState<any[]>([])
@@ -8,6 +10,8 @@ export default function LicensesPage() {
   const [loading, setLoading] = useState(true)
   const [newKeyData, setNewKeyData] = useState({ toolId: 'all', packageType: 'lifetime', note: '', quantity: 1 })
   const [generatedKeys, setGeneratedKeys] = useState<string[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchData()
@@ -33,47 +37,71 @@ export default function LicensesPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      showLoading()
       const res = await fetch('/api/admin/licenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newKeyData)
       })
       const data = await res.json()
+      closeLoading()
       if (data.keys) {
         setGeneratedKeys(data.keys.map((k: any) => k.key_code))
         fetchData()
         setNewKeyData({ ...newKeyData, note: '' })
+        await showSuccess('สร้างรหัสสำเร็จ')
+      } else {
+        await showError('ผิดพลาด', data.error || 'ไม่สามารถสร้างรหัสได้')
       }
     } catch (error) {
+      closeLoading()
       console.error(error)
+      await showError('ผิดพลาด', 'ไม่สามารถสร้างรหัสได้')
     }
   }
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = async (text: string) => {
     navigator.clipboard.writeText(text)
-    alert('คัดลอกแล้ว')
+    await showSuccess('คัดลอกแล้ว')
   }
 
-  const copyAllKeys = () => {
+  const copyAllKeys = async () => {
     navigator.clipboard.writeText(generatedKeys.join('\n'))
-    alert('คัดลอกรหัสทั้งหมดแล้ว')
+    await showSuccess('คัดลอกรหัสทั้งหมดแล้ว')
   }
 
   const revokeKey = async (id: string) => {
-    if (!confirm('ยืนยันการยกเลิกรหัสนี้?')) return
+    const confirmed = await showConfirm('ยืนยันการยกเลิกรหัสนี้?')
+    if (!confirmed) return
     try {
+      showLoading()
       const res = await fetch(`/api/admin/licenses/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'revoked' })
       })
-      if (res.ok) fetchData()
+      closeLoading()
+      if (res.ok) {
+        await showSuccess('ยกเลิกรหัสสำเร็จ')
+        fetchData()
+      } else {
+        await showError('ผิดพลาด', 'ไม่สามารถยกเลิกรหัสได้')
+      }
     } catch (error) {
+      closeLoading()
       console.error(error)
+      await showError('ผิดพลาด', 'ไม่สามารถยกเลิกรหัสได้')
     }
   }
 
-  if (loading) return <div className="p-8 text-white text-center">กำลังโหลด...</div>
+  // Pagination
+  const totalPages = Math.ceil(licenses.length / itemsPerPage)
+  const paginatedLicenses = licenses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  if (loading) return <LoadingSpinner text='กำลังโหลด License Keys...' />
 
   return (
     <div className="p-8 min-h-screen bg-slate-950">
@@ -161,47 +189,53 @@ export default function LicensesPage() {
         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
           <h2 className="text-xl font-bold text-white">รายการ License Keys</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-slate-300">
-            <thead className="bg-slate-950/50">
-              <tr>
-                <th className="p-4 font-semibold">รหัส</th>
-                <th className="p-4 font-semibold">เครื่องมือ</th>
-                <th className="p-4 font-semibold">สถานะ</th>
-                <th className="p-4 font-semibold">ผู้ใช้งาน</th>
-                <th className="p-4 font-semibold">บันทึก</th>
-                <th className="p-4 font-semibold">จัดการ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {licenses.map(lic => (
-                <tr key={lic.id} className="hover:bg-slate-800/50">
-                  <td className="p-4">
-                    <code className="bg-slate-950 px-2 py-1 rounded text-cyan-400">{lic.key_code}</code>
-                  </td>
-                  <td className="p-4">{lic.tools?.name || 'All-in-One'}</td>
-                  <td className="p-4">
-                    {lic.status === 'unused' && <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs">⏳ ยังไม่ใช้</span>}
-                    {lic.status === 'used' && <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">✅ ใช้แล้ว</span>}
-                    {lic.status === 'revoked' && <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs">❌ ยกเลิก</span>}
-                  </td>
-                  <td className="p-4">{lic.activated_email || '-'}</td>
-                  <td className="p-4">{lic.note || '-'}</td>
-                  <td className="p-4">
-                    {lic.status === 'unused' && (
-                      <button onClick={() => revokeKey(lic.id)} className="text-red-400 hover:text-red-300 text-sm">ยกเลิก</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {licenses.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-500">ไม่พบข้อมูล</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {licenses.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-slate-300">
+                <thead className="bg-slate-950/50">
+                  <tr>
+                    <th className="p-4 font-semibold">รหัส</th>
+                    <th className="p-4 font-semibold">เครื่องมือ</th>
+                    <th className="p-4 font-semibold">สถานะ</th>
+                    <th className="p-4 font-semibold">ผู้ใช้งาน</th>
+                    <th className="p-4 font-semibold">บันทึก</th>
+                    <th className="p-4 font-semibold">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {paginatedLicenses.map(lic => (
+                    <tr key={lic.id} className="hover:bg-slate-800/50">
+                      <td className="p-4">
+                        <code className="bg-slate-950 px-2 py-1 rounded text-cyan-400">{lic.key_code}</code>
+                      </td>
+                      <td className="p-4">{lic.tools?.name || 'All-in-One'}</td>
+                      <td className="p-4">
+                        {lic.status === 'unused' && <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-xs">⏳ ยังไม่ใช้</span>}
+                        {lic.status === 'used' && <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">✅ ใช้แล้ว</span>}
+                        {lic.status === 'revoked' && <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded text-xs">❌ ยกเลิก</span>}
+                      </td>
+                      <td className="p-4">{lic.activated_email || '-'}</td>
+                      <td className="p-4">{lic.note || '-'}</td>
+                      <td className="p-4">
+                        {lic.status === 'unused' && (
+                          <button onClick={() => revokeKey(lic.id)} className="text-red-400 hover:text-red-300 text-sm">ยกเลิก</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
+        )}
       </div>
     </div>
   )

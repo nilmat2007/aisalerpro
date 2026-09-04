@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { showSuccess, showError, showConfirm, showConfirmDelete, showLoading, closeLoading } from '@/lib/swal'
+import { LoadingSpinner, Pagination, EmptyState } from '@/components/AdminUI'
 
 
 export default function AdminOrdersPage() {
@@ -13,6 +15,9 @@ export default function AdminOrdersPage() {
   const [rejectId, setRejectId] = useState<string | null>(null);
 
   const [selectedSlip, setSelectedSlip] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchOrders();
@@ -33,24 +38,28 @@ export default function AdminOrdersPage() {
   };
 
   const handleApprove = async (id: string) => {
-    if (!confirm('ยืนยันการอนุมัติคำสั่งซื้อนี้?')) return;
+    const confirmed = await showConfirm('ยืนยันการอนุมัติคำสั่งซื้อนี้?');
+    if (!confirmed) return;
     setProcessingId(id);
+    showLoading('กำลังดำเนินการ...');
     try {
       const res = await fetch(`/api/admin/orders/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approve' })
       });
+      closeLoading();
       if (res.ok) {
-        alert('อนุมัติสำเร็จ');
+        await showSuccess('อนุมัติสำเร็จ');
         fetchOrders();
       } else {
         const data = await res.json();
-        alert(`Error: ${data.error}`);
+        showError('เกิดข้อผิดพลาด', data.error);
       }
     } catch (err) {
       console.error(err);
-      alert('เกิดข้อผิดพลาด');
+      closeLoading();
+      showError('เกิดข้อผิดพลาด', 'ไม่สามารถอนุมัติคำสั่งซื้อได้');
     } finally {
       setProcessingId(null);
     }
@@ -58,34 +67,49 @@ export default function AdminOrdersPage() {
 
   const handleReject = async (id: string) => {
     if (!rejectNote.trim()) {
-      alert('กรุณาระบุเหตุผลการปฏิเสธ');
+      showError('กรุณาระบุเหตุผล', 'กรุณาระบุเหตุผลการปฏิเสธ');
       return;
     }
     setProcessingId(id);
+    showLoading('กำลังดำเนินการ...');
     try {
       const res = await fetch(`/api/admin/orders/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reject', note: rejectNote })
       });
+      closeLoading();
       if (res.ok) {
-        alert('ปฏิเสธคำสั่งซื้อแล้ว');
+        await showSuccess('ปฏิเสธคำสั่งซื้อแล้ว');
         setRejectId(null);
         setRejectNote('');
         fetchOrders();
       } else {
         const data = await res.json();
-        alert(`Error: ${data.error}`);
+        showError('เกิดข้อผิดพลาด', data.error);
       }
     } catch (err) {
       console.error(err);
-      alert('เกิดข้อผิดพลาด');
+      closeLoading();
+      showError('เกิดข้อผิดพลาด', 'ไม่สามารถปฏิเสธคำสั่งซื้อได้');
     } finally {
       setProcessingId(null);
     }
   };
 
   const filteredOrders = orders.filter(o => filter === 'all' || o.status === filter);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
 
   return (
     <div className="w-full">
@@ -100,30 +124,26 @@ export default function AdminOrdersPage() {
         </div>
 
         {loading ? (
-          <div className="text-slate-400">กำลังโหลดข้อมูล...</div>
+          <LoadingSpinner text='กำลังโหลดคำสั่งซื้อ...' />
+        ) : filteredOrders.length === 0 ? (
+          <EmptyState icon='🧾' title='ไม่พบคำสั่งซื้อ' />
         ) : (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-800/50 text-slate-400 uppercase">
-                <tr>
-                  <th className="px-4 py-3">วันที่</th>
-                  <th className="px-4 py-3">อีเมล</th>
-                  <th className="px-4 py-3">เครื่องมือ</th>
-                  <th className="px-4 py-3">จำนวนเงิน</th>
-                  <th className="px-4 py-3">สลิป</th>
-                  <th className="px-4 py-3">สถานะ</th>
-                  <th className="px-4 py-3">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.length === 0 ? (
+          <>
+            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-800/50 text-slate-400 uppercase">
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                      ไม่พบข้อมูลคำสั่งซื้อ
-                    </td>
+                    <th className="px-4 py-3">วันที่</th>
+                    <th className="px-4 py-3">อีเมล</th>
+                    <th className="px-4 py-3">เครื่องมือ</th>
+                    <th className="px-4 py-3">จำนวนเงิน</th>
+                    <th className="px-4 py-3">สลิป</th>
+                    <th className="px-4 py-3">สถานะ</th>
+                    <th className="px-4 py-3">จัดการ</th>
                   </tr>
-                ) : (
-                  filteredOrders.map(order => (
+                </thead>
+                <tbody>
+                  {paginatedOrders.map(order => (
                     <tr key={order.id} className="border-b border-slate-800/50 hover:bg-slate-800/20">
                       <td className="px-4 py-3 whitespace-nowrap">
                         {new Date(order.created_at).toLocaleString('th-TH')}
@@ -182,11 +202,17 @@ export default function AdminOrdersPage() {
                         )}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </>
         )}
 
       </div>
