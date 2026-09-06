@@ -9,7 +9,8 @@ export default function AdminSettingsPage() {
     tagline: '',
     description: '',
     logo_url: '',
-    og_image_url: ''
+    og_image_url: '',
+    favicon_url: ''
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -18,8 +19,9 @@ export default function AdminSettingsPage() {
   
   const logoRef = useRef<HTMLInputElement>(null)
   const ogRef = useRef<HTMLInputElement>(null)
+  const faviconRef = useRef<HTMLInputElement>(null)
 
-  const handleImageUpload = async (file: File, type: 'logo' | 'og') => {
+  const handleImageUpload = async (file: File, type: 'logo' | 'og' | 'favicon') => {
     setUploading(type)
     try {
       const supabase = createClient()
@@ -34,8 +36,10 @@ export default function AdminSettingsPage() {
       const newSettings = { ...settings }
       if (type === 'logo') {
         newSettings.logo_url = publicUrl
-      } else {
+      } else if (type === 'og') {
         newSettings.og_image_url = publicUrl
+      } else if (type === 'favicon') {
+        newSettings.favicon_url = publicUrl
       }
       setSettings(newSettings)
       
@@ -150,6 +154,23 @@ export default function AdminSettingsPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">⭐ ไอคอนแท็บเบราว์เซอร์ (Favicon)</label>
+            <input type="file" ref={faviconRef} accept="image/png,image/x-icon,image/svg+xml,image/jpeg" className="hidden" onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'favicon')} />
+            <div className="flex gap-4 items-center">
+              <button type="button" onClick={() => faviconRef.current?.click()} disabled={uploading === 'favicon'} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm border border-slate-700 disabled:opacity-50">
+                {uploading === 'favicon' ? '⏳ กำลังอัปโหลด...' : '📤 อัปโหลด Favicon'}
+              </button>
+              {settings.favicon_url && (
+                <div className="p-2 bg-slate-950 rounded border border-slate-800 flex items-center gap-2">
+                  <img src={settings.favicon_url} alt="Favicon Preview" className="h-8 w-8 object-contain" />
+                  <span className="text-xs text-slate-500">ตัวอย่าง</span>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">แนะนำ: รูป PNG ขนาด 32x32 หรือ 64x64 px</p>
           </div>
 
           <div className="pt-4 border-t border-slate-800">
