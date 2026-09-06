@@ -27,6 +27,7 @@ export async function PUT(request: Request) {
       description: body.description || '',
       logo_url: body.logo_url || '',
       og_image_url: body.og_image_url || '',
+      favicon_url: body.favicon_url || '',
     };
 
     // First try to get the existing record
