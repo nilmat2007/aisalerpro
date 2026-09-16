@@ -37,12 +37,34 @@ function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string
   );
 }
 
-export default function DashboardClient({ user, profile, userTools, allTools, announcements }: any) {
+export default function DashboardClient({ user, profile, userTools, allTools, announcements, userTrials }: any) {
   const router = useRouter();
   const supabase = createClient();
   const [licenseKey, setLicenseKey] = useState('');
   const [licenseMsg, setLicenseMsg] = useState({ type: '', text: '' });
   const [activeAnnouncements, setActiveAnnouncements] = useState(announcements);
+  const [trialToolIds, setTrialToolIds] = useState<Set<string>>(new Set(userTrials?.map((t: any) => t.tool_id) || []));
+  const [startingTrial, setStartingTrial] = useState<string | null>(null);
+
+  const startTrial = async (toolId: string) => {
+    setStartingTrial(toolId);
+    try {
+      const res = await fetch('/api/trial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool_id: toolId })
+      });
+      const data = await res.json();
+      if (data.success || data.alreadyTried) {
+        setTrialToolIds(prev => new Set([...prev, toolId]));
+        router.refresh();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setStartingTrial(null);
+    }
+  };
 
   const displayName = profile?.display_name || user?.user_metadata?.full_name || 'ผู้ใช้งาน';
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || null;
@@ -142,30 +164,63 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                   </div>
                 );
               } else {
+                const hasTrial = trialToolIds.has(tool.id);
+                const trialEnabled = tool.trial_enabled && tool.trial_flow_url;
+                
                 return (
-                  <div key={tool.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 opacity-80 hover:opacity-100 transition-opacity flex flex-col h-full">
+                  <div key={tool.id} className={`bg-slate-900/50 border ${hasTrial ? 'border-amber-500/40' : 'border-slate-800'} rounded-2xl p-5 ${hasTrial ? 'opacity-100' : 'opacity-80 hover:opacity-100'} transition-opacity flex flex-col h-full`}>
                     {posterImage ? (
-                      <div className="w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden opacity-50 grayscale">
+                      <div className={`w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden ${hasTrial ? 'opacity-80' : 'opacity-50 grayscale'}`}>
                         <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center text-3xl mb-4 grayscale">
+                      <div className={`w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center text-3xl mb-4 ${hasTrial ? '' : 'grayscale'}`}>
                         {tool.icon || '🔒'}
                       </div>
                     )}
                     <h3 className="text-lg font-bold text-slate-300 mb-2">{tool.name}</h3>
                     <p className="text-slate-500 text-sm mb-4 flex-grow">{tool.description}</p>
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-800/50">
-                      <span className="text-slate-500 text-sm flex items-center gap-1">🔒 ยังไม่ได้ซื้อ</span>
-                      <div className="flex gap-2">
-                        <Link href={`/checkout/${tool.slug}`} className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-semibold">
-                          🛒 สั่งซื้อ
-                        </Link>
-                        <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg text-sm font-semibold">
-                          💬 สั่งซื้อ
-                        </a>
+                    
+                    {hasTrial ? (
+                      /* Trial active - เคยทดลองใช้แล้ว */
+                      <div className="mt-auto pt-4 border-t border-amber-500/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-amber-400 text-sm flex items-center gap-1">🎁 ทดลองใช้แล้ว (3 คลิป)</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Link href={`/tool/${tool.slug}?trial=1`} className="flex-1 text-center px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white rounded-lg text-sm font-semibold">
+                            ▶️ เข้าใช้ตัวทดลอง
+                          </Link>
+                          <Link href={`/checkout/${tool.slug}`} className="px-3 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-semibold">
+                            🛒 ซื้อเต็ม
+                          </Link>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      /* ยังไม่ได้ซื้อ / ยังไม่ได้ทดลอง */
+                      <div className="mt-auto pt-4 border-t border-slate-800/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500 text-sm flex items-center gap-1">🔒 ยังไม่ได้ซื้อ</span>
+                          <div className="flex gap-2">
+                            <Link href={`/checkout/${tool.slug}`} className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-semibold">
+                              🛒 สั่งซื้อ
+                            </Link>
+                            <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg text-sm font-semibold">
+                              💬 สั่งซื้อ
+                            </a>
+                          </div>
+                        </div>
+                        {trialEnabled && (
+                          <button
+                            onClick={() => startTrial(tool.id)}
+                            disabled={startingTrial === tool.id}
+                            className="w-full px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
+                          >
+                            {startingTrial === tool.id ? '⏳ กำลังเริ่ม...' : '🎁 ทดลองใช้ฟรี (3 คลิป)'}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               }

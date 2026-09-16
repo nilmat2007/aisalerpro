@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: string, hasAccess: boolean, loggedIn: boolean }) {
+export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = false, trialFlowUrl = '' }: { slug: string, hasAccess: boolean, loggedIn: boolean, isTrial?: boolean, trialFlowUrl?: string }) {
   const router = useRouter();
 
   const [tool, setTool] = useState<any>(null);
@@ -149,6 +149,21 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
         )}
       </header>
 
+      {/* Trial Banner */}
+      {isTrial && isUnlocked && (
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/50 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-amber-400 font-semibold">🎁 โหมดทดลองใช้ฟรี (จำกัด 3 คลิป)</p>
+              <p className="text-slate-400 text-sm">ซื้อเวอร์ชันเต็มเพื่อใช้งานไม่จำกัด!</p>
+            </div>
+            <Link href={`/checkout/${slug}`} className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white rounded-lg text-sm font-semibold whitespace-nowrap">
+              🛒 ซื้อเวอร์ชันเต็ม
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Guide Sections */}
       <main className="max-w-3xl mx-auto px-4 space-y-8">
         {guideSections.map((section: any, idx: number) => {
@@ -229,7 +244,8 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn }: { slug: s
                         {/* Code Block (Tool Link) */}
                         {step.code_block && !isVideo && (() => {
                           // ใช้ flow_url จาก tool เป็นหลัก ถ้ามี ถ้าไม่มีใช้ code_block จาก step
-                          const displayUrl = tool?.flow_url || step.code_block;
+                          // ถ้าเป็น trial → ใช้ trialFlowUrl แทน
+                          const displayUrl = isTrial && trialFlowUrl ? trialFlowUrl : (tool?.flow_url || step.code_block);
                           return isUnlocked ? (
                             <div className="bg-slate-950 p-3 rounded-lg mt-2 text-sm text-slate-400 break-all border border-slate-800">
                               <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">

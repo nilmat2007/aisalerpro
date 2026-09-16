@@ -16,6 +16,7 @@ export default function AdminSidebar() {
     { name: 'คำสั่งซื้อ', href: '/admin/orders', icon: '🛒' },
     { name: 'สมาชิก', href: '/admin/members', icon: '👥' },
     { name: 'ประกาศ', href: '/admin/announcements', icon: '📢' },
+    { name: 'CRM ทดลองใช้', href: '/admin/trials', icon: '🎯' },
     { name: 'ตั้งค่าเว็บไซต์', href: '/admin/settings', icon: '⚙️' },
   ]
 

@@ -14,7 +14,8 @@ export default function AdminToolsPage() {
   const [formData, setFormData] = useState({
     name: '', slug: '', icon: '', description: '', price: '', password: '',
     badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
-    is_active: true, is_coming_soon: false, sort_order: 0
+    is_active: true, is_coming_soon: false, sort_order: 0,
+    trial_enabled: false, trial_flow_url: ''
   })
   const [uploading, setUploading] = useState<string | null>(null)
   const [sendNotify, setSendNotify] = useState(false)
@@ -135,7 +136,8 @@ export default function AdminToolsPage() {
     setFormData({
       name: '', slug: '', icon: '', description: '', price: '', password: '',
       badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
-      is_active: true, is_coming_soon: false, sort_order: 0
+      is_active: true, is_coming_soon: false, sort_order: 0,
+      trial_enabled: false, trial_flow_url: ''
     })
     setIsModalOpen(true)
   }
@@ -268,6 +270,21 @@ export default function AdminToolsPage() {
                 <label className="block text-sm text-red-400 mb-1 font-semibold">▶️ ลิงก์ YouTube ตัวอย่าง — วิดีโอสาธิตการใช้งาน Tool</label>
                 <input type="text" value={formData.youtube_url || ''} onChange={(e) => setFormData({...formData, youtube_url: e.target.value})} placeholder="https://www.youtube.com/embed/xxxxx" className="w-full bg-slate-800 border border-red-500/50 rounded px-3 py-2 text-white" />
                 <p className="text-xs text-slate-500 mt-1">ใช้ลิงก์ embed เช่น https://www.youtube.com/embed/VIDEO_ID</p>
+              </div>
+
+              <div className="border-t border-slate-700 pt-4 mt-4">
+                <h4 className="text-sm font-semibold text-green-400 mb-3">🎁 ระบบทดลองใช้ฟรี</h4>
+                <div className="flex items-center gap-3 mb-3">
+                  <input type="checkbox" checked={formData.trial_enabled || false} onChange={(e) => setFormData({...formData, trial_enabled: e.target.checked})} className="w-4 h-4 accent-green-500" />
+                  <label className="text-sm text-slate-300">เปิดให้ทดลองใช้ฟรี (ลูกค้าต้อง Login ด้วย Gmail ก่อน)</label>
+                </div>
+                {formData.trial_enabled && (
+                  <div>
+                    <label className="block text-sm text-green-400 mb-1 font-semibold">🔗 ลิงก์เครื่องมือทดลอง (จำกัด 3 คลิป)</label>
+                    <input type="text" value={formData.trial_flow_url || ''} onChange={(e) => setFormData({...formData, trial_flow_url: e.target.value})} placeholder="https://labs.google/fx/tools/flow/shared/tool/..." className="w-full bg-slate-800 border border-green-500/50 rounded px-3 py-2 text-white" />
+                    <p className="text-xs text-slate-500 mt-1">ลิงก์ Tool ที่จำกัดการใช้งาน (เช่น 3 คลิป) สำหรับให้ลูกค้าทดลอง</p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

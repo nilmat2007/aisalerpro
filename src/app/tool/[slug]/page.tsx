@@ -12,16 +12,26 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
 
   let hasAccess = false;
   let loggedIn = !!user;
+  let isTrial = false;
+  let trialFlowUrl = '';
 
   if (user) {
-    const { data: tool } = await supabase.from('tools').select('id').eq('slug', slug).single()
+    const { data: tool } = await supabase.from('tools').select('id, trial_flow_url').eq('slug', slug).single()
     if (tool) {
       const { data: userTool } = await supabase.from('user_tools').select('*').eq('user_id', user.id).eq('tool_id', tool.id).single()
       if (userTool) {
         hasAccess = true;
+      } else {
+        // เช็ค trial
+        const { data: trial } = await supabase.from('user_trials').select('*').eq('user_id', user.id).eq('tool_id', tool.id).eq('status', 'active').maybeSingle()
+        if (trial) {
+          hasAccess = true;
+          isTrial = true;
+          trialFlowUrl = tool.trial_flow_url || '';
+        }
       }
     }
   }
 
-  return <ToolGuideClient slug={slug} hasAccess={hasAccess} loggedIn={loggedIn} />
+  return <ToolGuideClient slug={slug} hasAccess={hasAccess} loggedIn={loggedIn} isTrial={isTrial} trialFlowUrl={trialFlowUrl} />
 }
