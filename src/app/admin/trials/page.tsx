@@ -170,7 +170,7 @@ export default function AdminTrialsPage() {
 
       {/* Table */}
       {filteredTrials.length === 0 ? (
-        <EmptyState message="ไม่พบข้อมูลทดลองใช้" />
+        <EmptyState title="ไม่พบข้อมูลทดลองใช้" />
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">

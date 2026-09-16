@@ -43,7 +43,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const message = body.message || `สวัสดีครับ คุณ${trial.user_name || ''}! คุณได้ทดลองใช้ ${toolName} แล้ว สนใจซื้อเวอร์ชันเต็มไหมครับ?`
 
       const html = buildToolUpdateEmail(toolName, message)
-      await sendEmail(trial.user_email, `🎁 ข้อเสนอพิเศษ - ${toolName}`, html)
+      await sendEmail({ to: trial.user_email, subject: `🎁 ข้อเสนอพิเศษ - ${toolName}`, html })
 
       return NextResponse.json({ success: true, message: `ส่งอีเมลถึง ${trial.user_email} สำเร็จ` })
 
