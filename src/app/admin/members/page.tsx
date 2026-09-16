@@ -27,6 +27,31 @@ export default function MembersPage() {
     }
   }
 
+  const revokeAccess = async (memberId: string, memberName: string, userToolId: string, toolName: string) => {
+    const confirmed = await showConfirm(`ยกเลิกสิทธิ์ "${toolName}" ของ ${memberName}?`)
+    if (!confirmed) return
+
+    showLoading('กำลังยกเลิกสิทธิ์...')
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}/revoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_tool_id: userToolId })
+      })
+      const data = await res.json()
+      closeLoading()
+      if (data.success) {
+        showSuccess('ยกเลิกสิทธิ์สำเร็จ', `ยกเลิกสิทธิ์ "${toolName}" ของ ${memberName} แล้ว`)
+        fetchData()
+      } else {
+        showError('เกิดข้อผิดพลาด', data.error)
+      }
+    } catch {
+      closeLoading()
+      showError('เกิดข้อผิดพลาด', 'ไม่สามารถยกเลิกสิทธิ์ได้')
+    }
+  }
+
   const getNewMembersThisWeek = () => {
     const oneWeekAgo = new Date()
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
@@ -107,8 +132,15 @@ export default function MembersPage() {
                   <td className="p-4">
                     <div className="flex flex-wrap gap-2">
                       {member.user_tools?.map((ut: any) => (
-                        <span key={ut.id} className="bg-slate-800 border border-slate-700 text-xs px-2 py-1 rounded">
+                        <span key={ut.id} className="bg-slate-800 border border-slate-700 text-xs px-2 py-1 rounded flex items-center gap-1 group">
                           {ut.tools?.name || 'All-in-One'}
+                          <button
+                            onClick={() => revokeAccess(member.id, member.display_name || member.email, ut.id, ut.tools?.name || 'All-in-One')}
+                            className="text-slate-600 hover:text-red-400 transition-colors ml-1"
+                            title="ยกเลิกสิทธิ์"
+                          >
+                            ✕
+                          </button>
                         </span>
                       ))}
                       {(!member.user_tools || member.user_tools.length === 0) && (
