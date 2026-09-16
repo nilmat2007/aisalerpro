@@ -9,14 +9,33 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { action } = body
 
     if (action === 'convert') {
-      // ให้สิทธิ์เต็ม → สร้าง user_tools record
+      // ให้สิทธิ์เต็ม → สร้าง user_tools + License Key (นับรายได้)
       const { data: trial } = await supabase
         .from('user_trials')
-        .select('user_id, tool_id, user_email')
+        .select('user_id, tool_id, user_email, user_name')
         .eq('id', id)
         .single()
 
       if (!trial) return NextResponse.json({ error: 'ไม่พบ trial' }, { status: 404 })
+
+      // สร้าง License Key อัตโนมัติ (activated ทันที → นับรายได้)
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      let part1 = '', part2 = ''
+      for (let i = 0; i < 4; i++) {
+        part1 += chars.charAt(Math.floor(Math.random() * chars.length))
+        part2 += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      const keyCode = `PHM-${part1}-${part2}`
+
+      await supabase.from('license_keys').insert({
+        key_code: keyCode,
+        tool_id: trial.tool_id,
+        package_type: 'single',
+        status: 'activated',
+        activated_at: new Date().toISOString(),
+        activated_email: trial.user_email,
+        note: `จาก CRM Trial - ${trial.user_name || trial.user_email}`
+      })
 
       // เพิ่มเข้า user_tools
       await supabase.from('user_tools').upsert({
@@ -27,7 +46,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       // อัปเดต trial status
       await supabase.from('user_trials').update({ status: 'converted' }).eq('id', id)
 
-      return NextResponse.json({ success: true, message: 'ให้สิทธิ์เต็มสำเร็จ' })
+      return NextResponse.json({ success: true, message: `ให้สิทธิ์เต็มสำเร็จ + สร้าง License Key: ${keyCode}` })
 
     } else if (action === 'send_email') {
       // ส่งอีเมลติดตาม
