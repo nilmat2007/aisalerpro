@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { notifyLicenseActivated } from '@/lib/telegram'
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +45,9 @@ export async function POST(request: NextRequest) {
     // The RPC returns a JSONB object with its own success/error fields
     // Pass them through directly
     if (data && typeof data === 'object') {
+      if ((data as any).success) {
+        notifyLicenseActivated(user.email || '', (data as any).tool_name || 'ไม่ระบุ', keyCode)
+      }
       return NextResponse.json(data)
     }
 

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import DashboardClient from './DashboardClient'
+import { notifyNewMember } from '@/lib/telegram'
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,15 @@ export default async function HomePage() {
 
   // Dashboard
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  
+  // แจ้ง Telegram ถ้าเป็นสมาชิกใหม่ (ยังไม่มี profile)
+  if (!profile) {
+    notifyNewMember(
+      user.user_metadata?.full_name || user.user_metadata?.name || 'ไม่ทราบชื่อ',
+      user.email || ''
+    )
+  }
+  
   const { data: userTools } = await supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id)
   const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
   const { data: announcements } = await supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false })

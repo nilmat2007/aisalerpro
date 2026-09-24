@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { notifyOrderApproved } from '@/lib/telegram';
 
 function generateLicenseCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -76,6 +77,10 @@ export async function PATCH(
         .eq('id', id);
 
       if (updateError) throw updateError;
+
+      // แจ้ง Telegram
+      const { data: toolInfo } = await supabase.from('tools').select('name').eq('id', order.tool_id).single()
+      notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ')
 
       return NextResponse.json({ success: true, keyCode });
 

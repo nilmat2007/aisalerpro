@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { sendEmail, buildToolUpdateEmail } from '@/lib/email'
+import { notifyTrialConverted } from '@/lib/telegram'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -45,6 +46,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
       // อัปเดต trial status
       await supabase.from('user_trials').update({ status: 'converted' }).eq('id', id)
+
+      // แจ้ง Telegram
+      const { data: toolInfo } = await supabase.from('tools').select('name').eq('id', trial.tool_id).single()
+      notifyTrialConverted(trial.user_name || '', trial.user_email || '', toolInfo?.name || 'ไม่ระบุ')
 
       return NextResponse.json({ success: true, message: `ให้สิทธิ์เต็มสำเร็จ + สร้าง License Key: ${keyCode}` })
 
