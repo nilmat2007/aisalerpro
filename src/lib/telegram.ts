@@ -1,34 +1,77 @@
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ''
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID || ''
+const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`
 
-export async function sendTelegram(message: string) {
+export async function sendTelegram(message: string, replyMarkup?: any) {
   if (!BOT_TOKEN || !CHAT_ID) return
-  
+
   try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const body: any = {
+      chat_id: CHAT_ID,
+      text: message,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    }
+    if (replyMarkup) {
+      body.reply_markup = JSON.stringify(replyMarkup)
+    }
+    await fetch(`${API_BASE}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: message,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      })
+      body: JSON.stringify(body)
     })
   } catch (err) {
     console.error('Telegram send error:', err)
   }
 }
 
-// Helper functions for each activity type
-export function notifyNewOrder(customerName: string, customerEmail: string, toolName: string, price: string) {
+export async function answerCallback(callbackQueryId: string, text: string) {
+  try {
+    await fetch(`${API_BASE}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackQueryId, text, show_alert: true })
+    })
+  } catch (err) {
+    console.error('Answer callback error:', err)
+  }
+}
+
+export async function editMessage(chatId: string, messageId: number, text: string) {
+  try {
+    await fetch(`${API_BASE}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        text,
+        parse_mode: 'HTML'
+      })
+    })
+  } catch (err) {
+    console.error('Edit message error:', err)
+  }
+}
+
+// ========== Notification functions ==========
+
+export function notifyNewOrder(customerName: string, customerEmail: string, toolName: string, price: string, orderId?: string) {
+  const buttons = orderId ? {
+    inline_keyboard: [[
+      { text: '✅ อนุมัติ', callback_data: `approve_${orderId}` },
+      { text: '❌ ปฏิเสธ', callback_data: `reject_${orderId}` }
+    ]]
+  } : undefined
+
   return sendTelegram(
     `🛒 <b>คำสั่งซื้อใหม่!</b>\n` +
     `👤 ${customerName}\n` +
     `📧 ${customerEmail}\n` +
     `🛠️ ${toolName}\n` +
     `💰 ${price}\n` +
-    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
+    buttons
   )
 }
 
@@ -60,13 +103,20 @@ export function notifyLicenseActivated(email: string, toolName: string, keyCode:
   )
 }
 
-export function notifyTrialStarted(name: string, email: string, toolName: string) {
+export function notifyTrialStarted(name: string, email: string, toolName: string, trialId?: string) {
+  const buttons = trialId ? {
+    inline_keyboard: [[
+      { text: '✅ ให้สิทธิ์เต็ม', callback_data: `convert_${trialId}` }
+    ]]
+  } : undefined
+
   return sendTelegram(
     `🎁 <b>เริ่มทดลองใช้!</b>\n` +
     `🙋 ${name}\n` +
     `📧 ${email}\n` +
     `🛠️ ${toolName}\n` +
-    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
+    buttons
   )
 }
 

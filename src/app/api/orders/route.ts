@@ -37,12 +37,13 @@ export async function POST(request: Request) {
     // ดึงชื่อ tool
     const { data: toolInfo } = await supabase.from('tools').select('name').eq('id', toolId).single()
     
-    // แจ้ง Telegram
+    // แจ้ง Telegram (พร้อมปุ่มอนุมัติ/ปฏิเสธ)
     notifyNewOrder(
       user.user_metadata?.full_name || user.email || 'ไม่ทราบชื่อ',
       user.email || '',
       toolInfo?.name || 'ไม่ระบุ',
-      `${numericAmount} บาท`
+      `${numericAmount} บาท`,
+      data.id
     )
 
     return NextResponse.json(data);

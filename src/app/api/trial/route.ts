@@ -73,11 +73,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // แจ้ง Telegram
+    // แจ้ง Telegram (พร้อมปุ่มให้สิทธิ์เต็ม)
     notifyTrialStarted(
       user.user_metadata?.full_name || user.email || '',
       user.email || '',
-      tool.name
+      tool.name,
+      trial.id
     )
 
     return NextResponse.json({ 
