@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { sendEmail, buildToolUpdateEmail } from '@/lib/email'
+import { sendEmail, buildTrialFollowUpEmail } from '@/lib/email'
 import { notifyTrialConverted } from '@/lib/telegram'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -54,22 +54,45 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ success: true, message: `ให้สิทธิ์เต็มสำเร็จ + สร้าง License Key: ${keyCode}` })
 
     } else if (action === 'send_email') {
-      // ส่งอีเมลติดตาม
+      // ส่งอีเมลติดตามปิดการขาย
       const { data: trial } = await supabase
         .from('user_trials')
-        .select('user_email, user_name, tools(name)')
+        .select('user_email, user_name, tools(name, price, slug)')
         .eq('id', id)
         .single()
 
       if (!trial?.user_email) return NextResponse.json({ error: 'ไม่พบอีเมล' }, { status: 404 })
 
       const toolName = (trial as any).tools?.name || 'เครื่องมือ'
-      const message = body.message || `สวัสดีครับ คุณ${trial.user_name || ''}! คุณได้ทดลองใช้ ${toolName} แล้ว สนใจซื้อเวอร์ชันเต็มไหมครับ?`
+      const toolPrice = (trial as any).tools?.price
+      const toolSlug = (trial as any).tools?.slug
 
-      const html = buildToolUpdateEmail(toolName, message)
-      await sendEmail({ to: trial.user_email, subject: `🎁 ข้อเสนอพิเศษ - ${toolName}`, html })
+      const html = buildTrialFollowUpEmail({
+        customerName: trial.user_name,
+        toolName,
+        toolSlug,
+        toolPrice,
+        customMessage: body.message
+      })
 
-      return NextResponse.json({ success: true, message: `ส่งอีเมลถึง ${trial.user_email} สำเร็จ` })
+      const emailRes = await sendEmail({
+        to: trial.user_email,
+        subject: `🎁 คุณ ${trial.user_name || ''}! ข้อเสนอพิเศษปลดล็อก ${toolName} เวอร์ชันเต็ม (ตลอดชีพ) - PHEEM AI TOOLKIT`,
+        html
+      })
+
+      if (!emailRes.success) {
+        return NextResponse.json({ error: emailRes.error || 'ส่งอีเมลไม่สำเร็จ' }, { status: 500 })
+      }
+
+      try {
+        await supabase
+          .from('user_trials')
+          .update({ followup_sent_at: new Date().toISOString() })
+          .eq('id', id)
+      } catch {}
+
+      return NextResponse.json({ success: true, message: `ส่งอีเมลข้อเสนอพิเศษถึง ${trial.user_email} สำเร็จ` })
 
     } else if (action === 'delete') {
       await supabase.from('user_trials').delete().eq('id', id)

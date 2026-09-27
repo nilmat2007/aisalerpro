@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { sendTelegram, answerCallback, editMessage } from '@/lib/telegram'
+import { sendEmail, buildTrialFollowUpEmail } from '@/lib/email'
+import { processTrialFollowUps } from '@/lib/trial-followup'
 
 export async function POST(request: Request) {
   try {
@@ -31,6 +33,11 @@ export async function POST(request: Request) {
           return handleStats()
         case '/pending':
           return handlePending()
+        case '/trials':
+        case '/trial':
+          return handleTrials()
+        case '/followup':
+          return handleFollowUp()
         case '/genkey':
           return handleGenKey(text)
         case '/help':
@@ -50,13 +57,15 @@ export async function POST(request: Request) {
 // ========== /start ==========
 async function handleStart() {
   await sendTelegram(
-    `🤖 <b>AI SALER PRO Bot</b>\n\n` +
+    `🤖 <b>AI SALER PRO Bot (ระบบจัดการและปิดการขาย)</b>\n\n` +
     `คำสั่งที่ใช้ได้:\n\n` +
-    `📊 /stats — ดูสรุปยอดขาย\n` +
-    `📋 /pending — ดูออเดอร์รออนุมัติ\n` +
-    `🔑 /genkey [slug] — สร้าง License Key\n` +
+    `📊 /stats — ดูสรุปยอดขายและสถิติภาพรวม\n` +
+    `📋 /pending — ดูออเดอร์รออนุมัติ + ปุ่มอนุมัติ\n` +
+    `🎁 /trials — ดูคนกำลังทดลองใช้ + ปุ่มส่งดีลปิดการขาย\n` +
+    `⏰ /followup — ตรวจและส่งดีลปิดการขายให้คนที่ทดลองครบ 24 ชม. ทันที\n` +
+    `🔑 /genkey [slug] — สร้าง License Key ทันที\n` +
     `❓ /help — แสดงคำสั่งทั้งหมด\n\n` +
-    `ตัวอย่าง:\n` +
+    `ตัวอย่างคำสั่งสร้าง Key:\n` +
     `<code>/genkey ugc-batch</code>\n` +
     `<code>/genkey ai-content-factory</code>`
   )
@@ -219,6 +228,77 @@ async function handleGenKey(text: string) {
   return NextResponse.json({ ok: true })
 }
 
+// ========== /trials ==========
+async function handleTrials() {
+  const { data: trials, error } = await supabase
+    .from('user_trials')
+    .select('*, tools(name, price, slug)')
+    .eq('status', 'active')
+    .order('started_at', { ascending: false })
+    .limit(10)
+
+  if (error || !trials || trials.length === 0) {
+    await sendTelegram('🎁 <b>ไม่มีผู้ใช้ที่กำลังทดลองใช้ในขณะนี้</b>')
+    return NextResponse.json({ ok: true })
+  }
+
+  let msg = `🎁 <b>ผู้กำลังทดลองใช้ (${trials.length} คนล่าสุด)</b>\n\n`
+  const buttons: any[] = []
+  const now = Date.now()
+
+  trials.forEach((t: any, index: number) => {
+    const startTime = new Date(t.started_at || t.created_at).getTime()
+    const diffHours = Math.max(0, Math.floor((now - startTime) / (1000 * 60 * 60)))
+    const diffDays = Math.floor(diffHours / 24)
+    const remainHours = diffHours % 24
+    const timeElapsed = diffDays > 0 ? `${diffDays} วัน ${remainHours} ชม.` : `${remainHours} ชม.`
+
+    const isOver24h = diffHours >= 24
+    const badge = isOver24h ? ' 🔥 <b>[ครบ 1 วัน - ควรปิดการขาย!]</b>' : ''
+
+    msg += `━━━━━━━━━━━━━━━\n`
+    msg += `<b>${index + 1}. ${t.user_name || 'ไม่ระบุชื่อ'}</b>${badge}\n`
+    msg += `📧 ${t.user_email}\n`
+    msg += `🛠️ ${t.tools?.name || 'เครื่องมือ'} (฿${t.tools?.price || '0'})\n`
+    msg += `⏳ ทดลองแล้ว: <b>${timeElapsed}</b>\n\n`
+
+    const shortName = (t.user_name || t.user_email.split('@')[0]).substring(0, 15)
+    buttons.push([
+      { text: `✅ ให้สิทธิ์ (${shortName})`, callback_data: `convert_${t.id}` },
+      { text: `📧 ส่งดีล`, callback_data: `deal_${t.id}` }
+    ])
+  })
+
+  msg += `<i>กดปุ่มเพื่อส่งดีลปิดการขาย หรือให้สิทธิ์เต็มทันที</i>`
+
+  await sendTelegram(msg, { inline_keyboard: buttons })
+  return NextResponse.json({ ok: true })
+}
+
+// ========== /followup ==========
+async function handleFollowUp() {
+  await sendTelegram('⏳ กำลังตรวจสอบและประมวลผลระบบปิดการขาย 24 ชม. ...')
+  const result = await processTrialFollowUps()
+
+  if (!result.success) {
+    await sendTelegram('❌ เกิดข้อผิดพลาดในการประมวลผลระบบติดตาม')
+    return NextResponse.json({ ok: true })
+  }
+
+  if (result.totalEligible === 0) {
+    await sendTelegram('⏰ <b>ตรวจเช็คระบบปิดการขาย 24 ชม.:</b>\n\nยังไม่มีผู้ใช้ที่ทดลองครบ 24 ชม. และค้างอยู่ครับ 👍')
+    return NextResponse.json({ ok: true })
+  }
+
+  await sendTelegram(
+    `🎯 <b>ระบบติดตามปิดการขายอัตโนมัติทำงานสำเร็จ!</b>\n\n` +
+    `📊 พบผู้ทดลองครบ 24 ชม.: <b>${result.totalEligible}</b> คน\n` +
+    `📨 ส่งอีเมลข้อเสนอพิเศษสำเร็จ: <b>${result.processedCount}</b> คน\n` +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+  )
+  return NextResponse.json({ ok: true })
+}
+
 // ========== Callback Handlers ==========
 async function handleCallback(query: any) {
   const data = query.data || ''
@@ -238,6 +318,11 @@ async function handleCallback(query: any) {
   if (data.startsWith('convert_')) {
     const trialId = data.replace('convert_', '')
     return handleConvertTrial(query.id, chatId, messageId, trialId)
+  }
+
+  if (data.startsWith('deal_')) {
+    const trialId = data.replace('deal_', '')
+    return handleSendDeal(query.id, chatId, messageId, trialId)
   }
 
   await answerCallback(query.id, 'ไม่รู้จักคำสั่ง')
@@ -399,3 +484,64 @@ async function handleConvertTrial(callbackId: string, chatId: string, messageId:
 
   return NextResponse.json({ ok: true })
 }
+
+async function handleSendDeal(callbackId: string, chatId: string, messageId: number, trialId: string) {
+  const { data: trial, error } = await supabase
+    .from('user_trials')
+    .select('*, tools(name, price, slug)')
+    .eq('id', trialId)
+    .single()
+
+  if (error || !trial) {
+    await answerCallback(callbackId, '❌ ไม่พบข้อมูลการทดลองใช้')
+    return NextResponse.json({ ok: true })
+  }
+
+  const toolName = trial.tools?.name || 'เครื่องมือ AI'
+  const toolSlug = trial.tools?.slug
+  const toolPrice = trial.tools?.price
+
+  const html = buildTrialFollowUpEmail({
+    customerName: trial.user_name,
+    toolName,
+    toolSlug,
+    toolPrice
+  })
+
+  const emailRes = await sendEmail({
+    to: trial.user_email,
+    subject: `🎁 ข้อเสนอพิเศษปลดล็อก ${toolName} เวอร์ชันเต็ม (ตลอดชีพ) - PHEEM AI TOOLKIT`,
+    html
+  })
+
+  if (!emailRes.success) {
+    await answerCallback(callbackId, `❌ ส่งอีเมลไม่สำเร็จ: ${emailRes.error}`)
+    return NextResponse.json({ ok: true })
+  }
+
+  try {
+    await supabase
+      .from('user_trials')
+      .update({ followup_sent_at: new Date().toISOString() })
+      .eq('id', trialId)
+  } catch {}
+
+  await answerCallback(callbackId, '✅ ส่งข้อเสนอพิเศษให้ลูกค้าแล้ว!')
+
+  await sendTelegram(
+    `📨 <b>ส่งข้อเสนอพิเศษปิดการขายแล้ว!</b>\n\n` +
+    `👤 <b>${trial.user_name || 'ลูกค้า'}</b>\n` +
+    `📧 ${trial.user_email}\n` +
+    `🛠️ ${toolName} (฿${toolPrice || 'พิเศษ'})\n` +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}\n\n` +
+    `<i>ลูกค้าได้รับอีเมลพร้อมลิงก์ปลดล็อกและเลขบัญชีเรียบร้อยแล้วครับ</i>`,
+    {
+      inline_keyboard: [
+        [{ text: '✅ ให้สิทธิ์เต็ม (หากลูกค้าโอนแล้ว)', callback_data: `convert_${trialId}` }]
+      ]
+    }
+  )
+
+  return NextResponse.json({ ok: true })
+}
+

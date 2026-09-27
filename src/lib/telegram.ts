@@ -105,14 +105,22 @@ export function notifyLicenseActivated(email: string, toolName: string, keyCode:
 
 export function notifyTrialStarted(name: string, email: string, toolName: string, trialId?: string) {
   const buttons = trialId ? {
-    inline_keyboard: [[
-      { text: '✅ ให้สิทธิ์เต็ม', callback_data: `convert_${trialId}` }
-    ]]
+    inline_keyboard: [
+      [
+        { text: '✅ ให้สิทธิ์เต็ม (ปิดการขาย)', callback_data: `convert_${trialId}` }
+      ],
+      [
+        { text: '📧 ส่งดีลพิเศษเข้าอีเมล', callback_data: `deal_${trialId}` }
+      ],
+      [
+        { text: '💬 เมล์หาลูกค้าโดยตรง', url: `mailto:${email}?subject=${encodeURIComponent(`ข้อเสนอพิเศษปลดล็อก ${toolName} - PHEEM AI TOOLKIT`)}` }
+      ]
+    ]
   } : undefined
 
   return sendTelegram(
-    `🎁 <b>เริ่มทดลองใช้!</b>\n` +
-    `🙋 ${name}\n` +
+    `🎁 <b>เริ่มทดลองใช้ใหม่!</b>\n` +
+    `👤 <b>${name || 'ไม่ระบุชื่อ'}</b>\n` +
     `📧 ${email}\n` +
     `🛠️ ${toolName}\n` +
     `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
@@ -120,12 +128,43 @@ export function notifyTrialStarted(name: string, email: string, toolName: string
   )
 }
 
+export function notifyTrialAutoFollowUp(name: string, email: string, toolName: string, trialId: string, hoursElapsed: number) {
+  const buttons = {
+    inline_keyboard: [
+      [
+        { text: '✅ ให้สิทธิ์เต็ม (ปิดการขาย)', callback_data: `convert_${trialId}` }
+      ],
+      [
+        { text: '📧 ส่งอีเมลดีลพิเศษซ้ำ', callback_data: `deal_${trialId}` }
+      ],
+      [
+        { text: '💬 เมล์หาลูกค้า', url: `mailto:${email}?subject=${encodeURIComponent(`ข้อเสนอพิเศษปลดล็อก ${toolName} - PHEEM AI TOOLKIT`)}` }
+      ]
+    ]
+  }
+
+  const days = Math.floor(hoursElapsed / 24)
+  const hours = Math.floor(hoursElapsed % 24)
+  const timeStr = days > 0 ? `${days} วัน ${hours > 0 ? `${hours} ชม.` : ''}` : `${hours} ชม.`
+
+  return sendTelegram(
+    `⏰ <b>ครบ ${timeStr}! ติดตามปิดการขายอัตโนมัติ</b>\n` +
+    `👤 <b>${name || 'ไม่ระบุชื่อ'}</b>\n` +
+    `📧 ${email}\n` +
+    `🛠️ ${toolName}\n` +
+    `📨 <i>สถานะ: ระบบส่งอีเมลข้อเสนอพิเศษให้ลูกค้าเรียบร้อยแล้ว</i>\n` +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
+    buttons
+  )
+}
+
 export function notifyTrialConverted(name: string, email: string, toolName: string) {
   return sendTelegram(
-    `💰 <b>Trial → ซื้อจริง!</b>\n` +
+    `💰 <b>Trial → ซื้อจริง! (ปิดการขายสำเร็จ)</b>\n` +
     `🙋 ${name}\n` +
     `📧 ${email}\n` +
     `🛠️ ${toolName}\n` +
     `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
   )
 }
+
