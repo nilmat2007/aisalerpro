@@ -10,7 +10,8 @@ export default function AdminSettingsPage() {
     description: '',
     logo_url: '',
     og_image_url: '',
-    favicon_url: ''
+    favicon_url: '',
+    line_oa_url: ''
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -124,6 +125,18 @@ export default function AdminSettingsPage() {
           <div>
             <label className="block text-sm text-slate-400 mb-1">คำอธิบายเว็บไซต์ (Description)</label>
             <textarea value={settings.description} onChange={e => setSettings({...settings, description: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white h-24" />
+          </div>
+
+          <div>
+            <label className="block text-sm text-green-400 font-medium mb-1">📲 ลิงก์ LINE Official Account (สำหรับดึงคนจาก Facebook แชท)</label>
+            <input 
+              type="url" 
+              placeholder="https://lin.ee/xxxxx หรือ https://line.me/R/ti/p/@xxxxx" 
+              value={settings.line_oa_url || ''} 
+              onChange={e => setSettings({...settings, line_oa_url: e.target.value})} 
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white focus:border-green-500 focus:outline-none" 
+            />
+            <p className="text-xs text-slate-500 mt-1">เมื่อตั้งค่าลิงก์นี้ บอท Facebook จะส่งปุ่มชวนลูกค้าแอด LINE เพื่อรับสิทธิ์โปรโมชั่นและสร้างฐานบรอดแคสต์ฟรี</p>
           </div>
 
           <div>

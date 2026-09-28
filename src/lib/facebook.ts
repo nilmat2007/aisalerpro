@@ -8,6 +8,7 @@ export interface FBContact {
   profile_pic?: string
   first_message_at?: string
   last_message_at?: string
+  optin_token?: string
 }
 
 /**
@@ -75,6 +76,73 @@ export async function sendFBMessageWithButtons(
           }
         },
         messaging_type: 'UPDATE'
+      })
+    })
+    const data = await res.json()
+    if (data.error) return { success: false, error: data.error.message }
+    return { success: true, messageId: data.message_id }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Send an Opt-In Card (Recurring Notifications / One-Time Notification)
+ * Lets users give explicit permission to receive updates outside the 24-hour window
+ */
+export async function sendNotificationOptIn(
+  recipientPsid: string,
+  options?: {
+    title?: string
+    imageUrl?: string
+    frequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY'
+    payload?: string
+  }
+) {
+  if (!FB_PAGE_TOKEN) return { success: false, error: 'Token not set' }
+
+  try {
+    const res = await fetch(`${FB_API}/me/messages?access_token=${FB_PAGE_TOKEN}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipient: { id: recipientPsid },
+        message: {
+          attachment: {
+            type: 'template',
+            payload: {
+              template_type: 'notification_messages',
+              notification_messages_frequency: options?.frequency || 'WEEKLY',
+              title: options?.title || 'รับข่าวสารโปรโมชั่นและอัปเดต AI',
+              image_url: options?.imageUrl || 'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/site_og_1788176699543.jpg',
+              payload: options?.payload || 'OPTIN_PROMO_NEWS'
+            }
+          }
+        }
+      })
+    })
+    const data = await res.json()
+    if (data.error) return { success: false, error: data.error.message }
+    return { success: true, messageId: data.message_id }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+}
+
+/**
+ * Send message using a Notification Messages Token (Recurring Notifications)
+ * Allowed by Meta outside the 24-hour window!
+ */
+export async function sendFBMessageUsingToken(token: string, text: string) {
+  if (!FB_PAGE_TOKEN) return { success: false, error: 'Token not set' }
+
+  try {
+    const res = await fetch(`${FB_API}/me/messages?access_token=${FB_PAGE_TOKEN}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipient: { notification_messages_token: token },
+        message: { text }
       })
     })
     const data = await res.json()
@@ -159,39 +227,66 @@ export async function getFBUserProfile(psid: string) {
 }
 
 /**
- * Broadcast a message to multiple PSIDs
- * Note: Only reaches users who messaged within the last 24 hours (Facebook policy)
+ * Smart Broadcast:
+ * - Prioritizes 24h active contacts (safe & 100% deliverable)
+ * - Sends via notification tokens if available
+ * - Gracefully skips contacts outside window without bombing Meta API
  */
-export async function broadcastFBMessage(
-  psids: string[],
+export async function broadcastFBSmart(
+  contacts: Array<{ psid: string; last_message_at?: string; optin_token?: string }>,
   text: string,
   buttons?: Array<{ title: string; url?: string; payload?: string }>
-): Promise<{ total: number; sent: number; failed: number; errors: string[] }> {
+): Promise<{
+  total: number
+  sent: number
+  skippedOutside24h: number
+  failed: number
+  errors: string[]
+}> {
   let sent = 0
   let failed = 0
+  let skippedOutside24h = 0
   const errors: string[] = []
 
-  for (const psid of psids) {
-    let result
-    if (buttons && buttons.length > 0) {
-      result = await sendFBMessageWithButtons(psid, text, buttons)
-    } else {
-      result = await sendFBMessage(psid, text)
-    }
+  const now = Date.now()
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
-    if (result.success) {
-      sent++
-    } else {
-      failed++
-      // Only log non-551 errors (551 = outside 24h window, expected)
-      if (!result.error?.includes('551') && !result.error?.includes('ไม่สามารถติดต่อ')) {
-        errors.push(`${psid}: ${result.error}`)
+  for (const c of contacts) {
+    const lastMsgTime = c.last_message_at ? new Date(c.last_message_at).getTime() : 0
+    const isWithin24h = (now - lastMsgTime) < ONE_DAY_MS
+
+    if (c.optin_token) {
+      // 1. Try sending via Opt-in token (allowed outside 24h)
+      const res = await sendFBMessageUsingToken(c.optin_token, text)
+      if (res.success) {
+        sent++
+      } else {
+        failed++
+        errors.push(`${c.psid} (token): ${res.error}`)
       }
+    } else if (isWithin24h) {
+      // 2. Send via 24h UPDATE message
+      let res
+      if (buttons && buttons.length > 0) {
+        res = await sendFBMessageWithButtons(c.psid, text, buttons)
+      } else {
+        res = await sendFBMessage(c.psid, text)
+      }
+
+      if (res.success) {
+        sent++
+      } else {
+        failed++
+        errors.push(`${c.psid}: ${res.error}`)
+      }
+    } else {
+      // 3. Outside 24h and no token — skip safely to protect page standing
+      skippedOutside24h++
     }
 
-    // Rate limit: 200 calls per hour per page
-    await new Promise(r => setTimeout(r, 100))
+    // Rate limit
+    await new Promise(r => setTimeout(r, 80))
   }
 
-  return { total: psids.length, sent, failed, errors }
+  return { total: contacts.length, sent, skippedOutside24h, failed, errors }
 }

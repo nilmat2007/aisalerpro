@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { sendTelegram, answerCallback, editMessage } from '@/lib/telegram'
 import { sendEmail, buildTrialFollowUpEmail } from '@/lib/email'
 import { processTrialFollowUps } from '@/lib/trial-followup'
-import { broadcastFBMessage } from '@/lib/facebook'
+import { broadcastFBSmart } from '@/lib/facebook'
 
 export async function POST(request: Request) {
   try {
@@ -570,17 +570,27 @@ async function handleBroadcast(text: string) {
   // Get contacts
   const { data: contacts } = await supabase
     .from('fb_contacts')
-    .select('psid')
+    .select('psid, last_message_at')
 
   if (!contacts || contacts.length === 0) {
     await sendTelegram('📢 ยังไม่มีรายชื่อลูกค้า Facebook\nรอให้ลูกค้าทักมาก่อนครับ')
     return NextResponse.json({ ok: true })
   }
 
-  await sendTelegram(`📢 กำลังส่ง broadcast ไปยังลูกค้า ${contacts.length} คน...`)
+  // Fetch optin tokens
+  let optinMap = new Map<string, string>()
+  try {
+    const { data: optins } = await supabase.from('fb_optins').select('psid, token')
+    optins?.forEach((o: any) => optinMap.set(o.psid, o.token))
+  } catch {}
 
-  const psids = contacts.map(c => c.psid)
-  const result = await broadcastFBMessage(psids, message, [
+  const preparedContacts = contacts.map(c => ({
+    psid: c.psid,
+    last_message_at: c.last_message_at,
+    optin_token: optinMap.get(c.psid)
+  }))
+
+  const result = await broadcastFBSmart(preparedContacts, message, [
     { title: '🌐 เข้าเว็บ', url: 'https://aisalerpro.vercel.app' }
   ])
 
@@ -588,7 +598,7 @@ async function handleBroadcast(text: string) {
   try {
     await supabase.from('fb_broadcasts').insert({
       message,
-      type: 'text',
+      type: 'smart_broadcast',
       total_contacts: result.total,
       sent_count: result.sent,
       failed_count: result.failed,
@@ -598,9 +608,10 @@ async function handleBroadcast(text: string) {
 
   await sendTelegram(
     `📢 <b>บรอดแคสต์ Facebook สำเร็จ!</b>\n\n` +
-    `📨 ส่งถึง: <b>${result.sent}/${result.total}</b> คน\n` +
+    `📨 ส่งถึงแชทสำเร็จ: <b>${result.sent}</b> คน\n` +
+    `🛡️ ละเว้นนอกรอบ 24 ชม.: ${result.skippedOutside24h} คน\n` +
     `❌ ล้มเหลว: ${result.failed} คน\n` +
-    `💬 ข้อความ: ${message.substring(0, 200)}\n` +
+    `💬 ข้อความ: ${message.substring(0, 150)}\n` +
     `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
   )
 
@@ -613,7 +624,7 @@ async function handleContacts() {
     .from('fb_contacts')
     .select('*')
     .order('last_message_at', { ascending: false })
-    .limit(15)
+    .limit(10)
 
   if (!contacts || contacts.length === 0) {
     await sendTelegram('👥 <b>ยังไม่มีรายชื่อลูกค้า Facebook</b>\n\nรอให้ลูกค้าทักข้อความมาทางเพจก่อนครับ')
@@ -624,17 +635,26 @@ async function handleContacts() {
     .from('fb_contacts')
     .select('*', { count: 'exact', head: true })
 
-  let msg = `👥 <b>รายชื่อลูกค้า Facebook (${totalCount || contacts.length} คน)</b>\n\n`
+  const now = new Date()
+  const h24ago = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+  const { count: reachableCount } = await supabase
+    .from('fb_contacts')
+    .select('*', { count: 'exact', head: true })
+    .gte('last_message_at', h24ago)
+
+  let msg = `👥 <b>รายชื่อลูกค้า Facebook</b>\n`
+  msg += `📊 สะสมทั้งหมด: <b>${totalCount || contacts.length}</b> คน\n`
+  msg += `🟢 ส่งฟรีได้ทันที (ใน 24 ชม.): <b>${reachableCount || 0}</b> คน\n\n`
+  msg += `<b>ลูกค้าล่าสุด:</b>\n`
 
   contacts.forEach((c: any, i: number) => {
     const lastMsg = c.last_message_at
       ? new Date(c.last_message_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
       : 'ไม่ทราบ'
-    msg += `${i + 1}. <b>${c.name || 'ไม่ทราบชื่อ'}</b>\n`
-    msg += `   💬 ข้อความล่าสุด: ${lastMsg}\n\n`
+    msg += `${i + 1}. <b>${c.name || 'ไม่ทราบชื่อ'}</b> (${lastMsg})\n`
   })
 
-  msg += `<i>พิมพ์ /broadcast [ข้อความ] เพื่อส่งข้อความถึงทุกคน</i>`
+  msg += `\n<i>พิมพ์ /broadcast [ข้อความ] เพื่อส่งหาลูกค้าในรอบ 24 ชม.</i>`
 
   await sendTelegram(msg)
   return NextResponse.json({ ok: true })
