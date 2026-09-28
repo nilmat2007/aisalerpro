@@ -17,6 +17,7 @@ export default function AdminSidebar() {
     { name: 'สมาชิก', href: '/admin/members', icon: '👥' },
     { name: 'ประกาศ', href: '/admin/announcements', icon: '📢' },
     { name: 'CRM ทดลองใช้', href: '/admin/trials', icon: '🎯' },
+    { name: 'Facebook Broadcast', href: '/admin/facebook', icon: '💬' },
     { name: 'ตั้งค่าเว็บไซต์', href: '/admin/settings', icon: '⚙️' },
   ]
 
