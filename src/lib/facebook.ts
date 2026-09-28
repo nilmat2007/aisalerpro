@@ -12,6 +12,7 @@ export interface FBContact {
 
 /**
  * Send a text message to a specific user via Facebook Messenger
+ * Uses UPDATE type — works within 24-hour window of last user interaction
  */
 export async function sendFBMessage(recipientPsid: string, text: string) {
   if (!FB_PAGE_TOKEN) {
@@ -26,8 +27,7 @@ export async function sendFBMessage(recipientPsid: string, text: string) {
       body: JSON.stringify({
         recipient: { id: recipientPsid },
         message: { text },
-        messaging_type: 'MESSAGE_TAG',
-        tag: 'post_purchase_update'
+        messaging_type: 'UPDATE'
       })
     })
     const data = await res.json()
@@ -74,8 +74,7 @@ export async function sendFBMessageWithButtons(
             }
           }
         },
-        messaging_type: 'MESSAGE_TAG',
-        tag: 'post_purchase_update'
+        messaging_type: 'UPDATE'
       })
     })
     const data = await res.json()
@@ -127,8 +126,7 @@ export async function sendFBCard(
             }
           }
         },
-        messaging_type: 'MESSAGE_TAG',
-        tag: 'post_purchase_update'
+        messaging_type: 'UPDATE'
       })
     })
     const data = await res.json()
@@ -162,6 +160,7 @@ export async function getFBUserProfile(psid: string) {
 
 /**
  * Broadcast a message to multiple PSIDs
+ * Note: Only reaches users who messaged within the last 24 hours (Facebook policy)
  */
 export async function broadcastFBMessage(
   psids: string[],
@@ -184,7 +183,10 @@ export async function broadcastFBMessage(
       sent++
     } else {
       failed++
-      errors.push(`${psid}: ${result.error}`)
+      // Only log non-551 errors (551 = outside 24h window, expected)
+      if (!result.error?.includes('551') && !result.error?.includes('ไม่สามารถติดต่อ')) {
+        errors.push(`${psid}: ${result.error}`)
+      }
     }
 
     // Rate limit: 200 calls per hour per page

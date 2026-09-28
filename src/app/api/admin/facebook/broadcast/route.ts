@@ -111,9 +111,15 @@ export async function GET() {
       .order('sent_at', { ascending: false })
       .limit(10)
 
+    // Count reachable contacts (messaged within last 24 hours)
+    const now = new Date()
+    const h24ago = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+    const reachable = (contacts || []).filter(c => c.last_message_at && c.last_message_at >= h24ago).length
+
     return NextResponse.json({
       contacts: contacts || [],
       totalContacts: contacts?.length || 0,
+      reachableContacts: reachable,
       recentBroadcasts: broadcasts || []
     })
   } catch (err: any) {

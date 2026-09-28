@@ -53,6 +53,7 @@ export default function FacebookBroadcastClient() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
   const [totalContacts, setTotalContacts] = useState(0)
+  const [reachable, setReachable] = useState(0)
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -69,6 +70,7 @@ export default function FacebookBroadcastClient() {
       const data = await res.json()
       setContacts(data.contacts || [])
       setTotalContacts(data.totalContacts || 0)
+      setReachable(data.reachableContacts || 0)
       setBroadcasts(data.recentBroadcasts || [])
     } catch (err) {
       console.error(err)
@@ -153,11 +155,16 @@ export default function FacebookBroadcastClient() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-700/30 rounded-xl p-5">
           <div className="text-blue-400 text-sm">👥 ลูกค้าทั้งหมด</div>
           <div className="text-3xl font-bold text-white mt-1">{totalContacts.toLocaleString()}</div>
           <div className="text-blue-400/60 text-xs mt-1">จาก Facebook Messenger</div>
+        </div>
+        <div className="bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-700/30 rounded-xl p-5">
+          <div className="text-green-400 text-sm">✅ ส่งถึงได้ (24 ชม.)</div>
+          <div className="text-3xl font-bold text-white mt-1">{reachable.toLocaleString()}</div>
+          <div className="text-green-400/60 text-xs mt-1">ทักข้อความภายใน 24 ชม.</div>
         </div>
         <div className="bg-gradient-to-br from-cyan-600/20 to-cyan-800/20 border border-cyan-700/30 rounded-xl p-5">
           <div className="text-cyan-400 text-sm">📨 บรอดแคสต์ทั้งหมด</div>
@@ -213,6 +220,9 @@ export default function FacebookBroadcastClient() {
               <div className="flex items-center justify-between mt-4">
                 <span className="text-slate-400 text-sm">
                   📨 จะส่งถึง <span className="text-cyan-400 font-bold">{totalContacts.toLocaleString()}</span> คน
+                  {reachable < totalContacts && (
+                    <span className="text-yellow-400 ml-2">(ส่งได้จริง ~{reachable} คนที่ทักใน 24 ชม.)</span>
+                  )}
                 </span>
                 <button
                   onClick={handleBroadcast}
