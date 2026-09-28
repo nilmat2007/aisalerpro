@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { sendTelegram, answerCallback, editMessage } from '@/lib/telegram'
 import { sendEmail, buildTrialFollowUpEmail } from '@/lib/email'
 import { processTrialFollowUps } from '@/lib/trial-followup'
+import { broadcastFBMessage } from '@/lib/facebook'
 
 export async function POST(request: Request) {
   try {
@@ -40,6 +41,10 @@ export async function POST(request: Request) {
           return handleFollowUp()
         case '/genkey':
           return handleGenKey(text)
+        case '/broadcast':
+          return handleBroadcast(text)
+        case '/contacts':
+          return handleContacts()
         case '/help':
           return handleStart()
         default:
@@ -62,12 +67,14 @@ async function handleStart() {
     `📊 /stats — ดูสรุปยอดขายและสถิติภาพรวม\n` +
     `📋 /pending — ดูออเดอร์รออนุมัติ + ปุ่มอนุมัติ\n` +
     `🎁 /trials — ดูคนกำลังทดลองใช้ + ปุ่มส่งดีลปิดการขาย\n` +
-    `⏰ /followup — ตรวจและส่งดีลปิดการขายให้คนที่ทดลองครบ 24 ชม. ทันที\n` +
+    `⏰ /followup — ส่งดีลปิดการขายให้คนทดลองครบ 24 ชม.\n` +
     `🔑 /genkey [slug] — สร้าง License Key ทันที\n` +
+    `📢 /broadcast [ข้อความ] — บรอดแคสต์ Facebook\n` +
+    `👥 /contacts — ดูรายชื่อลูกค้า Facebook\n` +
     `❓ /help — แสดงคำสั่งทั้งหมด\n\n` +
-    `ตัวอย่างคำสั่งสร้าง Key:\n` +
+    `ตัวอย่าง:\n` +
     `<code>/genkey ugc-batch</code>\n` +
-    `<code>/genkey ai-content-factory</code>`
+    `<code>/broadcast 🔥 โปรพิเศษวันนี้!</code>`
   )
   return NextResponse.json({ ok: true })
 }
@@ -545,3 +552,90 @@ async function handleSendDeal(callbackId: string, chatId: string, messageId: num
   return NextResponse.json({ ok: true })
 }
 
+// ========== /broadcast [message] ==========
+async function handleBroadcast(text: string) {
+  const message = text.replace(/^\/broadcast\s*/i, '').trim()
+
+  if (!message) {
+    await sendTelegram(
+      `📢 <b>บรอดแคสต์ Facebook Messenger</b>\n\n` +
+      `วิธีใช้: <code>/broadcast [ข้อความ]</code>\n\n` +
+      `ตัวอย่าง:\n` +
+      `<code>/broadcast 🔥 โปรพิเศษวันนี้! ลดราคา 50% ทุกเครื่องมือ</code>\n` +
+      `<code>/broadcast สวัสดีครับ! เครื่องมือใหม่พร้อมใช้แล้ว</code>`
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  // Get contacts
+  const { data: contacts } = await supabase
+    .from('fb_contacts')
+    .select('psid')
+
+  if (!contacts || contacts.length === 0) {
+    await sendTelegram('📢 ยังไม่มีรายชื่อลูกค้า Facebook\nรอให้ลูกค้าทักมาก่อนครับ')
+    return NextResponse.json({ ok: true })
+  }
+
+  await sendTelegram(`📢 กำลังส่ง broadcast ไปยังลูกค้า ${contacts.length} คน...`)
+
+  const psids = contacts.map(c => c.psid)
+  const result = await broadcastFBMessage(psids, message, [
+    { title: '🌐 เข้าเว็บ', url: 'https://aisalerpro.vercel.app' }
+  ])
+
+  // Log broadcast
+  try {
+    await supabase.from('fb_broadcasts').insert({
+      message,
+      type: 'text',
+      total_contacts: result.total,
+      sent_count: result.sent,
+      failed_count: result.failed,
+      sent_at: new Date().toISOString()
+    })
+  } catch {}
+
+  await sendTelegram(
+    `📢 <b>บรอดแคสต์ Facebook สำเร็จ!</b>\n\n` +
+    `📨 ส่งถึง: <b>${result.sent}/${result.total}</b> คน\n` +
+    `❌ ล้มเหลว: ${result.failed} คน\n` +
+    `💬 ข้อความ: ${message.substring(0, 200)}\n` +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+  )
+
+  return NextResponse.json({ ok: true })
+}
+
+// ========== /contacts ==========
+async function handleContacts() {
+  const { data: contacts } = await supabase
+    .from('fb_contacts')
+    .select('*')
+    .order('last_message_at', { ascending: false })
+    .limit(15)
+
+  if (!contacts || contacts.length === 0) {
+    await sendTelegram('👥 <b>ยังไม่มีรายชื่อลูกค้า Facebook</b>\n\nรอให้ลูกค้าทักข้อความมาทางเพจก่อนครับ')
+    return NextResponse.json({ ok: true })
+  }
+
+  const { count: totalCount } = await supabase
+    .from('fb_contacts')
+    .select('*', { count: 'exact', head: true })
+
+  let msg = `👥 <b>รายชื่อลูกค้า Facebook (${totalCount || contacts.length} คน)</b>\n\n`
+
+  contacts.forEach((c: any, i: number) => {
+    const lastMsg = c.last_message_at
+      ? new Date(c.last_message_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
+      : 'ไม่ทราบ'
+    msg += `${i + 1}. <b>${c.name || 'ไม่ทราบชื่อ'}</b>\n`
+    msg += `   💬 ข้อความล่าสุด: ${lastMsg}\n\n`
+  })
+
+  msg += `<i>พิมพ์ /broadcast [ข้อความ] เพื่อส่งข้อความถึงทุกคน</i>`
+
+  await sendTelegram(msg)
+  return NextResponse.json({ ok: true })
+}
