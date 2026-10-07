@@ -59,7 +59,7 @@ export default function AdminSidebar() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <ThemeToggle size="sm" />
+          <ThemeToggle variant="icon" />
           <button
             onClick={() => setIsOpen(true)}
             className="p-2 rounded-lg bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors focus:outline-none"
@@ -93,7 +93,7 @@ export default function AdminSidebar() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <ThemeToggle size="sm" />
+                <ThemeToggle variant="icon" />
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -153,7 +153,7 @@ export default function AdminSidebar() {
               </div>
             </div>
           </div>
-          <ThemeToggle size="sm" />
+          <ThemeToggle variant="icon" />
         </div>
 
         <nav className="flex-1 space-y-1.5 overflow-y-auto pr-1">

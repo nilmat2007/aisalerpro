@@ -18,34 +18,49 @@ export default async function HomePage() {
     
     return (
       <div className="min-h-screen text-[var(--text-primary)] font-sans flex flex-col items-center transition-colors duration-200">
-        <header className="w-full text-center pt-8 md:pt-14 pb-12 px-4 relative overflow-hidden flex flex-col items-center">
-          
-          {/* Header Card matching pheembot extension screenshot */}
-          <div className="puppap-card p-4 sm:p-5 max-w-xl w-full mb-8 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5 text-left">
+        
+        {/* Top Navigation Bar สไตล์โมเดิร์นมาตรฐานสากล */}
+        <header className="w-full border-b border-[var(--border-light)] bg-[var(--bg-primary)]/80 backdrop-blur-md sticky top-0 z-50">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            {/* ซ้าย: โลโก้ + ชื่อแบรนด์ */}
+            <Link href="/" className="flex items-center gap-3 group">
               <img 
                 src={settings?.logo_url || "/images/logo-puppap-ai.png"} 
                 alt="PUP PAP AI Logo" 
-                className="w-12 h-12 rounded-2xl object-cover border-[1.5px] border-[var(--border)] bg-white shadow-sm shrink-0"
+                className="w-9 h-9 rounded-xl object-cover border-[1.5px] border-[var(--border)] bg-white shadow-sm group-hover:scale-105 transition-transform shrink-0"
               />
-              <div>
-                <div className="text-xl font-black text-[var(--text-primary)] tracking-tight">PUP PAP AI</div>
-                <div className="text-xs font-semibold text-[var(--accent)] flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse"></span>
-                  V1.2.9 · ระบบพร้อมทำงาน 0 Credit
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2.5 shrink-0">
-              <span className="puppap-badge-pro">
-                PRO · LIFETIME
+              <span className="text-lg md:text-xl font-black text-[var(--text-primary)] tracking-tight">
+                {settings?.site_name || 'PUP PAP AI'}
               </span>
-              <ThemeToggle size="md" />
+            </Link>
+
+            {/* ขวา: ตัวเลือกโหมดกลางวัน/กลางคืนมาตรฐาน + ปุ่มเข้าสู่ระบบ */}
+            <div className="flex items-center gap-3">
+              <ThemeToggle variant="segmented" size="sm" />
+              <Link 
+                href="/login" 
+                className="puppap-btn-primary px-4 py-1.5 rounded-full text-xs md:text-sm shadow-sm"
+              >
+                เข้าสู่ระบบ
+              </Link>
             </div>
           </div>
+        </header>
+
+        {/* Hero Section กลางหน้า คลีน สบายตา */}
+        <section className="w-full text-center pt-10 md:pt-16 pb-10 px-4 relative overflow-hidden flex flex-col items-center">
           
-          <h1 className="text-3xl md:text-5xl font-extrabold mb-3 tracking-tight text-center">
+          {/* มาสค็อตหุ่นยนต์ 3D คุณภาพสูง */}
+          <div className="relative group mb-6">
+            <img 
+              src={settings?.logo_url || "/images/logo-puppap-ai.png"} 
+              alt="PUP PAP AI Mascot" 
+              className="w-28 h-28 md:w-36 md:h-36 rounded-3xl object-cover border-[2px] border-[var(--border)] bg-white shadow-xl group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+          
+          {/* หัวข้อและสโลแกน */}
+          <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight text-center">
             <span className="text-[var(--text-primary)]">
               {settings?.site_name || 'PUP PAP AI'}
             </span>
@@ -59,8 +74,8 @@ export default async function HomePage() {
             {settings?.description || 'คิดปุ๊บ คลิปปั๊บ สร้างและโพสต์วิดีโอ AI อัตโนมัติ ปักตะกร้าลง TikTok, Facebook Reels, และ Shopee Video'}
           </p>
 
-          {/* Platform Pills matching pheembot */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 mb-8">
+          {/* Platform Pills */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
             <span className="puppap-tab active">
               🎵 TikTok
             </span>
@@ -78,8 +93,9 @@ export default async function HomePage() {
           <Link href="/login" className="puppap-btn-primary px-8 py-3.5 rounded-full text-base md:text-lg shadow-md hover:scale-105 active:scale-95 text-center flex items-center gap-2">
             <span>⚡</span> เข้าสู่ระบบเพื่อใช้งาน
           </Link>
-        </header>
+        </section>
 
+        {/* Tools Section */}
         <main className="max-w-6xl w-full mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold text-center mb-10 flex items-center justify-center gap-2.5 text-[var(--text-primary)]">
             <span className="text-[var(--accent)]">❖</span> เครื่องมือทั้งหมด
