@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import DashboardClient from './DashboardClient'
 import { notifyNewMember } from '@/lib/telegram'
+import { formatToolUpdateDate } from '@/lib/date-utils'
 
 export const dynamic = 'force-dynamic';
 
@@ -47,8 +48,9 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allTools?.map((tool: any) => {
               const posterImage = tool.poster_url || null;
+              const updateInfo = formatToolUpdateDate(tool.updated_at);
               return (
-                <div key={tool.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 relative group overflow-hidden flex flex-col h-full">
+                <div key={tool.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 relative group overflow-hidden flex flex-col h-full hover:border-cyan-500/40 transition-colors">
                   {posterImage ? (
                     <div className="w-full h-48 mb-4 rounded-xl overflow-hidden relative">
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent z-10"></div>
@@ -59,6 +61,24 @@ export default async function HomePage() {
                       {tool.icon || '✨'}
                     </div>
                   )}
+
+                  <div className="flex items-center gap-2 mb-2">
+                    {tool.version && (
+                      <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[11px] rounded-md font-semibold">
+                        {tool.version}
+                      </span>
+                    )}
+                    {updateInfo && (
+                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
+                        updateInfo.isRecent
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                          : 'bg-slate-800/80 border-slate-700 text-slate-400'
+                      }`}>
+                        {updateInfo.text}
+                      </span>
+                    )}
+                  </div>
+
                   <h3 className="text-xl font-bold text-white mb-2">{tool.name}</h3>
                   <p className="text-slate-400 text-sm mb-6 flex-grow">{tool.description}</p>
                   

@@ -24,6 +24,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     
     // Only include editable fields (exclude id, created_at, etc.)
     const { id, created_at, ...updateData } = body;
+    updateData.updated_at = new Date().toISOString();
     
     const { data, error } = await supabase
       .from('tools')

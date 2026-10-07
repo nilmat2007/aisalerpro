@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { showSuccess, showError, showConfirmDelete, showLoading, closeLoading } from '@/lib/swal'
 import { LoadingSpinner } from '@/components/AdminUI'
+import { formatToolUpdateDate } from '@/lib/date-utils'
 
 export default function AdminToolsPage() {
   const [tools, setTools] = useState<any[]>([])
@@ -13,6 +14,7 @@ export default function AdminToolsPage() {
   
   const [formData, setFormData] = useState({
     name: '', slug: '', icon: '', description: '', price: '', password: '',
+    version: 'v1.0',
     badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
     is_active: true, is_coming_soon: false, sort_order: 0,
     trial_enabled: false, trial_flow_url: ''
@@ -135,6 +137,7 @@ export default function AdminToolsPage() {
     setEditingTool(null)
     setFormData({
       name: '', slug: '', icon: '', description: '', price: '', password: '',
+      version: 'v1.0',
       badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
       is_active: true, is_coming_soon: false, sort_order: 0,
       trial_enabled: false, trial_flow_url: ''
@@ -168,32 +171,44 @@ export default function AdminToolsPage() {
               <th className="p-4 font-medium">ชื่อ</th>
               <th className="p-4 font-medium">ราคา</th>
               <th className="p-4 font-medium">รหัสผ่าน</th>
+              <th className="p-4 font-medium">เวอร์ชัน / อัปเดตล่าสุด</th>
               <th className="p-4 font-medium">สถานะ</th>
               <th className="p-4 font-medium text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
-            {tools.map(tool => (
-              <tr key={tool.id} className="hover:bg-slate-800/20">
-                <td className="p-4">
-                  {tool.poster_url ? <img src={tool.poster_url} alt={tool.name} className="w-16 h-10 object-cover rounded" /> : <div className="w-16 h-10 bg-slate-800 rounded"></div>}
-                </td>
-                <td className="p-4 text-white font-medium">{tool.name}</td>
-                <td className="p-4 text-slate-300">{tool.price}</td>
-                <td className="p-4 text-slate-300">{tool.password || '-'}</td>
-                <td className="p-4">
-                  {tool.is_active ? <span className="text-green-400 text-sm">ใช้งานได้</span> : <span className="text-red-400 text-sm">ปิดใช้งาน</span>}
-                  {tool.is_coming_soon && <span className="ml-2 text-purple-400 text-sm">เร็วๆ นี้</span>}
-                </td>
-                <td className="p-4 text-right space-x-3">
-                  <button onClick={() => openEditModal(tool)} className="text-cyan-400 hover:text-cyan-300">แก้ไข</button>
-                  <button onClick={() => handleDelete(tool)} className="text-red-400 hover:text-red-300">ลบ</button>
-                </td>
-              </tr>
-            ))}
+            {tools.map(tool => {
+              const updateInfo = formatToolUpdateDate(tool.updated_at)
+              return (
+                <tr key={tool.id} className="hover:bg-slate-800/20">
+                  <td className="p-4">
+                    {tool.poster_url ? <img src={tool.poster_url} alt={tool.name} className="w-16 h-10 object-cover rounded" /> : <div className="w-16 h-10 bg-slate-800 rounded"></div>}
+                  </td>
+                  <td className="p-4 text-white font-medium">{tool.name}</td>
+                  <td className="p-4 text-slate-300">{tool.price}</td>
+                  <td className="p-4 text-slate-300">{tool.password || '-'}</td>
+                  <td className="p-4">
+                    <span className="inline-block px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono text-xs border border-slate-700">
+                      {tool.version || 'v1.0'}
+                    </span>
+                    <div className="text-slate-400 text-xs mt-1">
+                      {updateInfo?.text || '-'}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    {tool.is_active ? <span className="text-green-400 text-sm">ใช้งานได้</span> : <span className="text-red-400 text-sm">ปิดใช้งาน</span>}
+                    {tool.is_coming_soon && <span className="ml-2 text-purple-400 text-sm">เร็วๆ นี้</span>}
+                  </td>
+                  <td className="p-4 text-right space-x-3">
+                    <button onClick={() => openEditModal(tool)} className="text-cyan-400 hover:text-cyan-300">แก้ไข</button>
+                    <button onClick={() => handleDelete(tool)} className="text-red-400 hover:text-red-300">ลบ</button>
+                  </td>
+                </tr>
+              )
+            })}
             {tools.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-400">ยังไม่มีเครื่องมือในระบบ</td>
+                <td colSpan={7} className="p-8 text-center text-slate-400">ยังไม่มีเครื่องมือในระบบ</td>
               </tr>
             )}
           </tbody>
@@ -220,7 +235,7 @@ export default function AdminToolsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">ราคา</label>
                   <input type="text" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" />
@@ -229,7 +244,20 @@ export default function AdminToolsPage() {
                   <label className="block text-sm text-slate-400 mb-1">รหัสผ่าน</label>
                   <input type="text" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" />
                 </div>
+                <div>
+                  <label className="block text-sm text-cyan-400 mb-1 font-medium">📦 เวอร์ชัน (Version)</label>
+                  <input type="text" placeholder="เช่น v2.8.1" value={formData.version || ''} onChange={(e) => setFormData({...formData, version: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:border-cyan-500 font-mono text-sm" />
+                </div>
               </div>
+
+              {editingTool?.updated_at && (
+                <div className="p-3 bg-slate-800/60 border border-slate-700/60 rounded-lg flex items-center justify-between text-xs">
+                  <span className="text-slate-400">🕒 บันทึกอัปเดตล่าสุดเมื่อ:</span>
+                  <span className="text-cyan-400 font-medium">
+                    {formatToolUpdateDate(editingTool.updated_at)?.text} ({formatToolUpdateDate(editingTool.updated_at)?.fullDate})
+                  </span>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm text-slate-400 mb-1">รายละเอียด</label>

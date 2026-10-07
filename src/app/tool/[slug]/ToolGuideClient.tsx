@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { formatToolUpdateDate } from '@/lib/date-utils';
 
 export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = false, trialFlowUrl = '' }: { slug: string, hasAccess: boolean, loggedIn: boolean, isTrial?: boolean, trialFlowUrl?: string }) {
   const router = useRouter();
@@ -112,7 +113,30 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
         <p className="text-slate-400 text-lg max-w-xl mx-auto">
           {tool.description}
         </p>
-        <div className="mt-4 inline-block bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 text-xs px-3 py-1 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+
+        {/* Version & Update Date Badges */}
+        <div className="flex items-center justify-center gap-2.5 mt-3 flex-wrap">
+          {tool.version && (
+            <span className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs rounded-full font-semibold">
+              📦 เวอร์ชัน {tool.version}
+            </span>
+          )}
+          {(() => {
+            const updateInfo = formatToolUpdateDate(tool.updated_at);
+            if (!updateInfo) return null;
+            return (
+              <span className={`text-xs font-medium px-3 py-1 rounded-full border ${
+                updateInfo.isRecent
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-slate-800 border-slate-700 text-slate-300'
+              }`}>
+                {updateInfo.text} ({updateInfo.fullDate})
+              </span>
+            );
+          })()}
+        </div>
+
+        <div className="mt-3 inline-block bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 text-xs px-3 py-1 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.2)]">
           ⭐ Exclusive for VIP Members
         </div>
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { formatToolUpdateDate } from '@/lib/date-utils';
 
 function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
@@ -140,6 +141,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
             {allTools?.map((tool: any) => {
               const hasTool = ownedToolIds.has(tool.id);
               const posterImage = tool.poster_url || null;
+              const updateInfo = formatToolUpdateDate(tool.updated_at);
 
               if (hasTool) {
                 return (
@@ -153,6 +155,24 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                         {tool.icon || '✨'}
                       </div>
                     )}
+
+                    <div className="flex items-center gap-2 mb-2">
+                      {tool.version && (
+                        <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[11px] rounded-md font-semibold">
+                          {tool.version}
+                        </span>
+                      )}
+                      {updateInfo && (
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
+                          updateInfo.isRecent
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                            : 'bg-slate-800 border-slate-700 text-slate-400'
+                        }`}>
+                          {updateInfo.text}
+                        </span>
+                      )}
+                    </div>
+
                     <h3 className="text-lg font-bold text-white mb-2">{tool.name}</h3>
                     <p className="text-slate-400 text-sm mb-4 flex-grow">{tool.description}</p>
                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-800">
@@ -178,6 +198,24 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                         {tool.icon || '🔒'}
                       </div>
                     )}
+
+                    <div className="flex items-center gap-2 mb-2">
+                      {tool.version && (
+                        <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[11px] rounded-md font-semibold">
+                          {tool.version}
+                        </span>
+                      )}
+                      {updateInfo && (
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
+                          updateInfo.isRecent
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                            : 'bg-slate-800/80 border-slate-700 text-slate-400'
+                        }`}>
+                          {updateInfo.text}
+                        </span>
+                      )}
+                    </div>
+
                     <h3 className="text-lg font-bold text-slate-300 mb-2">{tool.name}</h3>
                     <p className="text-slate-500 text-sm mb-4 flex-grow">{tool.description}</p>
                     

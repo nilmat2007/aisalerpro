@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { formatToolUpdateDate } from '@/lib/date-utils'
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,28 @@ export default async function StorePage() {
                 )}
                 
                 <div className="p-8 md:w-3/5 flex flex-col">
+                  {(() => {
+                    const updateInfo = formatToolUpdateDate(tool.updated_at);
+                    return (
+                      <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+                        {tool.version && (
+                          <span className="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs rounded-lg font-semibold">
+                            📦 เวอร์ชัน {tool.version}
+                          </span>
+                        )}
+                        {updateInfo && (
+                          <span className={`text-xs font-medium px-2.5 py-1 rounded-lg border ${
+                            updateInfo.isRecent
+                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                              : 'bg-slate-800 border-slate-700 text-slate-300'
+                          }`}>
+                            {updateInfo.text} ({updateInfo.fullDate})
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   <h3 className="text-3xl font-bold text-white mb-2">{tool.name}</h3>
                   <p className="text-slate-400 mb-6">{tool.description}</p>
                   
