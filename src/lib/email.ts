@@ -17,7 +17,7 @@ interface SendEmailOptions {
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   try {
     const info = await transporter.sendMail({
-      from: `"PHEEM AI TOOLKIT" <${process.env.GMAIL_USER}>`,
+      from: `"PUP PAP AI" <${process.env.GMAIL_USER}>`,
       to: Array.isArray(to) ? to.join(', ') : to,
       subject,
       html,
@@ -41,8 +41,8 @@ export function buildToolUpdateEmail(toolName: string, updateNote?: string) {
   <div style="max-width:600px; margin:0 auto; padding:40px 20px;">
     <!-- Header -->
     <div style="text-align:center; margin-bottom:30px;">
-      <h1 style="color:#06b6d4; font-size:24px; margin:0;">🔧 PHEEM AI TOOLKIT</h1>
-      <p style="color:#94a3b8; font-size:14px; margin-top:8px;">แจ้งเตือนอัปเดตเครื่องมือ</p>
+      <h1 style="color:#ef4444; font-size:24px; margin:0; font-weight:800;">🤖 PUP PAP AI</h1>
+      <p style="color:#94a3b8; font-size:14px; margin-top:8px;">คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม • แจ้งเตือนอัปเดตเครื่องมือ</p>
     </div>
 
     <!-- Main Card -->
@@ -60,7 +60,7 @@ export function buildToolUpdateEmail(toolName: string, updateNote?: string) {
       </p>
 
       <a href="https://aisalerpro.vercel.app" 
-         style="display:inline-block; background:linear-gradient(135deg, #06b6d4, #0891b2); color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
+         style="display:inline-block; background:linear-gradient(135deg, #ef4444, #dc2626); color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
         🚀 เข้าใช้งานเลย
       </a>
     </div>
@@ -68,8 +68,8 @@ export function buildToolUpdateEmail(toolName: string, updateNote?: string) {
     <!-- Footer -->
     <div style="text-align:center; padding-top:20px; border-top:1px solid #1e293b;">
       <p style="color:#64748b; font-size:12px; margin:0;">
-        คุณได้รับอีเมลนี้เพราะคุณเป็นสมาชิกของ PHEEM AI TOOLKIT<br>
-        © 2026 PHEEM AI TOOLKIT. All rights reserved.
+        คุณได้รับอีเมลนี้เพราะคุณเป็นสมาชิกของ PUP PAP AI<br>
+        © 2026 PUP PAP AI (ปุ๊บปั๊บ AI). All rights reserved.
       </p>
     </div>
   </div>
@@ -108,8 +108,8 @@ export function buildTrialFollowUpEmail({
   <div style="max-width:620px; margin:0 auto; padding:32px 16px;">
     <!-- Logo & Brand Header -->
     <div style="text-align:center; margin-bottom:28px;">
-      <h1 style="color:#06b6d4; font-size:26px; font-weight:800; letter-spacing:1px; margin:0;">PHEEM AI TOOLKIT</h1>
-      <p style="color:#94a3b8; font-size:13px; margin:6px 0 0 0; text-transform:uppercase; letter-spacing:2px;">MULTI-PROVIDER STUDIO</p>
+      <h1 style="color:#ef4444; font-size:26px; font-weight:900; letter-spacing:1px; margin:0;">🤖 PUP PAP AI</h1>
+      <p style="color:#f87171; font-size:13px; margin:6px 0 0 0; font-weight:700; letter-spacing:1px;">คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม</p>
     </div>
 
     <!-- Hero Card -->
@@ -175,7 +175,7 @@ export function buildTrialFollowUpEmail({
     <!-- Footer -->
     <div style="text-align:center; padding:12px; color:#64748b; font-size:12px; line-height:1.6;">
       <p style="margin:0;">
-        PHEEM AI TOOLKIT • ศูนย์รวมเครื่องมือ AI สร้างคอนเทนต์ระดับโปร<br>
+        PUP PAP AI (ปุ๊บปั๊บ AI) • คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม<br>
         หากมีข้อสงสัย ติดต่อเราได้ทางเพจ Facebook ได้ตลอด 24 ชม.
       </p>
     </div>

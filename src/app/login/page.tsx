@@ -31,20 +31,26 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 flex flex-col items-center text-center">
-        <div className="relative w-32 h-32 mb-6">
-          <div className="absolute inset-0 rounded-full bg-amber-500/20 blur-xl animate-pulse"></div>
+    <div className="min-h-screen bg-[#0F0F12] flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#18181E] border border-slate-800 rounded-3xl shadow-2xl p-8 flex flex-col items-center text-center">
+        <div className="relative w-28 h-28 mb-5">
+          <div className="absolute inset-0 rounded-2xl bg-amber-500/20 blur-xl animate-pulse"></div>
           <Image
-            src={settings?.logo_url || "/images/logo-pheem-ai-toolkit.jpg"}
+            src={settings?.logo_url || "/images/logo-puppap-ai.png"}
             alt="Logo"
             fill
-            className="rounded-full border-2 border-amber-500 object-cover shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+            className="rounded-2xl border-2 border-slate-700 object-cover shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           />
         </div>
+
+        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 font-extrabold text-[11px] tracking-wider uppercase mb-3">
+          PRO · LIFETIME · คิดปุ๊บ คลิปปั๊บ
+        </div>
         
-        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">{settings?.site_name || 'PHEEM AI TOOLKIT'}</h1>
-        <p className="text-slate-400 mb-8">เข้าสู่ระบบเพื่อใช้งานเครื่องมือ AI</p>
+        <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
+          {settings?.site_name || 'PUP PAP AI'}
+        </h1>
+        <p className="text-slate-400 text-sm mb-6">เข้าสู่ระบบเพื่อใช้งานเครื่องมือสร้างคลิป AI</p>
 
         <button
           onClick={handleLogin}

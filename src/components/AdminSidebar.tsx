@@ -50,11 +50,12 @@ export default function AdminSidebar() {
     <>
       {/* Mobile Top Navigation Bar */}
       <div className="md:hidden flex items-center justify-between bg-slate-900/95 backdrop-blur-md px-4 py-3.5 border-b border-slate-800 sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">⚡</span>
-          <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-            Admin Panel
-          </span>
+        <div className="flex items-center gap-2.5">
+          <img src="/images/logo-puppap-ai.png" alt="PUP PAP AI" className="w-8 h-8 rounded-lg object-contain shadow-md" />
+          <div className="flex flex-col">
+            <span className="text-sm font-black text-white leading-tight">PUP PAP AI</span>
+            <span className="text-[10px] text-red-400 font-bold tracking-wider">ADMIN PANEL</span>
+          </div>
         </div>
         <button
           onClick={() => setIsOpen(true)}
@@ -80,8 +81,12 @@ export default function AdminSidebar() {
           <div className="relative w-72 max-w-[85vw] bg-slate-900 border-r border-slate-800 flex flex-col h-full p-4 shadow-2xl z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
             <div className="flex items-center justify-between pb-4 mb-2 border-b border-slate-800">
-              <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
-                Admin Panel
+              <div className="flex items-center gap-2.5">
+                <img src="/images/logo-puppap-ai.png" alt="PUP PAP AI" className="w-9 h-9 rounded-xl object-contain shadow-md" />
+                <div>
+                  <div className="text-base font-black text-white leading-tight">PUP PAP AI</div>
+                  <div className="text-[10px] text-red-400 font-bold tracking-wider">ADMIN PANEL</div>
+                </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -130,8 +135,15 @@ export default function AdminSidebar() {
 
       {/* Desktop Sidebar (Permanent) */}
       <aside className="hidden md:flex md:w-64 bg-slate-900 border-r border-slate-800 min-h-screen p-4 flex-col shrink-0 sticky top-0 h-screen z-30">
-        <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-8 px-4">
-          Admin Panel
+        <div className="flex items-center gap-3 mb-8 px-2">
+          <img src="/images/logo-puppap-ai.png" alt="PUP PAP AI" className="w-10 h-10 rounded-xl object-contain shadow-md" />
+          <div>
+            <div className="text-lg font-black text-white leading-tight">PUP PAP AI</div>
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full bg-red-500/10 border border-red-500/30 text-[10px] font-bold text-red-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+              PRO · ADMIN
+            </div>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1.5 overflow-y-auto pr-1">

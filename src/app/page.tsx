@@ -16,27 +16,57 @@ export default async function HomePage() {
     const { data: settings } = await supabase.from('site_settings').select('*').single()
     
     return (
-      <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col items-center">
-        <header className="w-full text-center pt-20 pb-12 px-4 relative overflow-hidden flex flex-col items-center">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl -z-10"></div>
+      <div className="min-h-screen bg-[#0F0F12] text-white font-sans flex flex-col items-center">
+        <header className="w-full text-center pt-16 pb-12 px-4 relative overflow-hidden flex flex-col items-center">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl -z-10"></div>
           
-          <img 
-            src={settings?.logo_url || "/images/logo-pheem-ai-toolkit.jpg"} 
-            alt="Logo" 
-            className="w-32 h-32 rounded-full object-cover border-2 border-cyan-400 shadow-[0_0_30px_rgba(6,182,212,0.5)] mb-8"
-          />
+          {/* Logo with pheembot border style */}
+          <div className="relative group mb-6">
+            <img 
+              src={settings?.logo_url || "/images/logo-puppap-ai.png"} 
+              alt="PUP PAP AI Logo" 
+              className="w-32 h-32 rounded-3xl object-cover border-2 border-slate-700 shadow-[0_4px_24px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300 bg-[#18181E]"
+            />
+          </div>
+
+          {/* Pill Badge matching pheembot PRO · LIFETIME */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-red-500/40 bg-red-500/10 text-red-400 font-extrabold text-xs tracking-wider uppercase mb-5 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            PRO · LIFETIME · คิดปุ๊บ คลิปปั๊บ 🔄
+          </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-400 to-amber-400 tracking-tight text-center">
-            {settings?.site_name || 'PHEEM AI TOOLKIT'} <br/>
-            <span className="text-3xl md:text-4xl text-slate-300 font-medium tracking-normal">MULTI-PROVIDER STUDIO</span>
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight text-center">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-sky-400 to-indigo-400">
+              {settings?.site_name || 'PUP PAP AI'}
+            </span>
+            <br/>
+            <span className="text-2xl md:text-3xl text-slate-300 font-bold tracking-normal block mt-2">
+              {settings?.tagline || 'คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม'}
+            </span>
           </h1>
           
-          <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 text-center">
-            {settings?.description || 'ศูนย์รวมเครื่องมือ AI สำหรับสร้างคอนเทนต์วิดีโอระดับมืออาชีพ'}
+          <p className="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-8 text-center leading-relaxed">
+            {settings?.description || 'คิดปุ๊บ คลิปปั๊บ สร้างและโพสต์วิดีโอ AI อัตโนมัติ ปักตะกร้าลง TikTok, Facebook Reels, และ Shopee Video'}
           </p>
+
+          {/* Platform Pills matching pheembot */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 mb-8">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#18181E] border border-slate-800 text-white text-xs font-semibold shadow-sm hover:border-slate-700 transition-colors">
+              🎵 <span>TikTok</span>
+            </span>
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#18181E] border border-slate-800 text-blue-400 text-xs font-semibold shadow-sm hover:border-slate-700 transition-colors">
+              🎬 <span>Reels</span>
+            </span>
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#18181E] border border-orange-500/40 text-orange-400 text-xs font-bold shadow-sm hover:border-orange-500 transition-colors">
+              🛒 <span>Shopee VDO</span>
+            </span>
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#18181E] border border-slate-800 text-red-400 text-xs font-semibold shadow-sm hover:border-slate-700 transition-colors">
+              ▶️ <span>YouTube</span>
+            </span>
+          </div>
           
-          <Link href="/login" className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white rounded-2xl font-bold text-lg shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all hover:scale-105 active:scale-95 text-center">
-            เข้าสู่ระบบเพื่อใช้งาน
+          <Link href="/login" className="px-8 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-sky-500 hover:from-amber-400 hover:to-sky-400 text-slate-950 rounded-full font-extrabold text-base md:text-lg shadow-[0_0_25px_rgba(245,158,11,0.25)] transition-all hover:scale-105 active:scale-95 text-center">
+            ⚡ เข้าสู่ระบบเพื่อใช้งาน
           </Link>
         </header>
 
@@ -94,8 +124,8 @@ export default async function HomePage() {
           </div>
         </main>
         
-        <footer className="text-center py-12 text-slate-600 text-sm">
-          © 2026 PHEEM AI TOOLKIT
+        <footer className="text-center py-12 text-slate-500 text-sm">
+          © 2026 PUP PAP AI — คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม
         </footer>
       </div>
     )

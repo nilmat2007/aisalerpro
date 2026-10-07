@@ -105,21 +105,37 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
   const ownedToolIds = new Set(userTools?.map((ut: any) => ut.tool_id) || []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
-      <header className="max-w-6xl mx-auto flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover border-2 border-cyan-500" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-cyan-500 flex items-center justify-center">
-              {displayName.charAt(0)}
+    <div className="min-h-screen bg-[#0F0F12] text-white p-6">
+      <header className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-[#18181E] border border-slate-800 rounded-2xl p-4 shadow-lg">
+        <div className="flex items-center gap-3.5">
+          <Link href="/" className="shrink-0 group">
+            <img 
+              src="/images/logo-puppap-ai.png" 
+              alt="PUP PAP AI" 
+              className="w-12 h-12 rounded-xl object-cover border-1.5 border-slate-700 group-hover:scale-105 transition-transform" 
+            />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-white tracking-tight">PUP PAP AI</h1>
+              <span className="text-[10px] font-extrabold text-red-400 border border-red-500/40 bg-red-500/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                PRO · LIFETIME
+              </span>
             </div>
-          )}
-          <h1 className="text-2xl font-bold">สวัสดี, {displayName}!</h1>
+            <p className="text-xs text-slate-400 mt-0.5">
+              สวัสดี, <span className="text-amber-400 font-semibold">{displayName}</span> 👋 · คิดปุ๊บ คลิปปั๊บ
+            </p>
+          </div>
         </div>
-        <button onClick={handleLogout} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition-colors">
-          ออกจากระบบ
-        </button>
+        
+        <div className="flex items-center gap-3">
+          {avatarUrl && (
+            <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover border border-slate-700" />
+          )}
+          <button onClick={handleLogout} className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-full text-xs font-semibold border border-slate-700 transition-colors">
+            ออกจากระบบ
+          </button>
+        </div>
       </header>
 
       <main className="max-w-6xl mx-auto space-y-8">
@@ -296,8 +312,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
         </div>
       </main>
       
-      <footer className="text-center mt-20 text-slate-600 text-sm pb-8">
-        © 2026 PHEEM AI TOOLKIT
+      <footer className="text-center mt-20 text-slate-500 text-sm pb-8">
+        © 2026 PUP PAP AI — คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม
       </footer>
     </div>
   );

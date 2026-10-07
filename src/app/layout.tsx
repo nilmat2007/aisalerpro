@@ -18,20 +18,24 @@ async function getSettings() {
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
   
-  const icons: Metadata['icons'] = {}
-  if (settings?.favicon_url) {
-    icons.icon = settings.favicon_url
+  const icons: Metadata['icons'] = {
+    icon: settings?.favicon_url || '/images/icon128.png'
   }
 
+  const title = settings?.site_name 
+    ? `${settings.site_name} | ${settings.tagline || 'คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม'}`
+    : "PUP PAP AI | คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม"
+  const description = settings?.description || "PUP PAP AI — คิดปุ๊บ คลิปปั๊บ สร้างและโพสต์วิดีโอ AI อัตโนมัติ Shopee, TikTok, Reels"
+
   return {
-    title: settings?.site_name || "Pheem AI Toolkit - Multi-Provider Studio",
-    description: settings?.description || "ศูนย์รวมเครื่องมือ AI สำหรับสร้างคอนเทนต์วิดีโอระดับมืออาชีพ",
+    title,
+    description,
     icons,
     openGraph: {
-      title: settings?.site_name || "Pheem AI Toolkit - Multi-Provider Studio",
-      description: settings?.description || "ศูนย์รวมเครื่องมือ AI สำหรับสร้างคอนเทนต์วิดีโอระดับมืออาชีพ",
+      title,
+      description,
       type: "website",
-      ...(settings?.og_image_url && { images: [settings.og_image_url] }),
+      images: [settings?.og_image_url || '/images/cover-puppap-ai.png'],
     },
   }
 }

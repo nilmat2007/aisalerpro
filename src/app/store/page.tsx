@@ -9,15 +9,18 @@ export default async function StorePage() {
   const { data: tools } = await supabase.from('tools').select('*').order('sort_order')
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white py-12 px-4">
+    <div className="min-h-screen bg-[#0F0F12] text-white py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <header className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400">
-            ร้านค้า / Store
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 font-extrabold text-xs tracking-wider uppercase mb-4">
+            ⚡ PUP PAP AI STORE · ซื้อขาดตลอดชีพ
+          </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-sky-400 to-indigo-400">
+            PUP PAP AI STORE
           </h1>
-          <p className="text-slate-400 text-lg">เลือกซื้อเครื่องมือที่เหมาะกับคุณเพื่อปลดล็อกการสร้างคอนเทนต์</p>
-          <div className="mt-8">
-            <Link href="/" className="text-slate-500 hover:text-cyan-400 transition-colors">
+          <p className="text-slate-400 text-base md:text-lg">คิดปุ๊บ คลิปปั๊บ ปลดล็อกเครื่องมือสร้างวิดีโอ AI พร้อมปักตะกร้าขายได้ทันที</p>
+          <div className="mt-6">
+            <Link href="/" className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#18181E] border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 text-xs font-semibold transition-colors">
               ← กลับหน้าหลัก
             </Link>
           </div>
@@ -25,14 +28,20 @@ export default async function StorePage() {
 
         {/* All-in-One Package */}
         <section className="mb-16">
-          <div className="bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/50 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.15)]">
-            <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs font-bold px-4 py-1 rounded-bl-xl">BEST VALUE</div>
-            <h2 className="text-3xl font-bold text-amber-400 mb-4">แพ็กเกจบุฟเฟ่ต์ All-in-One</h2>
-            <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">ปลดล็อกทุกเครื่องมือ + อัปเดตฟรีตลอดชีพ คุ้มค่าที่สุดสำหรับการทำสื่อโฆษณา</p>
-            <div className="text-4xl font-bold text-white mb-8">
+          <div className="bg-gradient-to-br from-amber-500/15 via-[#18181E] to-sky-500/15 border-2 border-amber-500/40 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.12)]">
+            <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-xs font-extrabold px-4 py-1.5 rounded-bl-xl tracking-wider uppercase">
+              PRO · LIFETIME
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-sky-300 to-amber-200 mb-3">
+              แพ็กเกจบุฟเฟ่ต์ PUP PAP All-in-One
+            </h2>
+            <p className="text-slate-300 text-base md:text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
+              ปลดล็อกทุกเครื่องมือสร้างคลิป AI + อัปเดตฟรีตลอดชีพ คิดไอเดีย ผลิตคลิป ปักตะกร้า TikTok, Reels, และ Shopee Video ครบจบที่เดียว
+            </p>
+            <div className="text-4xl font-extrabold text-white mb-8">
               เร็วๆ นี้ <span className="text-lg text-slate-500 font-normal line-through ml-2">฿9,990</span>
             </div>
-            <button className="px-8 py-4 bg-slate-800 text-slate-400 rounded-xl font-bold cursor-not-allowed">
+            <button className="px-8 py-3.5 bg-slate-800/80 border border-slate-700 text-slate-400 rounded-full font-bold cursor-not-allowed">
               Coming Soon
             </button>
           </div>

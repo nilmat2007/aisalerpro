@@ -113,7 +113,7 @@ export function notifyTrialStarted(name: string, email: string, toolName: string
         { text: '📧 ส่งดีลพิเศษเข้าอีเมล', callback_data: `deal_${trialId}` }
       ],
       [
-        { text: '💬 เมล์หาลูกค้าโดยตรง', url: `mailto:${email}?subject=${encodeURIComponent(`ข้อเสนอพิเศษปลดล็อก ${toolName} - PHEEM AI TOOLKIT`)}` }
+        { text: '💬 เมล์หาลูกค้าโดยตรง', url: `mailto:${email}?subject=${encodeURIComponent(`ข้อเสนอพิเศษปลดล็อก ${toolName} - PUP PAP AI`)}` }
       ]
     ]
   } : undefined
@@ -138,7 +138,7 @@ export function notifyTrialAutoFollowUp(name: string, email: string, toolName: s
         { text: '📧 ส่งอีเมลดีลพิเศษซ้ำ', callback_data: `deal_${trialId}` }
       ],
       [
-        { text: '💬 เมล์หาลูกค้า', url: `mailto:${email}?subject=${encodeURIComponent(`ข้อเสนอพิเศษปลดล็อก ${toolName} - PHEEM AI TOOLKIT`)}` }
+        { text: '💬 เมล์หาลูกค้า', url: `mailto:${email}?subject=${encodeURIComponent(`ข้อเสนอพิเศษปลดล็อก ${toolName} - PUP PAP AI`)}` }
       ]
     ]
   }

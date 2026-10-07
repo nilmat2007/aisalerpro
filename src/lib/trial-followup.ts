@@ -60,7 +60,7 @@ export async function processTrialFollowUps(): Promise<FollowUpResult> {
 
     const emailRes = await sendEmail({
       to: trial.user_email,
-      subject: `🎁 คุณ ${trial.user_name || ''}! ข้อเสนอพิเศษปลดล็อก ${toolName} เวอร์ชันเต็ม (ตลอดชีพ) - PHEEM AI TOOLKIT`,
+      subject: `🎁 คุณ ${trial.user_name || ''}! ข้อเสนอพิเศษปลดล็อก ${toolName} เวอร์ชันเต็ม (ตลอดชีพ) - PUP PAP AI`,
       html
     })
 
