@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react'
 export type PuppapTheme = 'dark' | 'cream'
 
 export function useTheme() {
-  const [theme, setTheme] = useState<PuppapTheme>('dark')
+  const [theme, setTheme] = useState<PuppapTheme>('cream')
 
   useEffect(() => {
     // อ่านค่าธีมจาก documentElement หรือ localStorage
     const currentTheme = (document.documentElement.getAttribute('data-theme') as PuppapTheme) ||
       (localStorage.getItem('puppap_theme') as PuppapTheme) ||
-      'dark'
+      'cream'
     setTheme(currentTheme)
     document.documentElement.setAttribute('data-theme', currentTheme)
 

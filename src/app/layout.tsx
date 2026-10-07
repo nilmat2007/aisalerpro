@@ -54,7 +54,7 @@ export default function RootLayout({
               (function() {
                 try {
                   var saved = localStorage.getItem('puppap_theme');
-                  var theme = saved || 'dark';
+                  var theme = saved || 'cream';
                   document.documentElement.setAttribute('data-theme', theme);
                 } catch (e) {}
               })();
