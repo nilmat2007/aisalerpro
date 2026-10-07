@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function AdminSidebar() {
   const pathname = usePathname()
@@ -57,15 +58,18 @@ export default function AdminSidebar() {
             <span className="text-[10px] text-red-400 font-bold tracking-wider">ADMIN PANEL</span>
           </div>
         </div>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="p-2 rounded-lg bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors focus:outline-none"
-          aria-label="เปิดเมนู"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle size="sm" />
+          <button
+            onClick={() => setIsOpen(true)}
+            className="p-2 rounded-lg bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors focus:outline-none"
+            aria-label="เปิดเมนู"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer (Slide-over overlay) */}
@@ -88,13 +92,16 @@ export default function AdminSidebar() {
                   <div className="text-[10px] text-red-400 font-bold tracking-wider">ADMIN PANEL</div>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                aria-label="ปิดเมนู"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <ThemeToggle size="sm" />
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  aria-label="ปิดเมนู"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Menu Links */}
@@ -135,15 +142,18 @@ export default function AdminSidebar() {
 
       {/* Desktop Sidebar (Permanent) */}
       <aside className="hidden md:flex md:w-64 bg-slate-900 border-r border-slate-800 min-h-screen p-4 flex-col shrink-0 sticky top-0 h-screen z-30">
-        <div className="flex items-center gap-3 mb-8 px-2">
-          <img src="/images/logo-puppap-ai.png" alt="PUP PAP AI" className="w-10 h-10 rounded-xl object-contain shadow-md" />
-          <div>
-            <div className="text-lg font-black text-white leading-tight">PUP PAP AI</div>
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-full bg-red-500/10 border border-red-500/30 text-[10px] font-bold text-red-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-              PRO · ADMIN
+        <div className="flex items-center justify-between gap-2 mb-8 px-2">
+          <div className="flex items-center gap-2.5">
+            <img src="/images/logo-puppap-ai.png" alt="PUP PAP AI" className="w-10 h-10 rounded-xl object-contain shadow-md" />
+            <div>
+              <div className="text-base font-black text-white leading-tight">PUP PAP AI</div>
+              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 mt-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-[9px] font-bold text-red-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                PRO · ADMIN
+              </div>
             </div>
           </div>
+          <ThemeToggle size="sm" />
         </div>
 
         <nav className="flex-1 space-y-1.5 overflow-y-auto pr-1">

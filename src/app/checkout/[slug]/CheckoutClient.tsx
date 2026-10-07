@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function CheckoutClient({ tool, userEmail, userId }: { tool: any, userEmail: string, userId: string }) {
   const [step, setStep] = useState(1);
@@ -70,25 +71,33 @@ export default function CheckoutClient({ tool, userEmail, userId }: { tool: any,
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 py-12">
+    <div className="min-h-screen text-[var(--text-primary)] p-6 py-12 transition-colors duration-200">
       <div className="max-w-2xl mx-auto">
         
+        {/* Top Back & Theme Toggle */}
+        <div className="flex justify-between items-center mb-8">
+          <Link href="/store" className="puppap-btn-secondary px-3.5 py-1.5 text-xs font-semibold">
+            ← ย้อนกลับ
+          </Link>
+          <ThemeToggle size="sm" />
+        </div>
+
         {/* Progress Steps */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-10">
           <div className="flex items-center gap-4 text-sm font-bold">
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-cyan-500 text-slate-900' : 'bg-slate-800 text-slate-500'}`}>1</div>
-            <div className={`h-1 w-12 rounded ${step >= 2 ? 'bg-cyan-500' : 'bg-slate-800'}`}></div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? 'bg-cyan-500 text-slate-900' : 'bg-slate-800 text-slate-500'}`}>2</div>
-            <div className={`h-1 w-12 rounded ${step >= 3 ? 'bg-cyan-500' : 'bg-slate-800'}`}></div>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 3 ? 'bg-cyan-500 text-slate-900' : 'bg-slate-800 text-slate-500'}`}>3</div>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-secondary-btn)] text-[var(--text-muted)]'}`}>1</div>
+            <div className={`h-1 w-12 rounded ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--border-light)]'}`}></div>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-secondary-btn)] text-[var(--text-muted)]'}`}>2</div>
+            <div className={`h-1 w-12 rounded ${step >= 3 ? 'bg-[var(--accent)]' : 'bg-[var(--border-light)]'}`}></div>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 3 ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-secondary-btn)] text-[var(--text-muted)]'}`}>3</div>
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-10 shadow-xl">
+        <div className="puppap-card p-6 md:p-10 shadow-xl">
           
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold mb-6 border-b border-slate-800 pb-4">สรุปคำสั่งซื้อ</h2>
+              <h2 className="text-2xl font-black mb-6 border-b border-[var(--border-light)] pb-4 text-[var(--text-primary)]">สรุปคำสั่งซื้อ</h2>
               
               <div className="flex flex-col md:flex-row gap-6">
                 {posterImage ? (

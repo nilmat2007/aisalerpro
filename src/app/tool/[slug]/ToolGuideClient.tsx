@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatToolUpdateDate } from '@/lib/date-utils';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = false, trialFlowUrl = '' }: { slug: string, hasAccess: boolean, loggedIn: boolean, isTrial?: boolean, trialFlowUrl?: string }) {
   const router = useRouter();
@@ -96,9 +97,17 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
 
   // ===== MAIN GUIDE CONTENT =====
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen text-[var(--text-primary)] pb-12 transition-colors duration-200">
+      {/* Top Bar */}
+      <div className="max-w-3xl mx-auto px-4 pt-6 flex justify-between items-center">
+        <Link href="/" className="puppap-btn-secondary px-3.5 py-1.5 text-xs font-semibold">
+          ← กลับหน้าหลัก
+        </Link>
+        <ThemeToggle size="sm" />
+      </div>
+
       {/* Header */}
-      <header className="text-center pt-16 pb-12 px-4 flex flex-col items-center">
+      <header className="text-center pt-8 pb-12 px-4 flex flex-col items-center">
         {tool.logo_url ? (
           <img src={tool.logo_url} alt={tool.name} className="w-28 h-28 rounded-full object-cover border-2 border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:scale-105 transition-transform duration-300 mb-6" />
         ) : (

@@ -5,30 +5,31 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { formatToolUpdateDate } from '@/lib/date-utils';
+import ThemeToggle from '@/components/ThemeToggle';
 
 function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = ann.content && ann.content.length > 150;
 
   return (
-    <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl overflow-hidden">
-      <div className="p-4">
+    <div className="puppap-card p-4 border-[var(--border-light)] overflow-hidden">
+      <div>
         <div className="flex justify-between items-start gap-3">
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 text-xs font-semibold rounded-full">
-              {ann.badge_text || 'ประกาศ'}
+            <span className="px-2.5 py-0.5 bg-[var(--accent-dim)] border border-[var(--accent)] text-[var(--accent)] text-xs font-bold rounded-full">
+              {ann.badge_text || '📢 ประกาศ'}
             </span>
-            <h3 className="font-bold text-white">{ann.title}</h3>
+            <h3 className="font-bold text-[var(--text-primary)]">{ann.title}</h3>
           </div>
-          <button onClick={() => onDismiss(ann.id)} className="text-slate-500 hover:text-white text-lg shrink-0">✕</button>
+          <button onClick={() => onDismiss(ann.id)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-lg shrink-0">✕</button>
         </div>
-        <div className={`text-slate-300 text-sm leading-relaxed whitespace-pre-line ${!expanded && isLong ? 'line-clamp-3' : ''}`}>
+        <div className={`text-[var(--text-secondary)] text-sm leading-relaxed whitespace-pre-line ${!expanded && isLong ? 'line-clamp-3' : ''}`}>
           {ann.content}
         </div>
         {isLong && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-cyan-400 text-xs mt-2 hover:underline"
+            className="text-[var(--accent)] text-xs mt-2 hover:underline font-semibold"
           >
             {expanded ? '▲ ย่อ' : '▼ อ่านเพิ่มเติม'}
           </button>
@@ -105,34 +106,40 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
   const ownedToolIds = new Set(userTools?.map((ut: any) => ut.tool_id) || []);
 
   return (
-    <div className="min-h-screen bg-[#0F0F12] text-white p-6">
-      <header className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-[#18181E] border border-slate-800 rounded-2xl p-4 shadow-lg">
+    <div className="min-h-screen text-[var(--text-primary)] p-4 sm:p-6 transition-colors duration-200">
+      
+      {/* Header Card matching pheembot extension screenshot */}
+      <header className="max-w-6xl mx-auto puppap-card p-4 sm:p-5 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <Link href="/" className="shrink-0 group">
             <img 
               src="/images/logo-puppap-ai.png" 
               alt="PUP PAP AI" 
-              className="w-12 h-12 rounded-xl object-cover border-1.5 border-slate-700 group-hover:scale-105 transition-transform" 
+              className="w-12 h-12 rounded-2xl object-cover border-[1.5px] border-[var(--border)] bg-white shadow-sm group-hover:scale-105 transition-transform" 
             />
           </Link>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white tracking-tight">PUP PAP AI</h1>
-              <span className="text-[10px] font-extrabold text-red-400 border border-red-500/40 bg-red-500/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-black tracking-tight text-[var(--text-primary)]">PUP PAP AI</h1>
+              <span className="puppap-badge-pro">
                 PRO · LIFETIME
               </span>
+              <span className="text-[11px] font-semibold text-[var(--accent)] hidden md:inline">
+                · คิดปุ๊บ คลิปปั๊บ 🔄
+              </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              สวัสดี, <span className="text-amber-400 font-semibold">{displayName}</span> 👋 · คิดปุ๊บ คลิปปั๊บ
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              สวัสดี, <span className="font-semibold text-[var(--accent)]">{displayName}</span> 👋 · พร้อมสร้างคอนเทนต์ทุกแพลตฟอร์ม
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end sm:self-center">
           {avatarUrl && (
-            <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover border border-slate-700" />
+            <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover border-[1.5px] border-[var(--border)]" />
           )}
-          <button onClick={handleLogout} className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-full text-xs font-semibold border border-slate-700 transition-colors">
+          <ThemeToggle size="md" />
+          <button onClick={handleLogout} className="puppap-btn-secondary px-4 py-1.5 text-xs">
             ออกจากระบบ
           </button>
         </div>
@@ -150,8 +157,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
 
         {/* Tools Grid */}
         <div>
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <span className="text-cyan-500">❖</span> เครื่องมือของคุณ
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-[var(--text-primary)]">
+            <span className="text-[var(--accent)]">❖</span> เครื่องมือของคุณ
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allTools?.map((tool: any) => {
@@ -161,39 +168,42 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
 
               if (hasTool) {
                 return (
-                  <div key={tool.id} className="bg-gradient-to-b from-slate-800 to-slate-900 border border-green-500/30 rounded-2xl p-5 hover:border-green-400 transition-colors flex flex-col h-full">
+                  <div key={tool.id} className="puppap-card p-5 border-emerald-500/60 hover:border-emerald-500 transition-colors flex flex-col h-full shadow-md">
                     {posterImage ? (
-                      <div className="w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden">
+                      <div className="w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden border border-[var(--border-light)] bg-black/10">
                         <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-3xl mb-4">
+                      <div className="w-16 h-16 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-center justify-center text-3xl mb-4">
                         {tool.icon || '✨'}
                       </div>
                     )}
 
                     <div className="flex items-center gap-2 mb-2">
                       {tool.version && (
-                        <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[11px] rounded-md font-semibold">
+                        <span className="px-2 py-0.5 bg-[var(--accent-dim)] border border-[var(--accent)] text-[var(--accent)] font-mono text-[11px] rounded-md font-semibold">
                           {tool.version}
                         </span>
                       )}
                       {updateInfo && (
                         <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
                           updateInfo.isRecent
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                            : 'bg-slate-800 border-slate-700 text-slate-400'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-[var(--bg-deep)] border-[var(--border-light)] text-[var(--text-muted)]'
                         }`}>
                           {updateInfo.text}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-lg font-bold text-white mb-2">{tool.name}</h3>
-                    <p className="text-slate-400 text-sm mb-4 flex-grow">{tool.description}</p>
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-800">
-                      <span className="text-green-400 text-sm font-semibold flex items-center gap-1">🟢 ปลดล็อกแล้ว</span>
-                      <Link href={`/tool/${tool.slug}`} className="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-lg text-sm font-semibold shadow-lg shadow-cyan-500/20">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{tool.name}</h3>
+                    <p className="text-[var(--text-secondary)] text-sm mb-4 flex-grow">{tool.description}</p>
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--border-light)]">
+                      <span className="text-emerald-600 dark:text-emerald-400 text-sm font-bold flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        ปลดล็อกแล้ว
+                      </span>
+                      <Link href={`/tool/${tool.slug}`} className="puppap-btn-primary px-4 py-2 text-sm">
                         เข้าใช้งาน
                       </Link>
                     </div>
@@ -204,63 +214,63 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                 const trialEnabled = tool.trial_enabled && tool.trial_flow_url;
                 
                 return (
-                  <div key={tool.id} className={`bg-slate-900/50 border ${hasTrial ? 'border-amber-500/40' : 'border-slate-800'} rounded-2xl p-5 ${hasTrial ? 'opacity-100' : 'opacity-80 hover:opacity-100'} transition-opacity flex flex-col h-full`}>
+                  <div key={tool.id} className={`puppap-card p-5 flex flex-col h-full ${hasTrial ? 'border-amber-500/50' : 'border-[var(--border-light)] opacity-90 hover:opacity-100'} transition-opacity`}>
                     {posterImage ? (
-                      <div className={`w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden ${hasTrial ? 'opacity-80' : 'opacity-50 grayscale'}`}>
+                      <div className={`w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden border border-[var(--border-light)] ${hasTrial ? '' : 'grayscale opacity-75'}`}>
                         <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className={`w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center text-3xl mb-4 ${hasTrial ? '' : 'grayscale'}`}>
+                      <div className={`w-16 h-16 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-center justify-center text-3xl mb-4 ${hasTrial ? '' : 'grayscale'}`}>
                         {tool.icon || '🔒'}
                       </div>
                     )}
 
                     <div className="flex items-center gap-2 mb-2">
                       {tool.version && (
-                        <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[11px] rounded-md font-semibold">
+                        <span className="px-2 py-0.5 bg-[var(--accent-dim)] border border-[var(--accent)] text-[var(--accent)] font-mono text-[11px] rounded-md font-semibold">
                           {tool.version}
                         </span>
                       )}
                       {updateInfo && (
                         <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
                           updateInfo.isRecent
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                            : 'bg-slate-800/80 border-slate-700 text-slate-400'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-[var(--bg-deep)] border-[var(--border-light)] text-[var(--text-muted)]'
                         }`}>
                           {updateInfo.text}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-lg font-bold text-slate-300 mb-2">{tool.name}</h3>
-                    <p className="text-slate-500 text-sm mb-4 flex-grow">{tool.description}</p>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{tool.name}</h3>
+                    <p className="text-[var(--text-secondary)] text-sm mb-4 flex-grow">{tool.description}</p>
                     
                     {hasTrial ? (
                       /* Trial active - เคยทดลองใช้แล้ว */
-                      <div className="mt-auto pt-4 border-t border-amber-500/20 space-y-3">
+                      <div className="mt-auto pt-4 border-t border-[var(--border-light)] space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-amber-400 text-sm flex items-center gap-1">🎁 ทดลองใช้แล้ว (3 คลิป)</span>
+                          <span className="text-amber-600 dark:text-amber-400 text-sm font-semibold flex items-center gap-1">🎁 โหมดทดลองใช้ (3 คลิป)</span>
                         </div>
                         <div className="flex gap-2">
-                          <Link href={`/tool/${tool.slug}?trial=1`} className="flex-1 text-center px-3 py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white rounded-lg text-sm font-semibold">
-                            ▶️ เข้าใช้ตัวทดลอง
+                          <Link href={`/tool/${tool.slug}?trial=1`} className="flex-1 text-center px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-sm transition-colors">
+                            ▶️ เข้าตัวทดลอง
                           </Link>
-                          <Link href={`/checkout/${tool.slug}`} className="px-3 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-semibold">
+                          <Link href={`/checkout/${tool.slug}`} className="puppap-btn-primary px-3 py-2 text-sm">
                             🛒 ซื้อเต็ม
                           </Link>
                         </div>
                       </div>
                     ) : (
                       /* ยังไม่ได้ซื้อ / ยังไม่ได้ทดลอง */
-                      <div className="mt-auto pt-4 border-t border-slate-800/50 space-y-3">
+                      <div className="mt-auto pt-4 border-t border-[var(--border-light)] space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500 text-sm flex items-center gap-1">🔒 ยังไม่ได้ซื้อ</span>
+                          <span className="text-[var(--text-muted)] text-sm flex items-center gap-1">🔒 ยังไม่ได้ซื้อ</span>
                           <div className="flex gap-2">
-                            <Link href={`/checkout/${tool.slug}`} className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 rounded-lg text-sm font-semibold">
+                            <Link href={`/checkout/${tool.slug}`} className="puppap-btn-primary px-3 py-1.5 text-xs">
                               🛒 สั่งซื้อ
                             </Link>
-                            <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg text-sm font-semibold">
-                              💬 สั่งซื้อ
+                            <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="puppap-btn-secondary px-3 py-1.5 text-xs">
+                              💬 แชท
                             </a>
                           </div>
                         </div>
@@ -268,7 +278,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                           <button
                             onClick={() => startTrial(tool.id)}
                             disabled={startingTrial === tool.id}
-                            className="w-full px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
+                            className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
                           >
                             {startingTrial === tool.id ? '⏳ กำลังเริ่ม...' : '🎁 ทดลองใช้ฟรี (3 คลิป)'}
                           </button>
@@ -283,9 +293,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
         </div>
 
         {/* License Activation */}
-        <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 mt-12 max-w-xl mx-auto shadow-[0_0_30px_rgba(245,158,11,0.1)] relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-amber-400">
+        <div className="puppap-card p-6 mt-12 max-w-xl mx-auto relative overflow-hidden">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-[var(--accent)]">
             🔑 มีรหัสปลดล็อก?
           </h3>
           <div className="flex gap-3">
@@ -294,25 +303,25 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
               value={licenseKey}
               onChange={(e) => setLicenseKey(e.target.value)}
               placeholder="กรอก License Key ของคุณ"
-              className="flex-grow bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 focus:outline-none focus:border-amber-500/50 text-white"
+              className="flex-grow bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl px-4 py-2 focus:outline-none focus:border-[var(--accent)] text-[var(--text-primary)]"
             />
             <button
               onClick={handleActivate}
               disabled={!licenseKey}
-              className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="puppap-btn-primary px-6 py-2 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ปลดล็อก
             </button>
           </div>
           {licenseMsg.text && (
-            <p className={`mt-3 text-sm ${licenseMsg.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+            <p className={`mt-3 text-sm font-semibold ${licenseMsg.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--danger)]'}`}>
               {licenseMsg.text}
             </p>
           )}
         </div>
       </main>
       
-      <footer className="text-center mt-20 text-slate-500 text-sm pb-8">
+      <footer className="text-center mt-20 text-[var(--text-muted)] text-sm pb-8 border-t border-[var(--border-light)] pt-6">
         © 2026 PUP PAP AI — คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม
       </footer>
     </div>

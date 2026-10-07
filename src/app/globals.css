@@ -1,30 +1,208 @@
-@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap');
 
 @import "tailwindcss";
 
-body {
-  font-family: 'Prompt', sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #020617 50%, #0f172a 100%);
-  min-height: 100vh;
+/* ─── PUP PAP AI Dual Theme System (Cream Paper ↔ Obsidian Dark) ─── */
+/* Default / Cream Theme (ดึงจาก pheembot/sidepanel.css ตรง 100%) */
+:root, [data-theme="cream"] {
+  --bg-primary: #EDE6D6;
+  --bg-secondary: #E3DCB8;
+  --bg-card: #FFFFFF;
+  --bg-panel: #FFFFFF;
+  --bg-deep: #F5EFE3;
+  --bg-hover: #F5EFE3;
+  --bg-input: #FFFFFF;
+  --bg-secondary-btn: #E6DFCE;
+  --text-primary: #1C1917;
+  --text-secondary: #44403C;
+  --text-muted: #78716C;
+  --accent: #A82D24;
+  --accent-hover: #8F241C;
+  --accent-dim: rgba(168, 45, 36, 0.12);
+  --accent-ai: #A82D24;
+  --accent-ai-hover: #8F241C;
+  --success: #15803D;
+  --warning: #D97706;
+  --danger: #B91C1C;
+  --border: #1C1917;
+  --border-light: #D6CEBE;
+  --border-accent: #A82D24;
+  --radius: 20px;
+  --radius-sm: 14px;
+  --radius-pill: 9999px;
+  --shadow: 0 2px 8px rgba(28, 25, 23, 0.08);
+  --shadow-card: 0 4px 16px rgba(28, 25, 23, 0.06);
+  --shadow-hover: 0 8px 24px rgba(28, 25, 23, 0.12);
+  --transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --tab-active-bg: #1C1917;
+  --tab-active-text: #FFFFFF;
 }
 
-.neon-border {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.15), inset 0 0 15px rgba(6, 182, 212, 0.05);
+/* Dark Theme: Pure Black / Minimalist Obsidian (pheembot dark) */
+[data-theme="dark"] {
+  --bg-primary: #0F0F12;
+  --bg-secondary: #17171C;
+  --bg-card: #18181E;
+  --bg-panel: #18181E;
+  --bg-deep: #121216;
+  --bg-hover: #26262E;
+  --bg-input: #121216;
+  --bg-secondary-btn: #26262E;
+  --text-primary: #F4F4F5;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --accent: #DC2626;
+  --accent-hover: #B91C1C;
+  --accent-dim: rgba(220, 38, 38, 0.2);
+  --accent-ai: #DC2626;
+  --accent-ai-hover: #B91C1C;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --border: #2E2E36;
+  --border-light: #24242C;
+  --border-accent: #DC2626;
+  --shadow: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.4);
+  --shadow-hover: 0 8px 28px rgba(0,0,0,0.6);
+  --transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --tab-active-bg: #DC2626;
+  --tab-active-text: #FFFFFF;
+}
+
+body {
+  font-family: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+/* ─── PUP PAP Signature UI Components ─── */
+
+/* 1. Theme toggle button matching pheembot exactly */
+.btn-theme-toggle {
+  background: var(--bg-secondary-btn);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0;
+  user-select: none;
+  box-shadow: var(--shadow);
+}
+.btn-theme-toggle:hover {
+  transform: scale(1.08);
+}
+.btn-theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* 2. PUP PAP Theme Cards */
+.puppap-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  transition: background-color var(--transition), border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.puppap-card-inner {
+  background: var(--bg-deep);
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+/* 3. PRO · LIFETIME Badge */
+.puppap-badge-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+  transition: all var(--transition);
+}
+
+/* 4. Platform Tabs / Pills */
+.puppap-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+.puppap-tab:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.puppap-tab.active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-text);
+  border-color: var(--tab-active-bg);
+}
+
+/* 5. Buttons */
+.puppap-btn-primary {
+  background: var(--accent);
+  color: #FFFFFF;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  transition: var(--transition);
+}
+.puppap-btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.puppap-btn-secondary {
+  background: var(--bg-secondary-btn);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  transition: var(--transition);
+}
+.puppap-btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
+/* Neon glow for dark mode */
+[data-theme="dark"] .neon-border {
+  box-shadow: 0 0 15px rgba(220, 38, 38, 0.25), inset 0 0 15px rgba(220, 38, 38, 0.05);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-8px); }
-  75% { transform: translateX(8px); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }
 
 .animate-shake {
