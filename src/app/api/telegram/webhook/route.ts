@@ -591,7 +591,7 @@ async function handleBroadcast(text: string) {
   }))
 
   const result = await broadcastFBSmart(preparedContacts, message, [
-    { title: '🌐 เข้าเว็บ', url: 'https://aisalerpro.vercel.app' }
+    { title: '🌐 เข้าเว็บ', url: 'https://puppapai.vercel.app' }
   ])
 
   // Log broadcast

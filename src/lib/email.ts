@@ -59,7 +59,7 @@ export function buildToolUpdateEmail(toolName: string, updateNote?: string) {
         ${updateNote || `เราได้อัปเดตเครื่องมือ "${toolName}" ให้ดียิ่งขึ้น! เข้าไปลองใช้งานเวอร์ชันใหม่ได้เลยครับ`}
       </p>
 
-      <a href="https://aisalerpro.vercel.app" 
+      <a href="https://puppapai.vercel.app" 
          style="display:inline-block; background:linear-gradient(135deg, #ef4444, #dc2626); color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px;">
         🚀 เข้าใช้งานเลย
       </a>
@@ -94,8 +94,8 @@ export function buildTrialFollowUpEmail({
 }: TrialFollowUpOptions) {
   const priceDisplay = toolPrice ? `${toolPrice} บาท` : 'ราคาพิเศษ'
   const checkoutUrl = toolSlug 
-    ? `https://aisalerpro.vercel.app/checkout/${toolSlug}` 
-    : 'https://aisalerpro.vercel.app/store'
+    ? `https://puppapai.vercel.app/checkout/${toolSlug}` 
+    : 'https://puppapai.vercel.app/store'
 
   return `
 <!DOCTYPE html>

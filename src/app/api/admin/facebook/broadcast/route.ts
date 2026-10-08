@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       title: b.title,
       url: b.url
     })) || [
-      { title: '🌐 เข้าสู่เว็บไซต์', url: 'https://aisalerpro.vercel.app' }
+      { title: '🌐 เข้าสู่เว็บไซต์', url: 'https://puppapai.vercel.app' }
     ]
 
     // 4. Smart broadcast

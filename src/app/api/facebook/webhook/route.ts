@@ -171,8 +171,8 @@ async function handleIncomingMessage(psid: string, text: string) {
     msg += '👉 ดูรายละเอียดเพิ่มเติมกดปุ่มด้านล่างได้เลยครับ!'
 
     const buttons: Array<{ title: string; url?: string; payload?: string }> = [
-      { title: '🛒 สั่งซื้อบนเว็บ', url: 'https://aisalerpro.vercel.app/store' },
-      { title: '🎁 ทดลองใช้ฟรี', url: 'https://aisalerpro.vercel.app' }
+      { title: '🛒 สั่งซื้อบนเว็บ', url: 'https://puppapai.vercel.app/store' },
+      { title: '🎁 ทดลองใช้ฟรี', url: 'https://puppapai.vercel.app' }
     ]
 
     if (lineUrl) {
@@ -189,7 +189,7 @@ async function handleIncomingMessage(psid: string, text: string) {
   // Auto-reply keywords: ทดลอง / trial
   if (lower === 'ทดลอง' || lower === 'ทดลองใช้' || lower === 'trial' || lower === 'demo') {
     const buttons: Array<{ title: string; url?: string; payload?: string }> = [
-      { title: '🚀 เริ่มทดลองใช้ฟรี', url: 'https://aisalerpro.vercel.app' }
+      { title: '🚀 เริ่มทดลองใช้ฟรี', url: 'https://puppapai.vercel.app' }
     ]
     if (lineUrl) {
       buttons.push({ title: '📲 แอด LINE รับสิทธิ์', url: lineUrl })
@@ -205,7 +205,7 @@ async function handleIncomingMessage(psid: string, text: string) {
   // Auto-reply keywords: สมัคร / register
   if (lower === 'สมัคร' || lower === 'ลงทะเบียน' || lower === 'register') {
     const buttons: Array<{ title: string; url?: string; payload?: string }> = [
-      { title: '🔑 ล็อกอินด้วย Google', url: 'https://aisalerpro.vercel.app/login' }
+      { title: '🔑 ล็อกอินด้วย Google', url: 'https://puppapai.vercel.app/login' }
     ]
     if (lineUrl) {
       buttons.push({ title: '📲 ติดต่อแอดมิน LINE', url: lineUrl })
@@ -234,8 +234,8 @@ async function handlePostback(psid: string, payload: string) {
 
   if (payload === 'GET_STARTED') {
     const buttons: Array<{ title: string; url?: string; payload?: string }> = [
-      { title: '🛒 ดูเครื่องมือทั้งหมด', url: 'https://aisalerpro.vercel.app/store' },
-      { title: '🎁 ทดลองใช้ฟรี', url: 'https://aisalerpro.vercel.app' }
+      { title: '🛒 ดูเครื่องมือทั้งหมด', url: 'https://puppapai.vercel.app/store' },
+      { title: '🎁 ทดลองใช้ฟรี', url: 'https://puppapai.vercel.app' }
     ]
     if (lineUrl) {
       buttons.push({ title: '📲 แอด LINE รับส่วนลด', url: lineUrl })
