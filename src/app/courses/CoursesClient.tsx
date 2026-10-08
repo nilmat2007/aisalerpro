@@ -142,14 +142,10 @@ export default function CoursesClient({
           </p>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto pt-3">
+          <div className="grid grid-cols-3 gap-3 max-w-xl mx-auto pt-3">
             <div className="puppap-card p-3 text-center">
               <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{lessons.length || 16}</div>
               <div className="text-[11px] text-[var(--text-muted)]">บทเรียนเข้มข้น</div>
-            </div>
-            <div className="puppap-card p-3 text-center">
-              <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">16:9</div>
-              <div className="text-[11px] text-[var(--text-muted)]">วิดีโอแนวนอนคมชัด</div>
             </div>
             <div className="puppap-card p-3 text-center">
               <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{modules.length || 4}</div>
