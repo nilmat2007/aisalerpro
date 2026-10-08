@@ -4,6 +4,7 @@ import DashboardClient from './DashboardClient'
 import { notifyNewMember } from '@/lib/telegram'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
+import FlowToolCard from '@/components/FlowToolCard'
 
 export const dynamic = 'force-dynamic';
 
@@ -34,8 +35,20 @@ export default async function HomePage() {
               </span>
             </Link>
 
-            {/* ขวา: ตัวเลือกโหมดกลางวัน/กลางคืนมาตรฐาน + ปุ่มเข้าสู่ระบบ */}
-            <div className="flex items-center gap-3">
+            {/* ขวา: แคตตาล็อก Flow + คอร์สเรียน + ตัวเลือกโหมดกลางวัน/กลางคืนมาตรฐาน + ปุ่มเข้าสู่ระบบ */}
+            <div className="flex items-center gap-2 sm:gap-2.5">
+              <Link 
+                href="/courses" 
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--accent)] bg-[var(--bg-deep)] border border-[var(--border-light)] hover:scale-105 transition-transform"
+              >
+                <span>🎓 คอร์สเรียน</span>
+              </Link>
+              <Link 
+                href="/flow-tools" 
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[var(--accent)] bg-[var(--accent-dim)] border border-[var(--border-accent)] hover:scale-105 transition-transform"
+              >
+                <span>✨ แคตตาล็อก Flow</span>
+              </Link>
               <ThemeToggle variant="segmented" size="sm" />
               <Link 
                 href="/login" 
@@ -90,62 +103,84 @@ export default async function HomePage() {
             </span>
           </div>
           
-          <Link href="/login" className="puppap-btn-primary px-8 py-3.5 rounded-full text-base md:text-lg shadow-md hover:scale-105 active:scale-95 text-center flex items-center gap-2">
-            <span>⚡</span> เข้าสู่ระบบเพื่อใช้งาน
-          </Link>
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <Link href="/login" className="puppap-btn-primary px-8 py-3.5 rounded-full text-base md:text-lg shadow-md hover:scale-105 active:scale-95 text-center flex items-center gap-2">
+              <span>⚡</span> เข้าสู่ระบบเพื่อใช้งาน
+            </Link>
+            <Link href="/courses" className="puppap-btn-secondary px-6 py-3.5 rounded-full text-base font-bold text-center flex items-center gap-2 hover:scale-105 transition-transform">
+              <span>🎓</span> ดูคอร์สเรียน 990฿
+            </Link>
+          </div>
         </section>
+
+        {/* Featured Course Card for All Ages & Low Tech */}
+        <div className="max-w-6xl w-full mx-auto px-4 mb-8">
+          <div className="puppap-card p-6 sm:p-8 border-2 border-[var(--border-accent)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-deep)] to-[var(--bg-card)] shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
+                  🎓 คอร์สเรียนแนะนำ
+                </span>
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                  💡 ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (16 บทเรียน)
+                </span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)]">
+                ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+                คู่มือสร้างรายได้แบบจับมือทำ 16 บทเรียนเต็ม วิดีโอแนวนอน 16:9 คมชัด เรียนได้ทุกเพศทุกวัย แม้ไม่เก่งคอมพิวเตอร์ ทำตามได้บนมือถือเครื่องเดียว
+              </p>
+              <div className="flex items-center justify-center md:justify-start gap-3 text-xs text-[var(--text-muted)] flex-wrap pt-1">
+                <span>✓ ไม่มีพื้นฐานก็เรียนได้</span>
+                <span>•</span>
+                <span>✓ ดูซ้ำกี่รอบก็ได้ ไม่มีหมดอายุ</span>
+                <span>•</span>
+                <span>✓ พร้อมโปรแกรม Flow Tools ช่วยทำคลิป</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full sm:w-auto shrink-0 md:w-64">
+              <Link 
+                href="/courses" 
+                className="puppap-btn-primary py-3 px-6 text-center text-sm font-black flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-transform"
+              >
+                <span>🎓 ดูสารบัญ 16 บท</span>
+              </Link>
+              <Link 
+                href="/course/tiktok-ai-affiliate" 
+                className="puppap-btn-secondary py-2.5 px-4 text-center text-xs font-bold"
+              >
+                🎁 ดูตัวอย่างบทแรกฟรี
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {/* Tools Section */}
         <main className="max-w-6xl w-full mx-auto px-4 py-8">
-          <h2 className="text-2xl font-bold text-center mb-10 flex items-center justify-center gap-2.5 text-[var(--text-primary)]">
-            <span className="text-[var(--accent)]">❖</span> เครื่องมือทั้งหมด
-          </h2>
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2.5 text-[var(--text-primary)]">
+                <span className="text-[var(--accent)]">❖</span> เครื่องมือ Flow ทั้งหมด
+              </h2>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                คลิปขายสินค้า ละครสั้น พอดแคสต์ AI พร้อมโมเดล Omni, Veo 3.1, Imagen 4
+              </p>
+            </div>
+            <Link 
+              href="/flow-tools" 
+              className="text-xs text-[var(--accent)] hover:underline font-bold flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--accent-dim)] border border-[var(--border-accent)]"
+            >
+              <span>เปิดดูมุมมองแยกหมวดหมู่</span>
+              <span>→</span>
+            </Link>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allTools?.map((tool: any) => {
-              const posterImage = tool.poster_url || null;
-              const updateInfo = formatToolUpdateDate(tool.updated_at);
-              return (
-                <div key={tool.id} className="puppap-card p-5 relative group overflow-hidden flex flex-col h-full hover:scale-[1.01] transition-all">
-                  {posterImage ? (
-                    <div className="w-full h-48 mb-4 rounded-xl overflow-hidden relative border border-[var(--border-light)] bg-black/10">
-                      <img src={posterImage} alt={tool.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-center justify-center text-3xl mb-4">
-                      {tool.icon || '✨'}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 mb-2">
-                    {tool.version && (
-                      <span className="px-2 py-0.5 bg-[var(--accent-dim)] border border-[var(--accent)] text-[var(--accent)] font-mono text-[11px] rounded-md font-semibold">
-                        {tool.version}
-                      </span>
-                    )}
-                    {updateInfo && (
-                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
-                        updateInfo.isRecent
-                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-[var(--bg-deep)] border-[var(--border-light)] text-[var(--text-muted)]'
-                      }`}>
-                        {updateInfo.text}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{tool.name}</h3>
-                  <p className="text-[var(--text-secondary)] text-sm mb-6 flex-grow">{tool.description}</p>
-                  
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--border-light)]">
-                    <span className="text-[var(--accent)] font-bold text-lg">{tool.price ? `฿${tool.price.toLocaleString()}` : 'ฟรี'}</span>
-                    <Link href="/login" className="puppap-btn-secondary px-4 py-2 text-sm">
-                      ดูรายละเอียด
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
+            {allTools?.filter((t: any) => t.category !== 'course' && t.slug !== 'tiktok-ai-affiliate')?.map((tool: any) => (
+              <FlowToolCard key={tool.id} tool={tool} hasAccess={false} />
+            ))}
           </div>
         </main>
         

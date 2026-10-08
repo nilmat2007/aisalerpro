@@ -17,7 +17,12 @@ export default function AdminToolsPage() {
     version: 'v1.0',
     badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
     is_active: true, is_coming_soon: false, sort_order: 0,
-    trial_enabled: false, trial_flow_url: ''
+    trial_enabled: false, trial_flow_url: '',
+    category: 'hardsell',
+    tier_required: 'pro',
+    video_model: 'Omni 1.1 Flash · Veo 3.1',
+    image_model: 'Nano Banana Pro · Imagen 4',
+    tags_string: 'video, image, auto, tiktok'
   })
   const [uploading, setUploading] = useState<string | null>(null)
   const [sendNotify, setSendNotify] = useState(false)
@@ -82,10 +87,26 @@ export default function AdminToolsPage() {
     const method = editingTool ? 'PUT' : 'POST'
     
     showLoading()
+    const featuresPayload = {
+      ...(typeof editingTool?.features === 'object' && !Array.isArray(editingTool?.features) ? editingTool.features : {}),
+      category: formData.category || 'video',
+      tier_required: formData.tier_required || 'pro',
+      models_used: [
+        ...(formData.video_model ? [{ type: 'video', name: formData.video_model, customizable: true }] : []),
+        ...(formData.image_model ? [{ type: 'image', name: formData.image_model, customizable: true }] : [])
+      ],
+      tags: formData.tags_string ? formData.tags_string.split(',').map((s: string) => s.trim()).filter(Boolean) : []
+    }
+
+    const { category, tier_required, video_model, image_model, tags_string, ...cleanFormData } = formData as any
+
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
+      body: JSON.stringify({
+        ...cleanFormData,
+        features: featuresPayload
+      })
     })
     
     if (!res.ok) {
@@ -140,14 +161,33 @@ export default function AdminToolsPage() {
       version: 'v1.0',
       badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
       is_active: true, is_coming_soon: false, sort_order: 0,
-      trial_enabled: false, trial_flow_url: ''
+      trial_enabled: false, trial_flow_url: '',
+      category: 'hardsell',
+      tier_required: 'pro',
+      video_model: 'Omni 1.1 Flash · Veo 3.1',
+      image_model: 'Nano Banana Pro · Imagen 4',
+      tags_string: 'video, image, auto, tiktok'
     })
     setIsModalOpen(true)
   }
 
   const openEditModal = (tool: any) => {
     setEditingTool(tool)
-    setFormData(tool)
+    const feat = (typeof tool.features === 'object' && tool.features !== null && !Array.isArray(tool.features))
+      ? tool.features
+      : {}
+    const videoModel = feat.models_used?.find((m: any) => m.type === 'video')?.name || ''
+    const imageModel = feat.models_used?.find((m: any) => m.type === 'image')?.name || ''
+    const tagsStr = Array.isArray(feat.tags) ? feat.tags.join(', ') : ''
+
+    setFormData({
+      ...tool,
+      category: feat.category || 'video',
+      tier_required: feat.tier_required || 'pro',
+      video_model: videoModel,
+      image_model: imageModel,
+      tags_string: tagsStr
+    })
     setIsModalOpen(true)
   }
 
@@ -184,7 +224,27 @@ export default function AdminToolsPage() {
                   <td className="p-4">
                     {tool.poster_url ? <img src={tool.poster_url} alt={tool.name} className="w-16 h-10 object-cover rounded" /> : <div className="w-16 h-10 bg-slate-800 rounded"></div>}
                   </td>
-                  <td className="p-4 text-white font-medium">{tool.name}</td>
+                  <td className="p-4 text-white font-medium">
+                    <div>{tool.name}</div>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      {tool.features?.category && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 uppercase font-mono">
+                          {tool.features.category}
+                        </span>
+                      )}
+                      {tool.features?.tier_required && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${
+                          tool.features.tier_required === 'vip' 
+                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
+                            : tool.features.tier_required === 'starter'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                            : 'bg-red-500/10 border-red-500/30 text-red-400'
+                        }`}>
+                          {tool.features.tier_required.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-4 text-slate-300">{tool.price}</td>
                   <td className="p-4 text-slate-300">{tool.password || '-'}</td>
                   <td className="p-4">
@@ -298,6 +358,80 @@ export default function AdminToolsPage() {
                 <label className="block text-sm text-red-400 mb-1 font-semibold">▶️ ลิงก์ YouTube ตัวอย่าง — วิดีโอสาธิตการใช้งาน Tool</label>
                 <input type="text" value={formData.youtube_url || ''} onChange={(e) => setFormData({...formData, youtube_url: e.target.value})} placeholder="https://www.youtube.com/embed/xxxxx" className="w-full bg-slate-800 border border-red-500/50 rounded px-3 py-2 text-white" />
                 <p className="text-xs text-slate-500 mt-1">ใช้ลิงก์ embed เช่น https://www.youtube.com/embed/VIDEO_ID</p>
+              </div>
+
+              {/* Flow Tools Studio & AI Models (airefills style) */}
+              <div className="border-t border-slate-700 pt-4 mt-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🤖</span>
+                  <h4 className="text-sm font-semibold text-cyan-400">การตั้งค่า Flow Tools & โมเดล AI (สไตล์ AI Refill)</h4>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">🎬 โมเดลวิดีโอ (Video Model)</label>
+                    <input 
+                      type="text" 
+                      value={formData.video_model || ''} 
+                      onChange={(e) => setFormData({...formData, video_model: e.target.value})} 
+                      placeholder="เช่น Omni 1.1 Flash · Veo 3.1" 
+                      className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:border-cyan-500 text-sm" 
+                    />
+                    <p className="text-xs text-slate-500 mt-1">แสดงเป็นป้ายโมเดลบนการ์ดเครื่องมือ</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">🎨 โมเดลรูปภาพ (Image Model)</label>
+                    <input 
+                      type="text" 
+                      value={formData.image_model || ''} 
+                      onChange={(e) => setFormData({...formData, image_model: e.target.value})} 
+                      placeholder="เช่น Nano Banana Pro · Imagen 4" 
+                      className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:border-cyan-500 text-sm" 
+                    />
+                    <p className="text-xs text-slate-500 mt-1">แสดงเป็นป้ายโมเดลภาพบนการ์ด</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">📂 หมวดหมู่เครื่องมือ (Category)</label>
+                    <select 
+                      value={formData.category || 'video'} 
+                      onChange={(e) => setFormData({...formData, category: e.target.value})} 
+                      className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:border-cyan-500 text-sm"
+                    >
+                      <option value="hardsell">📢 คลิปขายสินค้าดุ (Hardsell Ads)</option>
+                      <option value="film">🎬 ละครสั้น / ซีรีส์ (Film & Drama)</option>
+                      <option value="podcast">🎙️ พอดแคสต์ AI (Podcast)</option>
+                      <option value="showhow">🧼 ทำให้ดู / โชว์สินค้า (Showhow Demo)</option>
+                      <option value="minimal">📦 โฆษณามินิมอล (Minimal Ad)</option>
+                      <option value="video">🎥 วิดีโอทั่วไป (General Video)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">🔒 ระดับสมาชิกที่เข้าถึงได้ (Tier)</label>
+                    <select 
+                      value={formData.tier_required || 'pro'} 
+                      onChange={(e) => setFormData({...formData, tier_required: e.target.value})} 
+                      className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:border-cyan-500 text-sm"
+                    >
+                      <option value="starter">🟢 PUP Starter (ทดลองฟรี 3 คลิป)</option>
+                      <option value="pro">🔴 PUP Pro Creator (สมาชิกโปร)</option>
+                      <option value="vip">👑 PUP Master VIP (สมาชิกสูงสุด)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">🏷️ แท็กฟีเจอร์ (Tags - คั่นด้วยจุลภาค ,)</label>
+                  <input 
+                    type="text" 
+                    value={formData.tags_string || ''} 
+                    onChange={(e) => setFormData({...formData, tags_string: e.target.value})} 
+                    placeholder="เช่น video, tiktok, ads, auto, ปิดการขาย" 
+                    className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white focus:border-cyan-500 text-sm" 
+                  />
+                </div>
               </div>
 
               <div className="border-t border-slate-700 pt-4 mt-4">

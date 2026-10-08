@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
+import FlowToolCard from '@/components/FlowToolCard';
 
 function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
@@ -104,6 +105,12 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
   };
 
   const ownedToolIds = new Set(userTools?.map((ut: any) => ut.tool_id) || []);
+  const courseTool = allTools?.find((t: any) => t.slug === 'tiktok-ai-affiliate' || t.category === 'course');
+  const flowTools = allTools?.filter((t: any) => t.category !== 'course' && t.slug !== 'tiktok-ai-affiliate');
+  const hasCourseAccess = Boolean(
+    profile?.role === 'admin' ||
+    (courseTool && ownedToolIds.has(courseTool.id))
+  );
 
   return (
     <div className="min-h-screen text-[var(--text-primary)] p-4 sm:p-6 transition-colors duration-200">
@@ -134,7 +141,13 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
           </div>
         </div>
         
-        <div className="flex items-center gap-3 self-end sm:self-center">
+        <div className="flex items-center gap-2.5 self-end sm:self-center flex-wrap">
+          <Link href="/courses" className="puppap-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 hover:scale-105 transition-transform">
+            <span>🎓 คอร์สเรียน</span>
+          </Link>
+          <Link href="/flow-tools" className="puppap-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 hover:scale-105 transition-transform">
+            <span>✨ คลัง Flow Tools</span>
+          </Link>
           {avatarUrl && (
             <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover border-[1.5px] border-[var(--border)]" />
           )}
@@ -155,140 +168,183 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
           </div>
         )}
 
-        {/* Tools Grid */}
-        <div>
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-[var(--text-primary)]">
-            <span className="text-[var(--accent)]">❖</span> เครื่องมือของคุณ
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allTools?.map((tool: any) => {
-              const hasTool = ownedToolIds.has(tool.id);
-              const posterImage = tool.poster_url || null;
-              const updateInfo = formatToolUpdateDate(tool.updated_at);
+        {/* 🎓 คอร์สเรียนออนไลน์ / ห้องเรียน (Low-Tech & All Ages Friendly) */}
+        {courseTool && (
+          <section className="puppap-card p-5 sm:p-7 relative overflow-hidden border-2 border-[var(--border-accent)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-deep)] to-[var(--bg-card)] shadow-lg">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-3 max-w-2xl">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
+                    🎓 คอร์สเรียนออนไลน์
+                  </span>
+                  {hasCourseAccess ? (
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                      <span>✅</span> ปลดล็อกแล้ว · สิทธิ์เรียนตลอดชีพ
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                      <span>💡</span> ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (16 บท)
+                    </span>
+                  )}
+                </div>
 
-              if (hasTool) {
-                return (
-                  <div key={tool.id} className="puppap-card p-5 border-emerald-500/60 hover:border-emerald-500 transition-colors flex flex-col h-full shadow-md">
-                    {posterImage ? (
-                      <div className="w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden border border-[var(--border-light)] bg-black/10">
-                        <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className="w-16 h-16 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-center justify-center text-3xl mb-4">
-                        {tool.icon || '✨'}
-                      </div>
-                    )}
+                <div>
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] tracking-tight">
+                    {courseTool.name || 'ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า'}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+                    {hasCourseAccess
+                      ? 'คุณมีสิทธิ์เข้าเรียนครบทั้ง 16 บทเรียนตลอดชีพ พร้อมโปรแกรมช่วยผลิตคลิป ดูซ้ำได้ทุกเวลาบนมือถือและคอมพิวเตอร์'
+                      : 'คู่มือสร้างรายได้แบบจับมือทำ 16 บทเรียนเต็ม ตั้งแต่ก้าวแรก ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์ ไม่ต้องออกกล้อง'}
+                  </p>
+                </div>
 
-                    <div className="flex items-center gap-2 mb-2">
-                      {tool.version && (
-                        <span className="px-2 py-0.5 bg-[var(--accent-dim)] border border-[var(--accent)] text-[var(--accent)] font-mono text-[11px] rounded-md font-semibold">
-                          {tool.version}
-                        </span>
-                      )}
-                      {updateInfo && (
-                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
-                          updateInfo.isRecent
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-[var(--bg-deep)] border-[var(--border-light)] text-[var(--text-muted)]'
-                        }`}>
-                          {updateInfo.text}
-                        </span>
-                      )}
-                    </div>
+                {/* Quick Info Badges */}
+                <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] flex-wrap pt-1">
+                  <span className="flex items-center gap-1">
+                    <span>🎬</span> 16 บทเรียนเต็ม
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <span>📱</span> ดูบนมือถือได้
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <span>🔄</span> อัปเดตฟรีตลอดชีพ
+                  </span>
+                </div>
+              </div>
 
-                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{tool.name}</h3>
-                    <p className="text-[var(--text-secondary)] text-sm mb-4 flex-grow">{tool.description}</p>
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--border-light)]">
-                      <span className="text-emerald-600 dark:text-emerald-400 text-sm font-bold flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        ปลดล็อกแล้ว
-                      </span>
-                      <Link href={`/tool/${tool.slug}`} className="puppap-btn-primary px-4 py-2 text-sm">
-                        เข้าใช้งาน
+              {/* Action Buttons: High-Contrast & Big for Low-Tech Learners */}
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0 lg:w-72">
+                {hasCourseAccess ? (
+                  <>
+                    <Link
+                      href={`/course/${courseTool.slug || 'tiktok-ai-affiliate'}`}
+                      className="puppap-btn-primary py-3.5 px-6 text-center text-sm sm:text-base font-black flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-transform"
+                    >
+                      <span className="text-lg">▶</span>
+                      <span>กดตรงนี้เพื่อเข้าห้องเรียน</span>
+                    </Link>
+                    <Link
+                      href="/courses"
+                      className="puppap-btn-secondary py-2.5 px-4 text-center text-xs font-bold text-[var(--text-secondary)]"
+                    >
+                      📑 ดูสารบัญ 16 บทเรียน
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href={`/checkout/${courseTool.slug || 'tiktok-ai-affiliate'}`}
+                      className="puppap-btn-primary py-3.5 px-6 text-center text-sm sm:text-base font-black flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-transform"
+                    >
+                      <span>🛒</span>
+                      <span>สมัครเรียน 990฿ (ครั้งเดียวจบ)</span>
+                    </Link>
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/course/${courseTool.slug || 'tiktok-ai-affiliate'}`}
+                        className="flex-1 puppap-btn-secondary py-2.5 px-3 text-center text-xs font-bold"
+                      >
+                        🎁 ดูตัวอย่างฟรี
+                      </Link>
+                      <Link
+                        href="/courses"
+                        className="flex-1 puppap-btn-secondary py-2.5 px-3 text-center text-xs font-bold"
+                      >
+                        รายละเอียด
                       </Link>
                     </div>
-                  </div>
-                );
-              } else {
-                const hasTrial = trialToolIds.has(tool.id);
-                const trialEnabled = tool.trial_enabled && tool.trial_flow_url;
-                
-                return (
-                  <div key={tool.id} className={`puppap-card p-5 flex flex-col h-full ${hasTrial ? 'border-amber-500/50' : 'border-[var(--border-light)] opacity-90 hover:opacity-100'} transition-opacity`}>
-                    {posterImage ? (
-                      <div className={`w-full aspect-[3/4] mb-4 rounded-xl overflow-hidden border border-[var(--border-light)] ${hasTrial ? '' : 'grayscale opacity-75'}`}>
-                        <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className={`w-16 h-16 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-center justify-center text-3xl mb-4 ${hasTrial ? '' : 'grayscale'}`}>
-                        {tool.icon || '🔒'}
-                      </div>
-                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
-                    <div className="flex items-center gap-2 mb-2">
-                      {tool.version && (
-                        <span className="px-2 py-0.5 bg-[var(--accent-dim)] border border-[var(--accent)] text-[var(--accent)] font-mono text-[11px] rounded-md font-semibold">
-                          {tool.version}
-                        </span>
-                      )}
-                      {updateInfo && (
-                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${
-                          updateInfo.isRecent
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-[var(--bg-deep)] border-[var(--border-light)] text-[var(--text-muted)]'
-                        }`}>
-                          {updateInfo.text}
-                        </span>
-                      )}
-                    </div>
+        {/* 📌 คู่มือ 3 ขั้นตอนง่ายๆ สำหรับทุกคนทุกวัย */}
+        <section className="puppap-card p-5 sm:p-6 bg-[var(--bg-card)] border-[var(--border-light)]">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h3 className="text-sm sm:text-base font-black text-[var(--text-primary)] flex items-center gap-2">
+              <span className="text-[var(--accent)]">📌</span> วิธีเข้าเรียนและใช้งานง่ายๆ (สำหรับมือใหม่)
+            </h3>
+            <a
+              href="https://m.me/100083126689322"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[var(--accent)] hover:underline font-bold flex items-center gap-1"
+            >
+              <span>💬 สอบถามแอดมินทางแชท</span>
+              <span>→</span>
+            </a>
+          </div>
 
-                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{tool.name}</h3>
-                    <p className="text-[var(--text-secondary)] text-sm mb-4 flex-grow">{tool.description}</p>
-                    
-                    {hasTrial ? (
-                      /* Trial active - เคยทดลองใช้แล้ว */
-                      <div className="mt-auto pt-4 border-t border-[var(--border-light)] space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-amber-600 dark:text-amber-400 text-sm font-semibold flex items-center gap-1">🎁 โหมดทดลองใช้ (3 คลิป)</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Link href={`/tool/${tool.slug}?trial=1`} className="flex-1 text-center px-3 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-sm transition-colors">
-                            ▶️ เข้าตัวทดลอง
-                          </Link>
-                          <Link href={`/checkout/${tool.slug}`} className="puppap-btn-primary px-3 py-2 text-sm">
-                            🛒 ซื้อเต็ม
-                          </Link>
-                        </div>
-                      </div>
-                    ) : (
-                      /* ยังไม่ได้ซื้อ / ยังไม่ได้ทดลอง */
-                      <div className="mt-auto pt-4 border-t border-[var(--border-light)] space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[var(--text-muted)] text-sm flex items-center gap-1">🔒 ยังไม่ได้ซื้อ</span>
-                          <div className="flex gap-2">
-                            <Link href={`/checkout/${tool.slug}`} className="puppap-btn-primary px-3 py-1.5 text-xs">
-                              🛒 สั่งซื้อ
-                            </Link>
-                            <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="puppap-btn-secondary px-3 py-1.5 text-xs">
-                              💬 แชท
-                            </a>
-                          </div>
-                        </div>
-                        {trialEnabled && (
-                          <button
-                            onClick={() => startTrial(tool.id)}
-                            disabled={startingTrial === tool.id}
-                            className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold disabled:opacity-50 transition-all"
-                          >
-                            {startingTrial === tool.id ? '⏳ กำลังเริ่ม...' : '🎁 ทดลองใช้ฟรี (3 คลิป)'}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
+                1
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">เข้าสู่ระบบครั้งเดียว</h4>
+                <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] leading-relaxed">
+                  ล็อกอินด้วย Gmail สะดวก รวดเร็ว ระบบจดจำสิทธิ์ตลอดชีพ ไม่ต้องจำรหัสผ่าน
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
+                2
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">กดปุ่มเข้าห้องเรียน</h4>
+                <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] leading-relaxed">
+                  กดปุ่มสีแดง "เข้าห้องเรียน" ด้านบน จะพบสารบัญวิดีโอ 16 บทเรียนพร้อมเรียนทันที
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
+                3
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">ดูคลิป & ทำตามได้เลย</h4>
+                <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] leading-relaxed">
+                  ดูวิดีโอแนวนอนคมชัด และกดปุ่มเปิดเครื่องมือ Flow ทำตามทีละขั้นตอนได้ง่ายๆ
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Tools Grid */}
+        <div>
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-[var(--text-primary)]">
+              <span className="text-[var(--accent)]">❖</span> สตูดิโอ Flow Tools ของคุณ
+            </h2>
+            <Link
+              href="/flow-tools"
+              className="text-xs text-[var(--accent)] hover:underline font-bold flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--accent-dim)] border border-[var(--border-accent)]"
+            >
+              <span>ดูเครื่องมือ Flow ทั้งหมด ({flowTools?.length || 0} ตัว)</span>
+              <span>→</span>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {flowTools?.map((tool: any) => (
+              <FlowToolCard
+                key={tool.id}
+                tool={tool}
+                hasAccess={ownedToolIds.has(tool.id)}
+                hasTrial={trialToolIds.has(tool.id)}
+                onStartTrial={startTrial}
+                isStartingTrial={startingTrial === tool.id}
+              />
+            ))}
           </div>
         </div>
 
