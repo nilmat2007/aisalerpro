@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { notifyOrderApproved } from '@/lib/telegram';
+import { sendEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email';
 
 function generateLicenseCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -79,8 +80,24 @@ export async function PATCH(
       if (updateError) throw updateError;
 
       // แจ้ง Telegram
-      const { data: toolInfo } = await supabase.from('tools').select('name').eq('id', order.tool_id).single()
+      const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single()
       notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ')
+
+      // ส่งอีเมลแจ้งเตือนลูกค้าว่าได้รับการอนุมัติเรียบร้อยแล้ว
+      if (order.user_email && order.user_email.includes('@')) {
+        const emailHtml = buildOrderApprovedEmail({
+          customerName: order.user_email.split('@')[0],
+          toolName: toolInfo?.name || 'เครื่องมือ AI',
+          toolSlug: toolInfo?.slug || '',
+          keyCode,
+          amount: order.amount || toolInfo?.price || '',
+        })
+        sendEmail({
+          to: order.user_email,
+          subject: `✅ คำสั่งซื้อ ${toolInfo?.name || 'เครื่องมือ AI'} ของคุณได้รับการอนุมัติแล้ว — PUP PAP AI`,
+          html: emailHtml,
+        }).catch(err => console.error('Failed to send order approved email:', err))
+      }
 
       return NextResponse.json({ success: true, keyCode });
 
@@ -94,6 +111,23 @@ export async function PATCH(
         .eq('id', id);
 
       if (updateError) throw updateError;
+
+      // ส่งอีเมลแจ้งเตือนลูกค้ากรณีปฏิเสธ
+      if (order.user_email && order.user_email.includes('@')) {
+        const { data: toolInfo } = await supabase.from('tools').select('name, slug').eq('id', order.tool_id).single()
+        const emailHtml = buildOrderRejectedEmail({
+          customerName: order.user_email.split('@')[0],
+          toolName: toolInfo?.name || 'เครื่องมือ AI',
+          toolSlug: toolInfo?.slug || '',
+          note,
+        })
+        sendEmail({
+          to: order.user_email,
+          subject: `⚠️ แจ้งเตือนเกี่ยวกับคำสั่งซื้อ ${toolInfo?.name || 'เครื่องมือ AI'} — PUP PAP AI`,
+          html: emailHtml,
+        }).catch(err => console.error('Failed to send order rejected email:', err))
+      }
+
       return NextResponse.json({ success: true });
     }
 

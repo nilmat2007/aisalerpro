@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { sendTelegram, answerCallback, editMessage } from '@/lib/telegram'
-import { sendEmail, buildTrialFollowUpEmail } from '@/lib/email'
+import { sendEmail, buildTrialFollowUpEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email'
 import { processTrialFollowUps } from '@/lib/trial-followup'
 import { broadcastFBSmart } from '@/lib/facebook'
 
@@ -340,7 +340,7 @@ async function handleApproveOrder(callbackId: string, chatId: string, messageId:
   // Get order
   const { data: order } = await supabase
     .from('orders')
-    .select('*, tools(name)')
+    .select('*, tools(name, slug, price)')
     .eq('id', orderId)
     .single()
 
@@ -396,6 +396,22 @@ async function handleApproveOrder(callbackId: string, chatId: string, messageId:
 
   await answerCallback(callbackId, '✅ อนุมัติสำเร็จ!')
 
+  // Send approval email to customer
+  if (order.user_email && order.user_email.includes('@')) {
+    const emailHtml = buildOrderApprovedEmail({
+      customerName: order.user_email.split('@')[0],
+      toolName: (order as any).tools?.name || 'เครื่องมือ AI',
+      toolSlug: (order as any).tools?.slug || '',
+      keyCode: keyStr,
+      amount: order.amount || (order as any).tools?.price || '',
+    })
+    sendEmail({
+      to: order.user_email,
+      subject: `✅ คำสั่งซื้อ ${(order as any).tools?.name || 'เครื่องมือ AI'} ของคุณได้รับการอนุมัติแล้ว — PUP PAP AI`,
+      html: emailHtml,
+    }).catch(err => console.error('Telegram approve send email error:', err))
+  }
+
   // Update message
   const toolName = (order as any).tools?.name || 'ไม่ระบุ'
   await editMessage(chatId, messageId,
@@ -412,7 +428,7 @@ async function handleApproveOrder(callbackId: string, chatId: string, messageId:
 async function handleRejectOrder(callbackId: string, chatId: string, messageId: number, orderId: string) {
   const { data: order } = await supabase
     .from('orders')
-    .select('*, tools(name)')
+    .select('*, tools(name, slug)')
     .eq('id', orderId)
     .single()
 
@@ -424,6 +440,21 @@ async function handleRejectOrder(callbackId: string, chatId: string, messageId: 
   await supabase.from('orders').update({ status: 'rejected' }).eq('id', orderId)
 
   await answerCallback(callbackId, '❌ ปฏิเสธแล้ว')
+
+  // Send rejection email to customer
+  if (order.user_email && order.user_email.includes('@')) {
+    const emailHtml = buildOrderRejectedEmail({
+      customerName: order.user_email.split('@')[0],
+      toolName: (order as any).tools?.name || 'เครื่องมือ AI',
+      toolSlug: (order as any).tools?.slug || '',
+      note: 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ถูกต้อง หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ',
+    })
+    sendEmail({
+      to: order.user_email,
+      subject: `⚠️ แจ้งเตือนเกี่ยวกับคำสั่งซื้อ ${(order as any).tools?.name || 'เครื่องมือ AI'} — PUP PAP AI`,
+      html: emailHtml,
+    }).catch(err => console.error('Telegram reject send email error:', err))
+  }
 
   await editMessage(chatId, messageId,
     `❌ <b>ปฏิเสธแล้ว</b>\n\n` +

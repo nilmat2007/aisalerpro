@@ -206,6 +206,23 @@ export default async function HomePage() {
   const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
   const { data: announcements } = await supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false })
   const { data: userTrials } = await supabase.from('user_trials').select('*').eq('user_id', user.id)
+  const { data: userOrders } = await supabase
+    .from('orders')
+    .select('*, tools(name, slug)')
+    .eq('user_id', user.id)
+    .in('status', ['pending', 'rejected'])
+    .order('created_at', { ascending: false })
+    .limit(5)
 
-  return <DashboardClient user={user} profile={profile} userTools={userTools || []} allTools={allTools || []} announcements={announcements || []} userTrials={userTrials || []} />
+  return (
+    <DashboardClient 
+      user={user} 
+      profile={profile} 
+      userTools={userTools || []} 
+      allTools={allTools || []} 
+      announcements={announcements || []} 
+      userTrials={userTrials || []} 
+      userOrders={userOrders || []} 
+    />
+  )
 }

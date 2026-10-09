@@ -328,8 +328,12 @@ export default function CheckoutClient({
                   <span>ทีมงานจะตรวจสอบและอนุมัติภายใน 5-15 นาที</span>
                 </p>
                 <p className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
-                  <span>✨</span>
+                  <span>⚡</span>
                   <span>เมื่ออนุมัติแล้ว ระบบจะปลดล็อกเครื่องมือ/คอร์สให้อัตโนมัติ</span>
+                </p>
+                <p className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold">
+                  <span>📧</span>
+                  <span>ระบบจะส่งอีเมลยืนยันผลการอนุมัติไปยัง {userEmail}</span>
                 </p>
               </div>
 

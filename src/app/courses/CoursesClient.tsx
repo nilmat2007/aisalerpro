@@ -159,17 +159,17 @@ export default function CoursesClient({
 
           {/* Call to Actions */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-            <Link
-              href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
-              className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-black shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
-            >
-              <span>{hasAccess ? '🚀 เข้าสู่ห้องเรียนของคุณ' : '🎁 ดูตัวอย่างบทเรียนฟรี'}</span>
-            </Link>
-
-            {!hasAccess && (
+            {hasAccess ? (
+              <Link
+                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
+                className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-black shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
+              >
+                <span>🚀 เข้าสู่ห้องเรียนของคุณ</span>
+              </Link>
+            ) : (
               <Link
                 href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
-                className="puppap-btn-secondary px-7 py-3.5 text-sm sm:text-base font-bold flex items-center gap-1.5 shadow-sm hover:scale-105 transition-transform"
+                className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-black shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
               >
                 <span>🛒 สมัครเรียน 990 บาท (ครั้งเดียวจบ)</span>
               </Link>

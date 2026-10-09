@@ -40,7 +40,7 @@ function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string
   );
 }
 
-export default function DashboardClient({ user, profile, userTools, allTools, announcements, userTrials }: any) {
+export default function DashboardClient({ user, profile, userTools, allTools, announcements, userTrials, userOrders = [] }: any) {
   const router = useRouter();
   const supabase = createClient();
   const [licenseKey, setLicenseKey] = useState('');
@@ -159,6 +159,87 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
       </header>
 
       <main className="max-w-6xl mx-auto space-y-8">
+        {/* Order Status Banners (Pending / Rejected) */}
+        {userOrders && userOrders.length > 0 && (
+          <div className="space-y-3">
+            {userOrders.map((order: any) => {
+              if (order.status === 'pending') {
+                return (
+                  <div 
+                    key={order.id} 
+                    className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-[var(--text-primary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-pulse"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-xl shrink-0 font-bold">
+                        ⏳
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-amber-400">
+                          ได้รับสลิปคำสั่งซื้อ &quot;{order.tools?.name || 'เครื่องมือ AI'}&quot; เรียบร้อยแล้ว
+                        </h4>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                          ทีมงานกำลังตรวจสอบและเปิดสิทธิ์การใช้งานให้คุณ (ปกติไม่เกิน 5-15 นาที) ระบบจะปลดล็อกให้อัตโนมัติ ไม่ต้องโอนซ้ำนะครับ
+                        </p>
+                      </div>
+                    </div>
+                    <a
+                      href="https://m.me/100083126689322"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="puppap-btn-secondary px-4 py-2 text-xs font-bold shrink-0 self-end sm:self-center flex items-center gap-1.5"
+                    >
+                      <span>💬 สอบถามแอดมิน</span>
+                    </a>
+                  </div>
+                );
+              }
+
+              if (order.status === 'rejected') {
+                return (
+                  <div 
+                    key={order.id} 
+                    className="p-4 sm:p-5 rounded-2xl bg-rose-500/10 border-2 border-rose-500/40 text-[var(--text-primary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl shrink-0 font-bold">
+                        ⚠️
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-rose-400">
+                          คำสั่งซื้อ &quot;{order.tools?.name || 'เครื่องมือ AI'}&quot; ยังไม่ผ่านการอนุมัติ
+                        </h4>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                          {order.admin_note ? `เหตุผล: ${order.admin_note}` : 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ชัดเจน หรือยอดเงินไม่ตรง ท่านสามารถแนบสลิปใหม่อีกครั้งได้ครับ'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      {order.tools?.slug && (
+                        <Link
+                          href={`/checkout/${order.tools.slug}`}
+                          className="puppap-btn-primary px-4 py-2 text-xs font-bold"
+                        >
+                          🔄 แนบสลิปใหม่
+                        </Link>
+                      )}
+                      <a
+                        href="https://m.me/100083126689322"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="puppap-btn-secondary px-3.5 py-2 text-xs font-semibold"
+                      >
+                        💬 แชทหาแอดมิน
+                      </a>
+                    </div>
+                  </div>
+                );
+              }
+
+              return null;
+            })}
+          </div>
+        )}
+
         {/* Announcements */}
         {activeAnnouncements.length > 0 && (
           <div className="space-y-3">
@@ -242,20 +323,12 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                       <span>🛒</span>
                       <span>สมัครเรียน 990฿ (ครั้งเดียวจบ)</span>
                     </Link>
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/course/${courseTool.slug || 'tiktok-ai-affiliate'}`}
-                        className="flex-1 puppap-btn-secondary py-2.5 px-3 text-center text-xs font-bold"
-                      >
-                        🎁 ดูตัวอย่างฟรี
-                      </Link>
-                      <Link
-                        href="/courses"
-                        className="flex-1 puppap-btn-secondary py-2.5 px-3 text-center text-xs font-bold"
-                      >
-                        รายละเอียด
-                      </Link>
-                    </div>
+                    <Link
+                      href="/courses"
+                      className="puppap-btn-secondary py-2.5 px-4 text-center text-xs font-bold text-[var(--text-secondary)]"
+                    >
+                      📑 ดูสารบัญ 16 บทเรียน
+                    </Link>
                   </>
                 )}
               </div>

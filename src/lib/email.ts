@@ -184,3 +184,191 @@ export function buildTrialFollowUpEmail({
 </html>`
 }
 
+export interface OrderApprovedEmailOptions {
+  customerName?: string
+  toolName: string
+  toolSlug?: string
+  keyCode?: string
+  amount?: string | number
+}
+
+export function buildOrderApprovedEmail({
+  customerName,
+  toolName,
+  toolSlug,
+  keyCode,
+  amount,
+}: OrderApprovedEmailOptions) {
+  const isCourse = toolSlug === 'tiktok-ai-affiliate'
+  const actionUrl = isCourse
+    ? `https://puppapai.vercel.app/course/${toolSlug}`
+    : toolSlug
+    ? `https://puppapai.vercel.app/tool/${toolSlug}`
+    : 'https://puppapai.vercel.app'
+  const amountDisplay = amount ? (String(amount).includes('บาท') ? amount : `${amount} บาท`) : ''
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#0b0f19; font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:620px; margin:0 auto; padding:32px 16px;">
+    <!-- Logo & Brand Header -->
+    <div style="text-align:center; margin-bottom:28px;">
+      <h1 style="color:#ef4444; font-size:26px; font-weight:900; letter-spacing:1px; margin:0;">🤖 PUP PAP AI</h1>
+      <p style="color:#f87171; font-size:13px; margin:6px 0 0 0; font-weight:700; letter-spacing:1px;">คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม</p>
+    </div>
+
+    <!-- Main Card -->
+    <div style="background:linear-gradient(180deg, #131d33 0%, #0d1527 100%); border:1px solid #10b98166; border-radius:20px; padding:32px 24px; box-shadow:0 12px 30px rgba(0,0,0,0.5); margin-bottom:20px;">
+      <!-- Badge -->
+      <div style="display:inline-block; background:linear-gradient(135deg, #10b981, #059669); color:#ffffff; font-size:12px; font-weight:700; padding:5px 14px; border-radius:30px; margin-bottom:18px; letter-spacing:0.5px;">
+        ✅ อนุมัติคำสั่งซื้อเรียบร้อยแล้ว
+      </div>
+
+      <h2 style="color:#ffffff; font-size:22px; font-weight:700; line-height:1.4; margin:0 0 14px 0;">
+        สวัสดีคุณ ${customerName || 'คนพิเศษ'} 👋<br>
+        <span style="color:#34d399;">ยินดีต้อนรับสู่ ${toolName}!</span>
+      </h2>
+
+      <p style="color:#cbd5e1; font-size:15px; line-height:1.7; margin:0 0 20px 0;">
+        ทีมงานได้ทำการตรวจสอบสลิปและ <b>อนุมัติคำสั่งซื้อให้คุณเรียบร้อยแล้ว</b> พร้อมทั้งผูกสิทธิ์การใช้งานตลอดชีพเข้ากับบัญชีอีเมลนี้ของคุณแบบอัตโนมัติ คุณสามารถกดเข้าใช้งานได้ทันทีโดยไม่ต้องกรอกรหัสใดๆ เพิ่มเติมครับ
+      </p>
+
+      <!-- Details Box -->
+      <div style="background:#0a101f; border:1px solid #1e293b; border-radius:14px; padding:18px 20px; margin-bottom:24px;">
+        <div style="color:#94a3b8; font-size:13px; margin-bottom:6px;">
+          📦 รายการ: <b style="color:#ffffff;">${toolName}</b>
+        </div>
+        ${amountDisplay ? `
+        <div style="color:#94a3b8; font-size:13px; margin-bottom:6px;">
+          💰 ยอดชำระ: <b style="color:#10b981;">${amountDisplay}</b> (ซื้อขาดตลอดชีพ)
+        </div>` : ''}
+        ${keyCode ? `
+        <div style="color:#94a3b8; font-size:13px; margin-top:10px; padding-top:10px; border-top:1px dashed #1e293b;">
+          🔑 รหัส License Key อ้างอิง: <span style="font-family:monospace; color:#38bdf8; font-weight:700; background:#0f172a; padding:3px 8px; border-radius:6px; border:1px solid #0284c733;">${keyCode}</span>
+          <div style="color:#64748b; font-size:11px; margin-top:4px;">(ระบบผูกสิทธิ์เข้าบัญชีให้อัตโนมัติแล้ว รหัสนี้เก็บไว้เป็นหลักฐานคำสั่งซื้อ)</div>
+        </div>` : ''}
+      </div>
+
+      <!-- Big CTA Button -->
+      <div style="text-align:center; margin-bottom:20px;">
+        <a href="${actionUrl}" 
+           style="display:inline-block; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#ffffff; font-size:16px; font-weight:700; text-decoration:none; padding:15px 36px; border-radius:12px; box-shadow:0 6px 20px rgba(16, 185, 129, 0.4);">
+          🚀 กดตรงนี้เพื่อเข้าใช้งาน ${toolName} ทันที
+        </a>
+      </div>
+
+      <div style="text-align:center;">
+        <a href="https://m.me/100083126689322" 
+           style="display:inline-block; color:#38bdf8; font-size:13px; font-weight:600; text-decoration:none; padding:6px 12px;">
+          💬 ติดต่อสอบถามหรือขอความช่วยเหลือจากทีมงาน &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center; padding:12px; color:#64748b; font-size:12px; line-height:1.6;">
+      <p style="margin:0;">
+        PUP PAP AI (ปุ๊บปั๊บ AI) • คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม<br>
+        © 2026 PUP PAP AI. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+export interface OrderRejectedEmailOptions {
+  customerName?: string
+  toolName: string
+  toolSlug?: string
+  note?: string
+}
+
+export function buildOrderRejectedEmail({
+  customerName,
+  toolName,
+  toolSlug,
+  note,
+}: OrderRejectedEmailOptions) {
+  const checkoutUrl = toolSlug 
+    ? `https://puppapai.vercel.app/checkout/${toolSlug}` 
+    : 'https://puppapai.vercel.app/store'
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#0b0f19; font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;">
+  <div style="max-width:620px; margin:0 auto; padding:32px 16px;">
+    <!-- Logo & Brand Header -->
+    <div style="text-align:center; margin-bottom:28px;">
+      <h1 style="color:#ef4444; font-size:26px; font-weight:900; letter-spacing:1px; margin:0;">🤖 PUP PAP AI</h1>
+      <p style="color:#f87171; font-size:13px; margin:6px 0 0 0; font-weight:700; letter-spacing:1px;">คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม</p>
+    </div>
+
+    <!-- Main Card -->
+    <div style="background:linear-gradient(180deg, #131d33 0%, #0d1527 100%); border:1px solid #f59e0b66; border-radius:20px; padding:32px 24px; box-shadow:0 12px 30px rgba(0,0,0,0.5); margin-bottom:20px;">
+      <!-- Badge -->
+      <div style="display:inline-block; background:linear-gradient(135deg, #f59e0b, #d97706); color:#ffffff; font-size:12px; font-weight:700; padding:5px 14px; border-radius:30px; margin-bottom:18px; letter-spacing:0.5px;">
+        ⚠️ แจ้งเตือนเกี่ยวกับคำสั่งซื้อ
+      </div>
+
+      <h2 style="color:#ffffff; font-size:22px; font-weight:700; line-height:1.4; margin:0 0 14px 0;">
+        สวัสดีคุณ ${customerName || 'คุณลูกค้า'} 👋<br>
+        <span style="color:#fcd34d;">คำสั่งซื้อ ${toolName} ยังไม่สามารถอนุมัติได้</span>
+      </h2>
+
+      <p style="color:#cbd5e1; font-size:15px; line-height:1.7; margin:0 0 20px 0;">
+        ทีมงานได้ทำการตรวจสอบคำสั่งซื้อของคุณแล้ว พบว่ายังไม่สามารถดำเนินการเปิดสิทธิ์ได้เนื่องจาก:
+      </p>
+
+      <!-- Reason Box -->
+      <div style="background:#1e1411; border:1px solid #ef444466; border-radius:14px; padding:18px 20px; margin-bottom:24px;">
+        <div style="color:#fca5a5; font-size:13px; font-weight:700; margin-bottom:4px;">
+          📝 เหตุผลจากเจ้าหน้าที่:
+        </div>
+        <div style="color:#ffffff; font-size:14px; line-height:1.6;">
+          ${note || 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ชัดเจน หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ'}
+        </div>
+      </div>
+
+      <p style="color:#94a3b8; font-size:14px; line-height:1.6; margin:0 0 24px 0;">
+        ไม่ต้องกังวลใจนะครับ! คุณสามารถกดปุ่มด้านล่างเพื่อทำการแนบสลิปใหม่อีกครั้ง หรือทักแชทแจ้งเจ้าหน้าที่เพื่อช่วยตรวจสอบได้ทันทีครับ
+      </p>
+
+      <!-- CTA Buttons -->
+      <div style="text-align:center; margin-bottom:16px;">
+        <a href="${checkoutUrl}" 
+           style="display:inline-block; background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:#ffffff; font-size:15px; font-weight:700; text-decoration:none; padding:14px 32px; border-radius:12px; box-shadow:0 6px 20px rgba(239, 68, 68, 0.35);">
+          🔄 แนบสลิปคำสั่งซื้อใหม่
+        </a>
+      </div>
+
+      <div style="text-align:center;">
+        <a href="https://m.me/100083126689322" 
+           style="display:inline-block; color:#38bdf8; font-size:13px; font-weight:600; text-decoration:none; padding:6px 12px;">
+          💬 หรือทักแชท Facebook เพื่อแจ้งสลิปกับแอดมิน &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center; padding:12px; color:#64748b; font-size:12px; line-height:1.6;">
+      <p style="margin:0;">
+        PUP PAP AI (ปุ๊บปั๊บ AI) • คิดปุ๊บ คลิปปั๊บ ขายได้ทุกแพลตฟอร์ม<br>
+        © 2026 PUP PAP AI. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
+}
+
