@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -25,13 +25,17 @@ interface CourseStudioClientProps {
   initialDemoMode?: boolean;
 }
 
-// Convert normal youtube links to embed
+// Convert normal youtube links to secure embed
 function getEmbedUrl(url: string): string {
   if (!url) return '';
-  if (url.includes('youtube.com/embed/')) return url;
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/);
-  if (match && match[1]) {
-    return `https://www.youtube.com/embed/${match[1]}?rel=0&modestbranding=1`;
+  const videoId = match && match[1] ? match[1] : null;
+  if (videoId) {
+    return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&controls=1&disablekb=0`;
+  }
+  if (url.includes('youtube.com/embed/') || url.includes('youtube-nocookie.com/embed/')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}rel=0&modestbranding=1&iv_load_policy=3&playsinline=1`;
   }
   return url;
 }
@@ -132,6 +136,47 @@ export default function CourseStudioClient({
   const embedUrl = activeLesson ? getEmbedUrl(activeLesson.video_url) : '';
   const isVideoReady = Boolean(embedUrl) && activeLesson?.status === 'ready';
 
+  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        setIsFullscreen(false);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen]);
+
+  const toggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+    if (!document.fullscreenElement && !isFullscreen) {
+      if (playerContainerRef.current.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen().catch(() => {
+          setIsFullscreen(true);
+        });
+      } else {
+        setIsFullscreen(true);
+      }
+    } else {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen text-[var(--text-primary)] flex flex-col transition-colors duration-200">
       {/* Studio Header */}
@@ -222,17 +267,65 @@ export default function CourseStudioClient({
       <div className="flex-1 flex max-w-7xl w-full mx-auto p-4 sm:p-6 gap-6 relative">
         {/* Left Column: 16:9 Video Player & Lesson Content */}
         <main className="flex-1 min-w-0 space-y-6">
-          {/* 16:9 Landscape Video Container */}
-          <div className="w-full aspect-video rounded-2xl overflow-hidden border-2 border-[var(--border)] bg-black shadow-xl relative flex items-center justify-center">
+          {/* 16:9 Landscape Video Container with Protection Suite */}
+          <div
+            ref={playerContainerRef}
+            onContextMenu={(e) => e.preventDefault()}
+            className={`overflow-hidden relative flex items-center justify-center select-none transition-all ${
+              isFullscreen
+                ? 'fixed inset-0 z-[9999] rounded-none border-0 w-screen h-screen bg-black'
+                : 'w-full aspect-video rounded-2xl border-2 border-[var(--border)] bg-black shadow-xl'
+            }`}
+          >
             {canViewActiveLesson ? (
               isVideoReady ? (
-                <iframe
-                  src={embedUrl}
-                  title={activeLesson.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full border-0"
-                />
+                <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  <iframe
+                    src={embedUrl}
+                    title={activeLesson.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full border-0"
+                  />
+
+                  {/* 🛡️ Invisible Click Trap: Top Bar */}
+                  {/* ป้องกันการคลิกชื่อคลิป, ไอคอนช่อง, ปุ่ม Share, ปุ่ม Watch Later เพื่อไม่ให้หลุดไป YouTube */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-14 z-20 cursor-default bg-transparent"
+                    title="PUP PAP AI Protected Player"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  />
+
+                  {/* 🛡️ Invisible Click Trap: Bottom-Right YouTube External Link */}
+                  {/* ป้องกันการคลิกโลโก้ YouTube ด้านล่างขวาเพื่อเปิดหน้าใหม่ */}
+                  <div
+                    className="absolute bottom-0 right-0 w-20 h-10 z-20 cursor-default bg-transparent"
+                    title="PUP PAP AI Protected Player"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  />
+
+                  {/* 🔒 Fixed Corner Watermark (Anti-Screen Recording) */}
+                  <div className="absolute top-3 left-3 z-30 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-[11px] font-mono text-white/60 tracking-wide shadow-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
+                    <span>{user?.email || 'นักเรียน PUP PAP AI'}</span>
+                  </div>
+
+                  {/* ⛶ Smart Fullscreen Button */}
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="absolute top-3 right-3 z-30 px-2.5 py-1 rounded-lg bg-black/60 hover:bg-black/85 backdrop-blur-xs text-white/80 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-white/20 transition-all shadow-md active:scale-95"
+                    title={isFullscreen ? 'ย่อหน้าจอ' : 'ขยายเต็มจอ (Smart Fullscreen)'}
+                  >
+                    <span>{isFullscreen ? '🗗 ย่อจอ' : '⛶ เต็มจอ'}</span>
+                  </button>
+                </div>
               ) : (
                 /* Graceful Coming Soon / In Production Placeholder */
                 <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-stone-900 via-stone-950 to-neutral-900 text-white relative overflow-hidden">
@@ -312,6 +405,17 @@ export default function CourseStudioClient({
                 <span>บทถัดไป ▶</span>
                 {nextLesson && <span className="text-[11px] font-bold">({nextLesson.id})</span>}
               </button>
+
+              {isVideoReady && (
+                <button
+                  type="button"
+                  onClick={toggleFullscreen}
+                  className="puppap-btn-secondary px-3.5 py-2.5 text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                  title="ขยายเครื่องเล่นวิดีโอเต็มหน้าจอ (Smart Fullscreen)"
+                >
+                  <span>{isFullscreen ? '🗗 ย่อหน้าจอ' : '⛶ ขยายเต็มจอ'}</span>
+                </button>
+              )}
             </div>
 
             {/* Mark as Completed Button */}
