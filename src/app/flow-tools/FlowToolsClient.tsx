@@ -111,7 +111,7 @@ export default function FlowToolsClient({
               <span className="font-extrabold text-base sm:text-lg tracking-tight text-[var(--text-primary)]">
                 PUP PAP <span className="text-[var(--accent)]">AI</span>
               </span>
-              <span className="hidden sm:inline-block ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)]">
+              <span className="hidden sm:inline-block ml-2 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)]">
                 FLOW TOOLS
               </span>
             </div>
@@ -159,10 +159,9 @@ export default function FlowToolsClient({
       {/* Hero Header Section */}
       <section className="relative py-12 sm:py-16 px-4 sm:px-6 overflow-hidden border-b border-[var(--border-light)] bg-gradient-to-b from-[var(--bg-secondary)]/50 to-[var(--bg-primary)]">
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)] text-xs font-bold mb-4 shadow-xs">
-            <span>✨</span>
-            <span>เครื่องมือ Google Flow · คิดปุ๊บ คลิปปั๊บ</span>
-          </div>
+          <p className="text-xs font-extrabold uppercase tracking-wider text-[var(--accent)] mb-2">
+            ✨ เครื่องมือ Google Flow · คิดปุ๊บ คลิปปั๊บ
+          </p>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[var(--text-primary)] leading-tight mb-4">
             เครื่องมือ Flow พร้อมใช้ <span className="text-[var(--accent)]">{tools.length}+</span> ตัว
@@ -264,7 +263,7 @@ export default function FlowToolsClient({
           <div className="puppap-card p-12 text-center space-y-3">
             <span className="text-4xl">🔍</span>
             <h3 className="text-base font-bold text-[var(--text-primary)]">ไม่พบเครื่องมือที่ตรงกับเงื่อนไข</h3>
-            <p className="text-xs text-[var(--text-muted)]">ลองเลือกหมวดหมู่อื่น หรือพิมพ์คำค้นหาใหม่อีกครั้ง</p>
+            <p className="text-sm text-[var(--text-muted)]">ลองเลือกหมวดหมู่อื่น หรือพิมพ์คำค้นหาใหม่อีกครั้ง</p>
             <button
               onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
               className="puppap-btn-secondary px-4 py-1.5 text-xs mt-2"
@@ -274,44 +273,44 @@ export default function FlowToolsClient({
           </div>
         )}
 
-        {/* How It Works Section */}
+        {/* How It Works Section (Flattened dividers instead of nested cards) */}
         <section id="how-it-works" className="puppap-card p-6 sm:p-8 mt-12 border-[var(--border-light)]">
           <div className="text-center max-w-xl mx-auto mb-8">
             <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-2">
               วิธีใช้งาน Flow Tools ง่ายๆ ใน 3 ขั้นตอน
             </h2>
-            <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+            <p className="text-sm text-[var(--text-secondary)]">
               ทำงานร่วมกับ Google Flow อัจฉริยะ คิดปุ๊บ คลิปปั๊บ ใช้งานได้ทันที
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-5 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-[var(--border-light)]">
+            <div className="pt-4 md:pt-0 space-y-2.5">
               <div className="w-10 h-10 rounded-xl bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shadow-sm">
                 1
               </div>
-              <h3 className="font-bold text-sm text-[var(--text-primary)]">เลือกเครื่องมือ & กดเปิดแอป</h3>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              <h3 className="font-bold text-base text-[var(--text-primary)]">เลือกเครื่องมือ & กดเปิดแอป</h3>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 เลือกลักษณะคอนเทนต์ที่ต้องการทำ เช่น คลิปขายของดุ, ละครสั้น, พอดแคสต์ แล้วกดปุ่ม &quot;เปิดใช้ Flow Tool&quot;
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-2.5">
+            <div className="pt-4 md:pt-0 md:pl-6 space-y-2.5">
               <div className="w-10 h-10 rounded-xl bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shadow-sm">
                 2
               </div>
-              <h3 className="font-bold text-sm text-[var(--text-primary)]">วางหัวข้อสินค้าหรือพล็อตเรื่อง</h3>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              <h3 className="font-bold text-base text-[var(--text-primary)]">วางหัวข้อสินค้าหรือพล็อตเรื่อง</h3>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 ใส่รายละเอียดสินค้า ลิงก์สินค้า หรือไอเดียเรื่องสั้นลงในช่องคำสั่งที่เตรียมไว้ให้
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-2.5">
+            <div className="pt-4 md:pt-0 md:pl-6 space-y-2.5">
               <div className="w-10 h-10 rounded-xl bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shadow-sm">
                 3
               </div>
-              <h3 className="font-bold text-sm text-[var(--text-primary)]">ได้คลิปพร้อมขายทันที</h3>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              <h3 className="font-bold text-base text-[var(--text-primary)]">ได้คลิปพร้อมขายทันที</h3>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 AI จะเรนเดอร์ภาพและวิดีโอพร้อมสคริปต์อัตโนมัติ นำไปโพสต์ Shopee, TikTok, Reels ได้ทันที
               </p>
             </div>

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-17T08:45:00+07:00",
+  "title": "Design System: PUP PAP AI",
+  "extensions": {
+    "colorMeta": {
+      "crimson-accent": {
+        "role": "primary",
+        "displayName": "Crimson Vermilion",
+        "canonical": "#A82D24",
+        "tonalRamp": ["#3B0D09", "#5C1610", "#7D1F18", "#A82D24", "#C94338", "#E06D63", "#F2A8A1", "#FBE4E2"]
+      },
+      "cream-paper": {
+        "role": "neutral",
+        "displayName": "Cream Paper Canvas",
+        "canonical": "#EDE6D6",
+        "tonalRamp": ["#1C1917", "#44403C", "#57534E", "#78716C", "#D6CEBE", "#E6DFCE", "#EDE6D6", "#F5EFE3"]
+      },
+      "obsidian-canvas": {
+        "role": "neutral",
+        "displayName": "Obsidian Studio Canvas",
+        "canonical": "#0F0F12",
+        "tonalRamp": ["#09090B", "#0F0F12", "#121216", "#18181E", "#24242C", "#2E2E36", "#A1A1AA", "#F4F4F5"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headlines on Landing, Store, and Course pages." },
+      "headline": { "displayName": "Headline", "purpose": "Section headers and featured course banners." },
+      "title": { "displayName": "Title", "purpose": "Flow Tool card titles and curriculum module titles." },
+      "body": { "displayName": "Body", "purpose": "Tool descriptions, lesson summaries, and beginner guides (>= 14px)." },
+      "label": { "displayName": "Label", "purpose": "Badges, version tags, and category chips (>= 12px)." }
+    },
+    "shadows": [
+      { "name": "card-rest", "value": "0 4px 16px rgba(28, 25, 23, 0.06)", "purpose": "Default resting shadow for .puppap-card." },
+      { "name": "card-hover", "value": "0 8px 24px rgba(28, 25, 23, 0.12)", "purpose": "Elevated hover state for interactive Flow Tool cards." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "0.2s cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Default snappy transition for theme switching, buttons, and cards." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "High-contrast crimson action button with tactile border.",
+      "html": "<button class=\"ds-btn-primary\">เข้าสู่ระบบเพื่อใช้งาน</button>",
+      "css": ".ds-btn-primary { background: var(--accent, #A82D24); color: #FFFFFF; border: 1.5px solid var(--border, #1C1917); border-radius: 14px; padding: 10px 24px; font-weight: 700; font-size: 14px; cursor: pointer; transition: background 0.2s, transform 0.2s; } .ds-btn-primary:hover { background: var(--accent-hover, #8F241C); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #A82D24); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Warm cream secondary button for navigation and auxiliary actions.",
+      "html": "<button class=\"ds-btn-secondary\">ดูสารบัญ 16 บทเรียน</button>",
+      "css": ".ds-btn-secondary { background: var(--bg-secondary-btn, #E6DFCE); color: var(--text-primary, #1C1917); border: 1.5px solid var(--border, #1C1917); border-radius: 14px; padding: 10px 20px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.2s; } .ds-btn-secondary:hover { background: var(--bg-hover, #F5EFE3); }"
+    },
+    {
+      "name": "PUP PAP Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Signature 20px radius container with 1.5px charcoal border.",
+      "html": "<div class=\"ds-card\"><h3>ปั้นนายหน้า TikTok ด้วย AI</h3><p>คู่มือสร้างรายได้แบบจับมือทำ 16 บทเรียนเต็ม</p></div>",
+      "css": ".ds-card { background: var(--bg-card, #FFFFFF); color: var(--text-primary, #1C1917); border: 1.5px solid var(--border, #1C1917); border-radius: 20px; padding: 24px; box-shadow: 0 4px 16px rgba(28, 25, 23, 0.06); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Tactile Creator Workshop",
+    "overview": "PUP PAP AI pairs a warm, approachable Cream Paper default workspace (#EDE6D6) with a Minimalist Obsidian dark studio (#0F0F12). Designed for Thai e-commerce sellers and affiliate creators of all ages, the interface favors crisp 1.5px structural borders, high-contrast Thai typography, and unmistakable action buttons.",
+    "keyCharacteristics": [
+      "Dual-theme architecture: Warm Cream Paper default + Obsidian Studio dark toggle.",
+      "Tactile 1.5px solid structural borders with 20px card radii.",
+      "Strict WCAG AA contrast floor (>= 4.5:1) and Thai-friendly typography floor (>= 12px labels, >= 14px body copy)."
+    ],
+    "rules": [
+      {
+        "name": "The High-Contrast Badge Rule",
+        "body": "Semantic pills on light/cream backgrounds must use deep text tokens (text-amber-800, text-emerald-800) rather than mid-tone 600 shades, and solid green buttons must use bg-emerald-700 with white text to guarantee >= 5.5:1 WCAG AA contrast.",
+        "section": "colors"
+      },
+      {
+        "name": "The 12px/14px Thai Legibility Floor Rule",
+        "body": "No UI badge, tag, or caption may render below 12px (text-xs), and no multi-word description or paragraph over 60 characters may render below 14px (text-sm).",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do use text-xs (12px) as the minimum size for all badges, tags, and metadata labels, and text-sm (14px) for all card and lesson descriptions.",
+      "Do flatten multi-column steps or value propositions inside .puppap-card using divide-y / divide-x divide-[var(--border-light)] instead of nested bordered cards.",
+      "Do use typographic kickers above h1 instead of pill-shaped eyebrow chips."
+    ],
+    "donts": [
+      "Don't nest a bordered/rounded card container inside another .puppap-card.",
+      "Don't use AI-slop purple/violet gradients (from-purple-600, bg-clip-text gradient headings).",
+      "Don't use animate-pulse on static status dots or animate-bounce on loading indicators."
+    ]
+  }
+}

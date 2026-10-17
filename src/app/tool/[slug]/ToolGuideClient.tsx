@@ -84,11 +84,7 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce"></div>
-          <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-          <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-        </div>
+        <div className="w-9 h-9 border-3 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -109,24 +105,24 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
       {/* Header */}
       <header className="text-center pt-8 pb-12 px-4 flex flex-col items-center">
         {tool.logo_url ? (
-          <img src={tool.logo_url} alt={tool.name} className="w-28 h-28 rounded-full object-cover border-2 border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:scale-105 transition-transform duration-300 mb-6" />
+          <img src={tool.logo_url} alt={tool.name} className="w-28 h-28 rounded-3xl object-cover border-2 border-[var(--border)] bg-white shadow-md hover:scale-105 transition-transform duration-300 mb-6" />
         ) : (
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center text-5xl mb-6">
+          <div className="w-28 h-28 rounded-3xl bg-[var(--accent)] text-white border-2 border-[var(--border)] shadow-md flex items-center justify-center text-5xl mb-6">
             {tool.icon}
           </div>
         )}
         
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500" style={{ textShadow: '0 0 10px rgba(6,182,212,0.7), 0 0 20px rgba(6,182,212,0.5)' }}>
+        <h1 className="text-3xl md:text-5xl font-black mb-4 text-[var(--text-primary)] tracking-tight">
           {tool.name}
         </h1>
-        <p className="text-slate-400 text-lg max-w-xl mx-auto">
+        <p className="text-[var(--text-secondary)] text-base md:text-lg max-w-xl mx-auto leading-relaxed">
           {tool.description}
         </p>
 
         {/* Version & Update Date Badges */}
         <div className="flex items-center justify-center gap-2.5 mt-3 flex-wrap">
           {tool.version && (
-            <span className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-xs rounded-full font-semibold">
+            <span className="px-3 py-1 bg-[var(--accent-dim)] border border-[var(--border-accent)] text-[var(--accent)] font-mono text-xs rounded-full font-bold">
               📦 เวอร์ชัน {tool.version}
             </span>
           )}
@@ -134,10 +130,10 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
             const updateInfo = formatToolUpdateDate(tool.updated_at);
             if (!updateInfo) return null;
             return (
-              <span className={`text-xs font-medium px-3 py-1 rounded-full border ${
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${
                 updateInfo.isRecent
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                  : 'bg-slate-800 border-slate-700 text-slate-300'
+                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                  : 'bg-[var(--bg-deep)] border-[var(--border-light)] text-[var(--text-secondary)]'
               }`}>
                 {updateInfo.text} ({updateInfo.fullDate})
               </span>
@@ -145,38 +141,38 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
           })()}
         </div>
 
-        <div className="mt-3 inline-block bg-gradient-to-r from-yellow-400/20 to-yellow-600/20 border border-yellow-500/30 text-yellow-300 text-xs px-3 py-1 rounded-full shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+        <div className="mt-3 inline-block bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold px-3.5 py-1 rounded-full">
           ⭐ Exclusive for VIP Members
         </div>
 
         {/* Purchase Banner for non-unlocked users */}
         {!isUnlocked && (
-          <div className="mt-6 w-full max-w-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/40 rounded-2xl p-5 text-center">
-            <p className="text-amber-300 font-semibold mb-3">🔒 ลิงก์เครื่องมือถูกซ่อนไว้ — ซื้อเพื่อปลดล็อก!</p>
+          <div className="mt-6 w-full max-w-xl bg-amber-500/10 border border-amber-500/40 rounded-2xl p-5 text-center">
+            <p className="text-amber-800 dark:text-amber-300 font-bold mb-3">🔒 ลิงก์เครื่องมือถูกซ่อนไว้ — ซื้อเพื่อปลดล็อก!</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href={`/checkout/${slug}`} className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-900 font-bold rounded-xl shadow-lg">
+              <Link href={`/checkout/${slug}`} className="puppap-btn-primary px-6 py-2.5 text-sm font-bold shadow-md">
                 🛒 สั่งซื้อในเว็บ
               </Link>
-              <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold rounded-xl shadow-lg">
+              <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="puppap-btn-secondary px-6 py-2.5 text-sm font-bold shadow-xs">
                 💬 สั่งซื้อผ่าน Messenger
               </a>
             </div>
             {/* Legacy password */}
-            <div className="mt-4 border-t border-slate-800 pt-4">
-              <p className="text-slate-500 text-xs mb-2">มีรหัสผ่านแล้ว?</p>
+            <div className="mt-4 border-t border-[var(--border-light)] pt-4">
+              <p className="text-[var(--text-muted)] text-xs mb-2">มีรหัสผ่านแล้ว?</p>
               <form onSubmit={handleUnlock} className="flex gap-2 max-w-xs mx-auto">
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="ใส่รหัสผ่าน"
-                  className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-center text-white text-sm font-mono focus:outline-none focus:border-cyan-400"
+                  className="flex-1 bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg px-3 py-2 text-center text-[var(--text-primary)] text-sm font-mono focus:outline-none focus:border-[var(--accent)]"
                 />
-                <button type="submit" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm">
+                <button type="submit" className="puppap-btn-secondary px-4 py-2 text-sm font-semibold">
                   ปลดล็อก
                 </button>
               </form>
-              {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+              {error && <p className="text-[var(--danger)] text-xs mt-1 font-semibold">{error}</p>}
             </div>
           </div>
         )}
@@ -185,12 +181,12 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
       {/* Trial Banner */}
       {isTrial && isUnlocked && (
         <div className="max-w-3xl mx-auto px-4">
-          <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/50 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-amber-400 font-semibold">🎁 โหมดทดลองใช้ฟรี (จำกัด 3 คลิป)</p>
-              <p className="text-slate-400 text-sm">ซื้อเวอร์ชันเต็มเพื่อใช้งานไม่จำกัด!</p>
+              <p className="text-amber-800 dark:text-amber-300 font-bold">🎁 โหมดทดลองใช้ฟรี (จำกัด 3 คลิป)</p>
+              <p className="text-[var(--text-secondary)] text-sm">ซื้อเวอร์ชันเต็มเพื่อใช้งานไม่จำกัด!</p>
             </div>
-            <Link href={`/checkout/${slug}`} className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white rounded-lg text-sm font-semibold whitespace-nowrap">
+            <Link href={`/checkout/${slug}`} className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold whitespace-nowrap">
               🛒 ซื้อเวอร์ชันเต็ม
             </Link>
           </div>
@@ -208,8 +204,8 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
           const videoUrl = tool?.youtube_url || section.steps?.[0]?.code_block;
           if (isVideo && videoUrl) {
             return (
-              <div key={section.id || idx} className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 neon-border relative overflow-hidden flex flex-col items-center">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-purple-500"></div>
+              <div key={section.id || idx} className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 neon-border relative overflow-hidden flex flex-col items-center text-white">
+                <div className="absolute top-0 left-0 w-full h-1 bg-[var(--accent)]"></div>
                 <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
                   <span className="text-3xl">{section.icon}</span> {section.title}
                 </h2>

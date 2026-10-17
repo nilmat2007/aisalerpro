@@ -42,11 +42,10 @@ export default async function StorePage() {
             </div>
           </div>
 
-          <div className="text-center max-w-3xl mx-auto pt-4 space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)]">
-              <span>⚡</span>
-              <span>PUP PAP AI STORE · ซื้อขาดตลอดชีพ ไม่มีรายเดือน</span>
-            </div>
+          <div className="text-center max-w-3xl mx-auto pt-4 space-y-2.5">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[var(--accent)]">
+              ⚡ PUP PAP AI STORE · ซื้อขาดตลอดชีพ ไม่มีรายเดือน
+            </p>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[var(--text-primary)] tracking-tight">
               ศูนย์รวมเครื่องมือสร้างคลิป AI
             </h1>
@@ -65,14 +64,14 @@ export default async function StorePage() {
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
                     🔥 PRO · LIFETIME
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                     บุฟเฟ่ต์รวมทุกเครื่องมือ
                   </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)]">
                   แพ็กเกจบุฟเฟ่ต์ PUP PAP All-in-One
                 </h2>
-                <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                   ปลดล็อกทุกเครื่องมือสร้างคลิป AI ทั้งปัจจุบันและอนาคต พร้อมรับอัปเดตฟรีตลอดชีพ จ่ายครั้งเดียวจบ ไม่ต้องซื้อแยกทีละตัว
                 </p>
               </div>
@@ -105,7 +104,7 @@ export default async function StorePage() {
                 <span className="text-[var(--accent)]">🛠️</span>
                 <span>เครื่องมือเดี่ยวทั้งหมด</span>
               </h2>
-              <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-0.5">
+              <p className="text-sm text-[var(--text-muted)] mt-0.5">
                 เลือกซื้อเฉพาะเครื่องมือที่คุณต้องการใช้งาน จ่ายครั้งเดียวใช้ได้ตลอดชีพ
               </p>
             </div>
@@ -147,12 +146,12 @@ export default async function StorePage() {
                     {/* Floating Badges */}
                     <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 flex-wrap">
                       {tool.version && (
-                        <span className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-lg bg-black/80 text-white backdrop-blur-md border border-white/10 shadow-sm">
+                        <span className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-black/85 text-white backdrop-blur-md border border-white/15 shadow-sm">
                           📦 {tool.version}
                         </span>
                       )}
                       {updateInfo?.isRecent && (
-                        <span className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-600/90 text-white backdrop-blur-md shadow-sm">
+                        <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-700 text-white backdrop-blur-md shadow-sm">
                           {updateInfo.text}
                         </span>
                       )}
@@ -175,7 +174,7 @@ export default async function StorePage() {
                         </h3>
                       </div>
 
-                      <p className="text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
+                      <p className="text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed">
                         {tool.description || 'เครื่องมือสร้างวิดีโอ AI ปักตะกร้าคุณภาพสูง'}
                       </p>
 
@@ -184,7 +183,7 @@ export default async function StorePage() {
                         <ul className="pt-2 space-y-1.5">
                           {features.slice(0, 3).map((feature: string, i: number) => (
                             <li key={i} className="flex items-start text-xs text-[var(--text-muted)] leading-tight">
-                              <span className="text-emerald-500 mr-1.5 font-black shrink-0">✓</span>
+                              <span className="text-emerald-700 dark:text-emerald-400 mr-1.5 font-black shrink-0">✓</span>
                               <span className="line-clamp-1">{feature}</span>
                             </li>
                           ))}
@@ -199,13 +198,13 @@ export default async function StorePage() {
                           <div className="text-2xl font-black text-[var(--accent)]">
                             {tool.price ? (tool.price.includes('บาท') ? tool.price : `฿${tool.price}`) : 'เร็วๆ นี้'}
                           </div>
-                          <div className="text-[11px] text-[var(--text-muted)]">
+                          <div className="text-xs text-[var(--text-muted)]">
                             {tool.price ? 'ซื้อขาดตลอดชีพ · อัปเดตฟรี' : 'อยู่ระหว่างพัฒนา'}
                           </div>
                         </div>
 
                         {tool.trial_enabled && (
-                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
                             🎁 มีตัวทดลองฟรี
                           </span>
                         )}

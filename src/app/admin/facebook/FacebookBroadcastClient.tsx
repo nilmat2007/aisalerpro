@@ -216,10 +216,10 @@ export default function FacebookBroadcastClient() {
           <div className="text-green-400/60 text-xs mt-1">ลูกค้าที่ทักเข้ามาใน 24 ชม.</div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-700/30 rounded-xl p-5">
-          <div className="text-purple-400 text-sm font-medium">🎟️ ผู้รับข่าวสาร (Opt-in)</div>
+        <div className="bg-gradient-to-br from-amber-600/20 to-amber-800/20 border border-amber-700/30 rounded-xl p-5">
+          <div className="text-amber-400 text-sm font-medium">🎟️ ผู้รับข่าวสาร (Opt-in)</div>
           <div className="text-3xl font-bold text-white mt-1">{optinCount.toLocaleString()}</div>
-          <div className="text-purple-400/60 text-xs mt-1">ส่งนอก 24 ชม. ได้ตามกฎ Meta</div>
+          <div className="text-amber-400/60 text-xs mt-1">ส่งนอก 24 ชม. ได้ตามกฎ Meta</div>
         </div>
 
         <div className="bg-gradient-to-br from-cyan-600/20 to-cyan-800/20 border border-cyan-700/30 rounded-xl p-5">

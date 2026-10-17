@@ -121,14 +121,14 @@ export default async function HomePage() {
                 <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
                   🎓 คอร์สเรียนแนะนำ
                 </span>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                   💡 ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (16 บทเรียน)
                 </span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)]">
                 ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า
               </h2>
-              <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 คู่มือสร้างรายได้แบบจับมือทำ 16 บทเรียนเต็ม วิดีโอแนวนอน 16:9 คมชัด เรียนได้ทุกเพศทุกวัย แม้ไม่เก่งคอมพิวเตอร์ ทำตามได้บนมือถือเครื่องเดียว
               </p>
               <div className="flex items-center justify-center md:justify-start gap-3 text-xs text-[var(--text-muted)] flex-wrap pt-1">
@@ -164,7 +164,7 @@ export default async function HomePage() {
               <h2 className="text-2xl font-bold flex items-center gap-2.5 text-[var(--text-primary)]">
                 <span className="text-[var(--accent)]">❖</span> เครื่องมือ Flow ทั้งหมด
               </h2>
-              <p className="text-xs text-[var(--text-secondary)] mt-1">
+              <p className="text-sm text-[var(--text-secondary)] mt-1">
                 คลิปขายสินค้า ละครสั้น พอดแคสต์ AI พร้อมโมเดล Omni, Veo 3.1, Imagen 4
               </p>
             </div>

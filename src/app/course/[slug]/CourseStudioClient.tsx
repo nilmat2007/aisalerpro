@@ -198,16 +198,16 @@ export default function CourseStudioClient({
                   {tool?.name || 'ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า'}
                 </h1>
                 {effectiveHasAccess ? (
-                  <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                  <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
                     ✓ {demoMode ? 'โหมดจำลอง (พรีวิวครบ 16 บท)' : 'สิทธิ์เรียนตลอดชีพ'}
                   </span>
                 ) : (
-                  <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                  <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                     🎁 ตัวอย่างฟรี
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[var(--text-muted)] truncate">
+              <p className="text-xs text-[var(--text-muted)] truncate">
                 {activeLesson ? `บทที่ ${activeLesson.id}: ${activeLesson.title}` : ''}
               </p>
             </div>
@@ -228,7 +228,7 @@ export default function CourseStudioClient({
               className="lg:hidden puppap-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1.5"
             >
               <span>📑 สารบัญ</span>
-              <span className="px-1.5 py-0.2 bg-[var(--accent)] text-white rounded-full text-[10px]">
+              <span className="px-1.5 py-0.2 bg-[var(--accent)] text-white rounded-full text-xs">
                 {activeLesson?.id}
               </span>
             </button>
@@ -246,7 +246,7 @@ export default function CourseStudioClient({
       {/* 🎬 Preview Mode Bar (ให้แอดมินหรือผู้ใช้ทดสอบดูหน้าตาจริงตอนใส่คลิปครบ) */}
       <div className="bg-[var(--bg-deep)] border-b border-[var(--border-light)] px-4 py-2 text-xs flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-[var(--accent-dim)] text-[var(--accent)] font-bold text-[11px]">
+          <span className="px-2.5 py-0.5 rounded bg-[var(--accent-dim)] text-[var(--accent)] font-bold text-xs">
             {demoMode ? '🎬 โหมดจำลองเนื้อหาครบ 16 บท' : '📊 โหมดข้อมูลจริงจาก Database'}
           </span>
           <span className="text-[var(--text-secondary)] hidden sm:inline">
@@ -311,8 +311,8 @@ export default function CourseStudioClient({
                   />
 
                   {/* 🔒 Fixed Corner Watermark (Anti-Screen Recording) */}
-                  <div className="absolute top-3 left-3 z-30 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-[11px] font-mono text-white/60 tracking-wide shadow-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
+                  <div className="absolute top-3 left-3 z-30 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/65 backdrop-blur-xs border border-white/15 text-xs font-mono text-white/75 tracking-wide shadow-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <span>{user?.email || 'นักเรียน PUP PAP AI'}</span>
                   </div>
 
@@ -320,7 +320,7 @@ export default function CourseStudioClient({
                   <button
                     type="button"
                     onClick={toggleFullscreen}
-                    className="absolute top-3 right-3 z-30 px-2.5 py-1 rounded-lg bg-black/60 hover:bg-black/85 backdrop-blur-xs text-white/80 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-white/20 transition-all shadow-md active:scale-95"
+                    className="absolute top-3 right-3 z-30 px-2.5 py-1 rounded-lg bg-black/65 hover:bg-black/85 backdrop-blur-xs text-white/85 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-white/20 transition-all shadow-md active:scale-95"
                     title={isFullscreen ? 'ย่อหน้าจอ' : 'ขยายเต็มจอ (Smart Fullscreen)'}
                   >
                     <span>{isFullscreen ? '🗗 ย่อจอ' : '⛶ เต็มจอ'}</span>
@@ -333,7 +333,7 @@ export default function CourseStudioClient({
                   <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
                   
                   <div className="relative z-10 max-w-md space-y-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[var(--accent)] text-white flex items-center justify-center text-3xl sm:text-4xl mx-auto shadow-lg animate-pulse">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[var(--accent)] text-white flex items-center justify-center text-3xl sm:text-4xl mx-auto shadow-lg">
                       🎬
                     </div>
                     <div className="space-y-1.5">
@@ -343,14 +343,14 @@ export default function CourseStudioClient({
                       <h3 className="text-lg sm:text-xl font-bold tracking-tight text-white">
                         บทที่ {activeLesson?.id}: {activeLesson?.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+                      <p className="text-sm text-stone-300 leading-relaxed">
                         เนื้อหาวิดีโอความยาวประมาณ 10-15 นาที กำลังบันทึกและตัดต่อ
                         ท่านสามารถอ่านสรุปหัวข้อและเนื้อหาสำคัญด้านล่างได้ทันทีครับ
                       </p>
                     </div>
 
                     {activeLesson?.is_free_preview && (
-                      <span className="inline-block text-[11px] text-emerald-400 font-semibold bg-emerald-950/60 border border-emerald-500/30 px-3 py-0.5 rounded-full">
+                      <span className="inline-block text-xs text-emerald-300 font-semibold bg-emerald-950/70 border border-emerald-500/30 px-3 py-0.5 rounded-full">
                         🎁 บทนี้เปิดให้ดูฟรีเมื่อคลิปพร้อมใช้งาน
                       </span>
                     )}
@@ -367,7 +367,7 @@ export default function CourseStudioClient({
                   <h3 className="text-lg sm:text-xl font-bold">
                     บทเรียนนี้สำหรับสมาชิกที่สมัครคอร์ส
                   </h3>
-                  <p className="text-xs sm:text-sm text-stone-400">
+                  <p className="text-sm text-stone-300">
                     ปลดล็อกทั้ง 16 บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร
                   </p>
                   <Link
@@ -403,7 +403,7 @@ export default function CourseStudioClient({
                 }`}
               >
                 <span>บทถัดไป ▶</span>
-                {nextLesson && <span className="text-[11px] font-bold">({nextLesson.id})</span>}
+                {nextLesson && <span className="text-xs font-bold">({nextLesson.id})</span>}
               </button>
 
               {isVideoReady && (
@@ -423,8 +423,8 @@ export default function CourseStudioClient({
               onClick={() => activeLesson && toggleComplete(activeLesson.id)}
               className={`w-full sm:w-auto px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 border shadow-xs ${
                 completedIds.includes(activeLesson?.id || 0)
-                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
-                  : 'bg-[var(--bg-deep)] text-[var(--text-secondary)] border-[var(--border-light)] hover:border-emerald-500'
+                  ? 'bg-emerald-700 text-white border-emerald-800 shadow-sm'
+                  : 'bg-[var(--bg-deep)] text-[var(--text-secondary)] border-[var(--border-light)] hover:border-emerald-600'
               }`}
             >
               <span className="text-sm">{completedIds.includes(activeLesson?.id || 0) ? '✅' : '⚪'}</span>
@@ -459,7 +459,7 @@ export default function CourseStudioClient({
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] flex items-center gap-1.5">
                   <span>📌</span> สิ่งที่คุณจะได้เรียนรู้ในบทนี้
                 </h4>
-                <ul className="space-y-1.5 text-xs sm:text-sm text-[var(--text-secondary)]">
+                <ul className="space-y-1.5 text-sm text-[var(--text-secondary)]">
                   {activeLesson.key_points.map((pt, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-[var(--accent)] font-bold">•</span>
@@ -477,7 +477,7 @@ export default function CourseStudioClient({
                   <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent)]">
                     <span>⚡</span> เครื่องมือ Flow แนะนำสำหรับบทนี้
                   </div>
-                  <p className="text-xs text-[var(--text-secondary)]">
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
                     กดเปิดเครื่องมือ Google Flow เพื่อลงมือทำตามบทเรียนได้ทันที
                   </p>
                 </div>
@@ -494,7 +494,7 @@ export default function CourseStudioClient({
                       <path d="m12 5 7 7-7 7" />
                     </svg>
                   </Link>
-                  <span className="text-[10px] text-[var(--text-muted)] italic">
+                  <span className="text-xs text-[var(--text-muted)] italic">
                     💡 คลิปยังคงเปิดอยู่ที่แท็บนี้ ไม่ต้องกลัวหาย
                   </span>
                 </div>
@@ -519,17 +519,17 @@ export default function CourseStudioClient({
               </a>
             </div>
 
-            <div className="space-y-3 text-xs sm:text-sm">
-              <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-1">
+            <div className="divide-y divide-[var(--border-light)] text-sm">
+              <div className="py-3 first:pt-0 space-y-1">
                 <h4 className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                   <span className="text-[var(--accent)]">Q:</span> เข้าเรียนในครั้งต่อไปอย่างไร? ต้องจำรหัสผ่านไหม?
                 </h4>
                 <p className="text-[var(--text-secondary)] pl-5 leading-relaxed">
-                  ไม่ต้องจำรหัสผ่านครับ เพียงเปิดเว็บนี้ แล้วกด "เข้าสู่ระบบด้วย Google" ด้วยบัญชี Gmail เดิม ระบบจะจำสิทธิ์และเปิดห้องเรียนให้ทันทีตลอดชีพครับ
+                  ไม่ต้องจำรหัสผ่านครับ เพียงเปิดเว็บนี้ แล้วกด &quot;เข้าสู่ระบบด้วย Google&quot; ด้วยบัญชี Gmail เดิม ระบบจะจำสิทธิ์และเปิดห้องเรียนให้ทันทีตลอดชีพครับ
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-1">
+              <div className="py-3 space-y-1">
                 <h4 className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                   <span className="text-[var(--accent)]">Q:</span> ดูผ่านโทรศัพท์มือถือ หรือแท็บเล็ตได้ไหม?
                 </h4>
@@ -538,7 +538,7 @@ export default function CourseStudioClient({
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-1">
+              <div className="py-3 space-y-1">
                 <h4 className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                   <span className="text-[var(--accent)]">Q:</span> ซื้อครั้งเดียวเรียนได้ทุกบทจริงไหม มีค่าใช้จ่ายรายเดือนไหม?
                 </h4>
@@ -547,7 +547,7 @@ export default function CourseStudioClient({
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-1">
+              <div className="py-3 last:pb-0 space-y-1">
                 <h4 className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                   <span className="text-[var(--accent)]">Q:</span> ถ้าคลิปไม่เล่น หรือดูไม่ได้ต้องทำอย่างไร?
                 </h4>
@@ -594,7 +594,7 @@ export default function CourseStudioClient({
           {/* Progress Bar */}
           <div className="w-full bg-[var(--bg-deep)] h-2 rounded-full overflow-hidden mb-5 border border-[var(--border-light)]">
             <div
-              className="bg-emerald-500 h-full transition-all duration-300 rounded-full"
+              className="bg-emerald-600 h-full transition-all duration-300 rounded-full"
               style={{ width: `${progressPercent}%` }}
             ></div>
           </div>
@@ -629,9 +629,9 @@ export default function CourseStudioClient({
                         {/* Status Icon */}
                         <span className="shrink-0 mt-0.5 text-xs">
                           {isDone ? (
-                            <span className="text-emerald-500 font-bold">✓</span>
+                            <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓</span>
                           ) : isActive ? (
-                            <span className="text-[var(--accent)] animate-pulse">▶</span>
+                            <span className="text-[var(--accent)]">▶</span>
                           ) : isLocked ? (
                             <span className="text-[var(--text-muted)]">🔒</span>
                           ) : (
@@ -645,15 +645,15 @@ export default function CourseStudioClient({
                               {lesson.id}. {lesson.title}
                             </span>
                             {lesson.is_free_preview && !effectiveHasAccess && (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shrink-0 font-bold">
+                              <span className="text-xs px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 shrink-0 font-bold">
                                 ฟรี
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] mt-0.5">
+                          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-0.5">
                             {lesson.status === 'coming_soon' ? (
-                              <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                              <span className="text-amber-800 dark:text-amber-300 font-semibold">
                                 ⏳ เร็วๆ นี้
                               </span>
                             ) : (

@@ -131,7 +131,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
               <span className="puppap-badge-pro">
                 PRO · LIFETIME
               </span>
-              <span className="text-[11px] font-semibold text-[var(--accent)] hidden md:inline">
+              <span className="text-xs font-semibold text-[var(--accent)] hidden md:inline">
                 · คิดปุ๊บ คลิปปั๊บ 🔄
               </span>
             </div>
@@ -167,17 +167,17 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                 return (
                   <div 
                     key={order.id} 
-                    className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-[var(--text-primary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-pulse"
+                    className="p-4 sm:p-5 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-[var(--text-primary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-xl shrink-0 font-bold">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-800 dark:text-amber-300 flex items-center justify-center text-xl shrink-0 font-bold">
                         ⏳
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-amber-400">
+                        <h4 className="text-sm font-bold text-amber-800 dark:text-amber-300">
                           ได้รับสลิปคำสั่งซื้อ &quot;{order.tools?.name || 'เครื่องมือ AI'}&quot; เรียบร้อยแล้ว
                         </h4>
-                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5 leading-relaxed">
                           ทีมงานกำลังตรวจสอบและเปิดสิทธิ์การใช้งานให้คุณ (ปกติไม่เกิน 5-15 นาที) ระบบจะปลดล็อกให้อัตโนมัติ ไม่ต้องโอนซ้ำนะครับ
                         </p>
                       </div>
@@ -198,17 +198,17 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                 return (
                   <div 
                     key={order.id} 
-                    className="p-4 sm:p-5 rounded-2xl bg-rose-500/10 border-2 border-rose-500/40 text-[var(--text-primary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+                    className="p-4 sm:p-5 rounded-2xl bg-rose-500/15 border-2 border-rose-500/40 text-[var(--text-primary)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl shrink-0 font-bold">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-700 dark:text-rose-300 flex items-center justify-center text-xl shrink-0 font-bold">
                         ⚠️
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-rose-400">
+                        <h4 className="text-sm font-bold text-rose-700 dark:text-rose-300">
                           คำสั่งซื้อ &quot;{order.tools?.name || 'เครื่องมือ AI'}&quot; ยังไม่ผ่านการอนุมัติ
                         </h4>
-                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5 leading-relaxed">
                           {order.admin_note ? `เหตุผล: ${order.admin_note}` : 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ชัดเจน หรือยอดเงินไม่ตรง ท่านสามารถแนบสลิปใหม่อีกครั้งได้ครับ'}
                         </p>
                       </div>
@@ -259,11 +259,11 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                     🎓 คอร์สเรียนออนไลน์
                   </span>
                   {hasCourseAccess ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
                       <span>✅</span> ปลดล็อกแล้ว · สิทธิ์เรียนตลอดชีพ
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
                       <span>💡</span> ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (16 บท)
                     </span>
                   )}
@@ -273,7 +273,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                   <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)] tracking-tight">
                     {courseTool.name || 'ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า'}
                   </h2>
-                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1.5 leading-relaxed">
+                  <p className="text-sm text-[var(--text-secondary)] mt-1.5 leading-relaxed">
                     {hasCourseAccess
                       ? 'คุณมีสิทธิ์เข้าเรียนครบทั้ง 16 บทเรียนตลอดชีพ พร้อมโปรแกรมช่วยผลิตคลิป ดูซ้ำได้ทุกเวลาบนมือถือและคอมพิวเตอร์'
                       : 'คู่มือสร้างรายได้แบบจับมือทำ 16 บทเรียนเต็ม ตั้งแต่ก้าวแรก ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์ ไม่ต้องออกกล้อง'}
@@ -353,38 +353,38 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
             </a>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-start gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
+            <div className="pt-3 sm:pt-0 flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
                 1
               </div>
               <div className="space-y-1">
-                <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">เข้าสู่ระบบครั้งเดียว</h4>
-                <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] leading-relaxed">
+                <h4 className="text-sm font-bold text-[var(--text-primary)]">เข้าสู่ระบบครั้งเดียว</h4>
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
                   ล็อกอินด้วย Gmail สะดวก รวดเร็ว ระบบจดจำสิทธิ์ตลอดชีพ ไม่ต้องจำรหัสผ่าน
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-start gap-3">
+            <div className="pt-3 sm:pt-0 sm:pl-6 flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
                 2
               </div>
               <div className="space-y-1">
-                <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">กดปุ่มเข้าห้องเรียน</h4>
-                <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] leading-relaxed">
-                  กดปุ่มสีแดง "เข้าห้องเรียน" ด้านบน จะพบสารบัญวิดีโอ 16 บทเรียนพร้อมเรียนทันที
+                <h4 className="text-sm font-bold text-[var(--text-primary)]">กดปุ่มเข้าห้องเรียน</h4>
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+                  กดปุ่มสีแดง &quot;เข้าห้องเรียน&quot; ด้านบน จะพบสารบัญวิดีโอ 16 บทเรียนพร้อมเรียนทันที
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] flex items-start gap-3">
+            <div className="pt-3 sm:pt-0 sm:pl-6 flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
                 3
               </div>
               <div className="space-y-1">
-                <h4 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">ดูคลิป & ทำตามได้เลย</h4>
-                <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] leading-relaxed">
+                <h4 className="text-sm font-bold text-[var(--text-primary)]">ดูคลิป & ทำตามได้เลย</h4>
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
                   ดูวิดีโอแนวนอนคมชัด และกดปุ่มเปิดเครื่องมือ Flow ทำตามทีละขั้นตอนได้ง่ายๆ
                 </p>
               </div>

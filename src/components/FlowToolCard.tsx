@@ -38,9 +38,9 @@ export default function FlowToolCard({
   const getTierLabel = (tier: string) => {
     switch (tier.toLowerCase()) {
       case 'vip':
-        return { label: 'PUP VIP', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' };
+        return { label: 'PUP VIP', color: 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30' };
       case 'starter':
-        return { label: 'PUP Starter', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' };
+        return { label: 'PUP Starter', color: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30' };
       case 'pro':
       default:
         return { label: 'PUP Pro', color: 'bg-[var(--accent-dim)] text-[var(--accent)] border-[var(--border-accent)]' };
@@ -71,13 +71,13 @@ export default function FlowToolCard({
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 flex-wrap">
           {badgeText && (
-            <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-[var(--accent)] text-white shadow-md flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-[var(--accent)] text-white shadow-md flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
               {badgeText}
             </span>
           )}
           {hasAccess && (
-            <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-600 text-white shadow-md flex items-center gap-1">
+            <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-700 text-white shadow-md flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
               ปลดล็อกแล้ว
             </span>
@@ -86,9 +86,9 @@ export default function FlowToolCard({
 
         {/* Top Right Tier Badge */}
         <div className="absolute top-2.5 right-2.5 z-10">
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-md border ${tierInfo.color} shadow-sm bg-white/90 dark:bg-black/80`}>
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-md border ${tierInfo.color} shadow-sm bg-white/95 dark:bg-black/85`}>
             {hasAccess ? (
-              <svg className="w-3 h-3 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             ) : (
@@ -119,7 +119,7 @@ export default function FlowToolCard({
               <h3 className="text-base font-bold text-[var(--text-primary)] truncate" title={tool.name}>
                 {tool.name}
               </h3>
-              <span className="px-2 py-0.5 rounded-md bg-[var(--bg-deep)] border border-[var(--border-light)] text-[11px] font-mono font-bold text-[var(--accent)] shrink-0">
+              <span className="px-2 py-0.5 rounded-md bg-[var(--bg-deep)] border border-[var(--border-light)] text-xs font-mono font-bold text-[var(--accent)] shrink-0">
                 {version}
               </span>
             </div>
@@ -130,7 +130,7 @@ export default function FlowToolCard({
         </div>
 
         {/* Short Description */}
-        <p className="text-xs sm:text-sm text-[var(--text-secondary)] line-clamp-2 mb-3 leading-relaxed flex-grow">
+        <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-3 leading-relaxed flex-grow">
           {tool.description || 'เครื่องมือสร้างสรรค์วิดีโอ AI อัตโนมัติ คิดปุ๊บ คลิปปั๊บ'}
         </p>
 
@@ -143,10 +143,10 @@ export default function FlowToolCard({
                 <span
                   key={idx}
                   title={`${isVideo ? 'โมเดลวิดีโอ' : 'โมเดลภาพ'}: ${m.name}`}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${
                     isVideo
-                      ? 'bg-indigo-950/80 text-indigo-100 border-indigo-700/50 dark:bg-indigo-950 dark:text-indigo-200'
-                      : 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30'
+                      ? 'bg-indigo-950/90 text-indigo-100 border-indigo-700/50 dark:bg-indigo-950 dark:text-indigo-200'
+                      : 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30'
                   }`}
                 >
                   {isVideo ? (
@@ -157,7 +157,7 @@ export default function FlowToolCard({
                       <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
                     </svg>
                   ) : (
-                    <svg className="w-3 h-3 text-amber-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-3 h-3 text-amber-700 dark:text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
                       <circle cx="9" cy="9" r="2" />
                       <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
@@ -186,9 +186,9 @@ export default function FlowToolCard({
             {tags.slice(0, 4).map((tag: string, i: number) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bg-deep)] border border-[var(--border-light)] text-[10.5px] font-medium text-[var(--text-muted)]"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--bg-deep)] border border-[var(--border-light)] text-xs font-medium text-[var(--text-secondary)]"
               >
-                <span className="text-[var(--accent)]">#</span>
+                <span className="text-[var(--accent)] font-bold">#</span>
                 {tag}
               </span>
             ))}
@@ -242,7 +242,7 @@ export default function FlowToolCard({
             <div className="flex-1 flex gap-2">
               <Link
                 href={`/tool/${tool.slug}?trial=1`}
-                className="flex-1 h-10 px-3 rounded-full bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 shadow-sm transition-colors text-center"
+                className="flex-1 h-10 px-3 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 shadow-sm transition-colors text-center"
               >
                 <span>▶️ ตัวทดลอง (3 คลิป)</span>
               </Link>
@@ -257,7 +257,7 @@ export default function FlowToolCard({
             <button
               onClick={() => onStartTrial(tool.id)}
               disabled={isStartingTrial}
-              className="flex-1 h-10 px-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-emerald-700 shadow-md transition-colors disabled:opacity-50"
+              className="flex-1 h-10 px-4 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-emerald-800 shadow-md transition-colors disabled:opacity-50"
             >
               <span>{isStartingTrial ? '⏳ กำลังเปิด...' : '🎁 ทดลองฟรี 3 คลิป'}</span>
             </button>

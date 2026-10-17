@@ -70,7 +70,7 @@ export default function CoursesClient({
               <span className="font-extrabold text-base sm:text-lg tracking-tight text-[var(--text-primary)]">
                 PUP PAP <span className="text-[var(--accent)]">AI</span>
               </span>
-              <span className="hidden sm:inline-block ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)]">
+              <span className="hidden sm:inline-block ml-2 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)]">
                 COURSE ACADEMY
               </span>
             </div>
@@ -122,15 +122,9 @@ export default function CoursesClient({
       {/* Hero Section */}
       <section className="relative py-12 sm:py-20 px-4 sm:px-6 overflow-hidden border-b border-[var(--border-light)] bg-gradient-to-b from-[var(--bg-secondary)]/50 to-[var(--bg-primary)]">
         <div className="max-w-4xl mx-auto text-center relative z-10 space-y-5">
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)] text-xs font-bold shadow-xs">
-              <span>🎓</span>
-              <span>คอร์สเรียนวิดีโอแนวนอน 16:9 · อัปเดตตลอดชีพ</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-bold">
-              <span>✅</span> ซื้อครั้งเดียวเรียนได้ครบทุกบท ไม่มีค่ารายเดือน
-            </span>
-          </div>
+          <p className="text-xs font-extrabold uppercase tracking-wider text-[var(--accent)]">
+            🎓 คอร์สเรียนวิดีโอแนวนอน 16:9 · ซื้อครั้งเดียวเรียนได้ตลอดชีพ ไม่มีค่ารายเดือน
+          </p>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[var(--text-primary)] leading-tight">
             ปั้นนายหน้า TikTok ด้วย <span className="text-[var(--accent)]">AI ปักตะกร้า</span>
@@ -143,17 +137,17 @@ export default function CoursesClient({
 
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-3 gap-3 max-w-xl mx-auto pt-3">
-            <div className="puppap-card p-3 text-center">
+            <div className="puppap-card p-3.5 text-center">
               <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{lessons.length || 16}</div>
-              <div className="text-[11px] text-[var(--text-muted)]">บทเรียนเข้มข้น</div>
+              <div className="text-xs text-[var(--text-muted)] font-medium mt-0.5">บทเรียนเข้มข้น</div>
             </div>
-            <div className="puppap-card p-3 text-center">
+            <div className="puppap-card p-3.5 text-center">
               <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{modules.length || 4}</div>
-              <div className="text-[11px] text-[var(--text-muted)]">โมดูลปฏิบัติการ</div>
+              <div className="text-xs text-[var(--text-muted)] font-medium mt-0.5">โมดูลปฏิบัติการ</div>
             </div>
-            <div className="puppap-card p-3 text-center">
+            <div className="puppap-card p-3.5 text-center">
               <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">∞</div>
-              <div className="text-[11px] text-[var(--text-muted)]">ดูซ้ำได้ตลอดชีพ</div>
+              <div className="text-xs text-[var(--text-muted)] font-medium mt-0.5">ดูซ้ำได้ตลอดชีพ</div>
             </div>
           </div>
 
@@ -188,7 +182,7 @@ export default function CoursesClient({
           <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-2 flex items-center gap-2">
             <span className="text-[var(--accent)]">❖</span> สารบัญ {lessons.length || 16} บทเรียน (Curriculum)
           </h2>
-          <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+          <p className="text-sm text-[var(--text-secondary)]">
             จัดเรียงตามลำดับการเรียนรู้ จากพื้นฐาน สู่การลงมือปฏิบัติจริง และขยายผลกำไร
           </p>
         </div>
@@ -214,7 +208,7 @@ export default function CoursesClient({
                     <p className="text-xs text-[var(--text-muted)] line-clamp-1">{mod.desc}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--text-secondary)]">
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--text-secondary)]">
                       {mod.lessons.length} บท
                     </span>
                     <span className="text-base text-[var(--accent)] font-bold">
@@ -241,17 +235,17 @@ export default function CoursesClient({
                                 {lesson.title}
                               </h4>
                               {lesson.is_free_preview && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold">
+                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 font-bold">
                                   🎁 ดูตัวอย่างฟรี
                                 </span>
                               )}
                               {lesson.status === 'coming_soon' && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold">
+                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 font-semibold">
                                   ⏳ อยู่ระหว่างผลิตวิดีโอ
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-[var(--text-secondary)] mt-1">
+                            <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
                               {lesson.description}
                             </p>
                           </div>
@@ -259,7 +253,7 @@ export default function CoursesClient({
 
                         <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                           {lesson.flow_tool_slug && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--accent)] font-semibold">
+                            <span className="text-xs px-2.5 py-0.5 rounded bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--accent)] font-semibold">
                               ใช้ Flow Tool
                             </span>
                           )}
@@ -279,45 +273,45 @@ export default function CoursesClient({
           })}
         </div>
 
-        {/* Value Proposition Box */}
+        {/* Value Proposition Box (Flattened dividers instead of nested cards) */}
         <section className="puppap-card p-6 sm:p-8 space-y-6 border-[var(--border-light)]">
           <div className="text-center max-w-xl mx-auto space-y-2">
             <h3 className="text-lg sm:text-xl font-black text-[var(--text-primary)]">
               ทำไมต้องเรียนคอร์สนี้กับ PUP PAP AI?
             </h3>
-            <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+            <p className="text-sm text-[var(--text-secondary)]">
               เราไม่ได้สอนแค่ทฤษฎี แต่ให้เครื่องมือจริงที่ช่วยทุ่นแรงได้ 10 เท่า
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
+            <div className="pt-4 sm:pt-0 space-y-2">
               <span className="text-2xl">⚡</span>
-              <h4 className="font-bold text-sm text-[var(--text-primary)]">คู่กับ Google Flow</h4>
-              <p className="text-xs text-[var(--text-secondary)]">
+              <h4 className="font-bold text-base text-[var(--text-primary)]">คู่กับ Google Flow</h4>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 ทุกบทที่ลงมือทำมีโปรแกรม Flow Tools เฉพาะตัว เปิดลิงก์ทำตามได้ทันที
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-2">
+            <div className="pt-4 sm:pt-0 sm:pl-6 space-y-2">
               <span className="text-2xl">📱</span>
-              <h4 className="font-bold text-sm text-[var(--text-primary)]">ทำได้บนมือถือเครื่องเดียว</h4>
-              <p className="text-xs text-[var(--text-secondary)]">
+              <h4 className="font-bold text-base text-[var(--text-primary)]">ทำได้บนมือถือเครื่องเดียว</h4>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 ไม่ต้องมีคอมพิวเตอร์แรงๆ สั่งงาน AI ผ่านสมาร์ตโฟนเครื่องโปรดของคุณได้เลย
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)] space-y-2">
+            <div className="pt-4 sm:pt-0 sm:pl-6 space-y-2">
               <span className="text-2xl">🔄</span>
-              <h4 className="font-bold text-sm text-[var(--text-primary)]">อัปเดตตลอดชีพ</h4>
-              <p className="text-xs text-[var(--text-secondary)]">
+              <h4 className="font-bold text-base text-[var(--text-primary)]">อัปเดตตลอดชีพ</h4>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 เมื่อมีโมเดลใหม่ กฎ TikTok ใหม่ เราอัปเดตวิดีโอและเครื่องมือเพิ่มให้อัตโนมัติ
               </p>
             </div>
           </div>
 
           {/* Bottom CTA */}
-          <div className="pt-4 text-center">
+          <div className="pt-4 border-t border-[var(--border-light)] text-center">
             <Link
               href={hasAccess ? `/course/${course?.slug || 'tiktok-ai-affiliate'}` : `/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
               className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-bold shadow-lg inline-flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
@@ -327,61 +321,61 @@ export default function CoursesClient({
           </div>
         </section>
 
-        {/* 📌 3 ขั้นตอนเริ่มต้นสำหรับคนไม่เก่งเทคโนโลยี */}
-        <section className="puppap-card p-6 sm:p-8 space-y-4 border-[var(--border-light)] bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-deep)]">
-          <div className="text-center max-w-xl mx-auto space-y-1 mb-4">
+        {/* 📌 3 ขั้นตอนเริ่มต้นสำหรับคนไม่เก่งเทคโนโลยี (Flattened dividers instead of nested cards) */}
+        <section className="puppap-card p-6 sm:p-8 space-y-5 border-[var(--border-light)]">
+          <div className="text-center max-w-xl mx-auto space-y-1">
             <h3 className="text-lg sm:text-xl font-black text-[var(--text-primary)]">
               ขั้นตอนการเข้าเรียนง่ายนิดเดียว สำหรับทุกคนทุกวัย
             </h3>
-            <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+            <p className="text-sm text-[var(--text-secondary)]">
               ไม่ต้องกังวลเรื่องเทคโนโลยี เราออกแบบให้กดง่ายที่สุด ไม่ซับซ้อน
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] flex items-start gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-light)]">
+            <div className="pt-4 sm:pt-0 flex items-start gap-3">
               <span className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
                 1
               </span>
               <div>
                 <h4 className="text-sm font-bold text-[var(--text-primary)]">สมัครและแนบสลิป</h4>
-                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
                   กดปุ่มสมัครเรียน โอนเงิน 990 บาท และแนบรูปสลิปในเว็บได้ทันที
                 </p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] flex items-start gap-3">
+            <div className="pt-4 sm:pt-0 sm:pl-6 flex items-start gap-3">
               <span className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
                 2
               </span>
               <div>
                 <h4 className="text-sm font-bold text-[var(--text-primary)]">ระบบปลดล็อกให้ทันที</h4>
-                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
                   เมื่อระบบตรวจสอบสลิปแล้ว ห้องเรียนจะปลดล็อกครบทุกบทเรียนตลอดชีพ
                 </p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] flex items-start gap-3">
+            <div className="pt-4 sm:pt-0 sm:pl-6 flex items-start gap-3">
               <span className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-black text-sm flex items-center justify-center shrink-0">
                 3
               </span>
               <div>
                 <h4 className="text-sm font-bold text-[var(--text-primary)]">เปิดดูและทำตามได้เลย</h4>
-                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
                   เข้าสู่ระบบครั้งเดียว ดูได้ทุกที่ทุกเวลาบนมือถือเครื่องโปรดของคุณ
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-4 border-t border-[var(--border-light)]">
             <a
               href="https://m.me/100083126689322"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-[var(--accent)] hover:underline font-bold inline-flex items-center gap-1"
+              className="text-xs sm:text-sm text-[var(--accent)] hover:underline font-bold inline-flex items-center gap-1"
             >
               <span>💬 หากติดปัญหาหรือสอบถามข้อมูลเพิ่มเติม ทักแชทแอดมินได้ตลอดเวลา</span>
               <span>→</span>
