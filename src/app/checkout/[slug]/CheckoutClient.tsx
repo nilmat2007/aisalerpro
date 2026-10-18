@@ -10,10 +10,12 @@ export default function CheckoutClient({
   tool,
   userEmail,
   userId,
+  alreadyOwned = false,
 }: {
   tool: any;
   userEmail: string;
   userId: string;
+  alreadyOwned?: boolean;
 }) {
   const [step, setStep] = useState(2); // Start at step 2 (payment) or step 1
   const [file, setFile] = useState<File | null>(null);
@@ -23,6 +25,8 @@ export default function CheckoutClient({
   const router = useRouter();
 
   const posterImage = tool.poster_url || null;
+  const isCourse = tool.slug === 'tiktok-ai-affiliate' || tool.category === 'course';
+  const destinationUrl = isCourse ? `/course/${tool.slug}` : `/tool/${tool.slug}`;
 
   // Clean price display without duplicate 'บาท'
   const rawPrice = String(tool.price || '0').replace(/[^0-9.]/g, '');
@@ -86,15 +90,89 @@ export default function CheckoutClient({
     }
   };
 
+  if (alreadyOwned) {
+    return (
+      <div className="min-h-screen text-[var(--text-primary)] p-4 sm:p-6 py-10 sm:py-16 transition-colors duration-200">
+        <div className="max-w-xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <Link href="/" className="puppap-btn-secondary px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5">
+              <span>← กลับหน้าแดชบอร์ด</span>
+            </Link>
+            <ThemeToggle size="sm" />
+          </div>
+
+          <div className="puppap-card p-6 sm:p-10 text-center space-y-5 border-2 border-emerald-500/50 shadow-xl">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/15 border-2 border-emerald-600 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-3xl font-black mx-auto">
+              ✓
+            </div>
+
+            <div className="space-y-2">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
+                ✅ ปลดล็อกแล้ว · สิทธิ์ใช้งานตลอดชีพ
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)]">
+                คุณมีสิทธิ์ใช้งาน &quot;{tool.name}&quot; อยู่แล้ว!
+              </h1>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                บัญชีอีเมล <strong className="text-[var(--text-primary)]">{userEmail}</strong> ได้รับสิทธิ์ใช้งานรายการนี้เรียบร้อยแล้ว ไม่จำเป็นต้องชำระเงินหรือสั่งซื้อซ้ำครับ
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+              {tool.flow_url && (
+                <a
+                  href={tool.flow_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="puppap-btn-primary px-6 py-3.5 text-sm font-black shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>🚀 เปิดใช้ Flow Tool ทันที</span>
+                </a>
+              )}
+              <Link
+                href={destinationUrl}
+                className={`${tool.flow_url ? 'puppap-btn-secondary' : 'puppap-btn-primary'} px-6 py-3.5 text-sm font-bold flex items-center justify-center gap-2`}
+              >
+                <span>📖 {isCourse ? 'เข้าสู่ห้องเรียน' : 'เปิดดูคู่มือ & ลิงก์ใช้งาน'}</span>
+              </Link>
+            </div>
+
+            <div className="pt-2 border-t border-[var(--border-light)]">
+              <Link href="/" className="text-xs font-bold text-[var(--accent)] hover:underline">
+                ← กลับไปยังหน้าแดชบอร์ดหลักของคุณ
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen text-[var(--text-primary)] p-4 sm:p-6 py-10 sm:py-12 transition-colors duration-200">
       <div className="max-w-2xl mx-auto">
         {/* Top Back & Theme Toggle */}
-        <div className="flex justify-between items-center mb-8">
-          <Link href="/store" className="puppap-btn-secondary px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5">
-            <span>← ย้อนกลับ</span>
+        <div className="flex justify-between items-center mb-6">
+          <Link href="/" className="puppap-btn-secondary px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5">
+            <span>← กลับหน้าหลัก</span>
           </Link>
           <ThemeToggle size="sm" />
+        </div>
+
+        {/* Returning Customer Helper Notice */}
+        <div className="mb-6 p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="text-xs sm:text-sm text-[var(--text-primary)] leading-relaxed">
+            <strong className="text-amber-800 dark:text-amber-300">💡 เคยซื้อรายการนี้ไปแล้วใช่ไหมครับ?</strong>
+            <p className="text-[var(--text-secondary)] mt-0.5">
+              หากคุณมีรหัสผ่านเดิม หรือ License Key อยู่แล้ว ไม่ต้องโอนเงินซ้ำ กดปุ่มด้านขวาเพื่อกรอกรหัสปลดล็อกได้เลยครับ (ขณะนี้ล็อกอินด้วย: <strong>{userEmail}</strong>)
+            </p>
+          </div>
+          <Link
+            href={isCourse ? '/#unlock-box' : `/tool/${tool.slug}`}
+            className="puppap-btn-secondary px-3.5 py-2 text-xs font-bold shrink-0 self-end sm:self-center"
+          >
+            🔑 ไปหน้ากรอกรหัสปลดล็อก
+          </Link>
         </div>
 
         {/* Progress Steps */}

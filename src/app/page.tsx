@@ -15,7 +15,12 @@ export default async function HomePage() {
   if (!user) {
     // Landing Page
     const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
-    const { data: settings } = await supabase.from('site_settings').select('*').single()
+    const { data: settings } = await supabase
+      .from('site_settings')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
     
     return (
       <div className="min-h-screen text-[var(--text-primary)] font-sans flex flex-col items-center transition-colors duration-200">
@@ -162,10 +167,10 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2.5 text-[var(--text-primary)]">
-                <span className="text-[var(--accent)]">❖</span> เครื่องมือ Flow ทั้งหมด
+                <span className="text-[var(--accent)]">❖</span> เครื่องมือ Flow พร้อมใช้งาน
               </h2>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
-                คลิปขายสินค้า ละครสั้น พอดแคสต์ AI พร้อมโมเดล Omni, Veo 3.1, Imagen 4
+                สำหรับลูกค้าที่ซื้อแล้ว กดปุ่ม &quot;เข้าสู่ระบบเพื่อใช้งาน&quot; เพื่อเปิดเครื่องมือของคุณได้ทันที
               </p>
             </div>
             <Link 
@@ -178,9 +183,11 @@ export default async function HomePage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allTools?.filter((t: any) => t.category !== 'course' && t.slug !== 'tiktok-ai-affiliate')?.map((tool: any) => (
-              <FlowToolCard key={tool.id} tool={tool} hasAccess={false} />
-            ))}
+            {allTools
+              ?.filter((t: any) => t.is_active && t.category !== 'course' && t.slug !== 'tiktok-ai-affiliate')
+              ?.map((tool: any) => (
+                <FlowToolCard key={tool.id} tool={tool} hasAccess={false} isLoggedIn={false} />
+              ))}
           </div>
         </main>
         
@@ -192,7 +199,7 @@ export default async function HomePage() {
   }
 
   // Dashboard
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
   
   // แจ้ง Telegram ถ้าเป็นสมาชิกใหม่ (ยังไม่มี profile)
   if (!profile) {
@@ -202,17 +209,64 @@ export default async function HomePage() {
     )
   }
   
-  const { data: userTools } = await supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id)
+  let { data: userTools } = await supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id)
+
+  // Auto-heal entitlements: if user has activated license_keys or approved orders by email/id that aren't in user_tools yet
+  const ownedSet = new Set((userTools || []).map((ut: any) => ut.tool_id))
+  if (user.email) {
+    const [{ data: emailKeys }, { data: approvedOrders }] = await Promise.all([
+      supabase
+        .from('license_keys')
+        .select('id, tool_id')
+        .eq('status', 'activated')
+        .ilike('activated_email', user.email),
+      supabase
+        .from('orders')
+        .select('tool_id, license_key_id')
+        .eq('status', 'approved')
+        .ilike('user_email', user.email),
+    ])
+
+    let healed = false
+    for (const k of emailKeys || []) {
+      if (k.tool_id && !ownedSet.has(k.tool_id)) {
+        await supabase.from('user_tools').upsert(
+          { user_id: user.id, tool_id: k.tool_id, license_key_id: k.id, is_active: true },
+          { onConflict: 'user_id,tool_id' }
+        )
+        ownedSet.add(k.tool_id)
+        healed = true
+      }
+    }
+    for (const o of approvedOrders || []) {
+      if (o.tool_id && !ownedSet.has(o.tool_id)) {
+        await supabase.from('user_tools').upsert(
+          { user_id: user.id, tool_id: o.tool_id, license_key_id: o.license_key_id || null, is_active: true },
+          { onConflict: 'user_id,tool_id' }
+        )
+        ownedSet.add(o.tool_id)
+        healed = true
+      }
+    }
+    if (healed) {
+      const refreshed = await supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id)
+      userTools = refreshed.data || userTools
+    }
+  }
+
   const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
   const { data: announcements } = await supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false })
   const { data: userTrials } = await supabase.from('user_trials').select('*').eq('user_id', user.id)
-  const { data: userOrders } = await supabase
+  const { data: rawOrders } = await supabase
     .from('orders')
     .select('*, tools(name, slug)')
     .eq('user_id', user.id)
     .in('status', ['pending', 'rejected'])
     .order('created_at', { ascending: false })
     .limit(5)
+
+  // Only show pending/rejected banners for tools the user does NOT already own
+  const userOrders = (rawOrders || []).filter((o: any) => !ownedSet.has(o.tool_id))
 
   return (
     <DashboardClient 
@@ -222,7 +276,7 @@ export default async function HomePage() {
       allTools={allTools || []} 
       announcements={announcements || []} 
       userTrials={userTrials || []} 
-      userOrders={userOrders || []} 
+      userOrders={userOrders} 
     />
   )
 }

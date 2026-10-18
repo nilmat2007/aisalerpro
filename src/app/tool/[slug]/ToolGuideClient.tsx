@@ -6,7 +6,21 @@ import Link from 'next/link';
 import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
 
-export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = false, trialFlowUrl = '' }: { slug: string, hasAccess: boolean, loggedIn: boolean, isTrial?: boolean, trialFlowUrl?: string }) {
+export default function ToolGuideClient({
+  slug,
+  hasAccess,
+  loggedIn,
+  userEmail = '',
+  isTrial = false,
+  trialFlowUrl = '',
+}: {
+  slug: string;
+  hasAccess: boolean;
+  loggedIn: boolean;
+  userEmail?: string;
+  isTrial?: boolean;
+  trialFlowUrl?: string;
+}) {
   const router = useRouter();
 
   const [tool, setTool] = useState<any>(null);
@@ -15,6 +29,7 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
   const [isUnlocked, setIsUnlocked] = useState(hasAccess);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [unlockNotice, setUnlockNotice] = useState('');
   const [isShaking, setIsShaking] = useState(false);
 
   useEffect(() => {
@@ -59,16 +74,18 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
         body: JSON.stringify({ toolId: tool.id, password }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setIsUnlocked(true);
-          setError('');
-        } else {
-          showError('❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
-        }
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsUnlocked(true);
+        setError('');
+        setUnlockNotice(
+          data.boundToAccount
+            ? `✅ ปลดล็อกสำเร็จ! ระบบได้ผูกสิทธิ์เครื่องมือนี้เข้ากับอีเมล ${userEmail || 'ของคุณ'} แบบถาวรเรียบร้อยแล้ว`
+            : '✅ ปลดล็อกเครื่องมือสำเร็จ!'
+        );
+        router.refresh();
       } else {
-        showError('❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
+        showError(data.error || '❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
       }
     } catch {
       showError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
@@ -91,6 +108,8 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
 
   if (!tool) return null;
 
+  const activeFlowUrl = isTrial && trialFlowUrl ? trialFlowUrl : tool.flow_url;
+
   // ===== MAIN GUIDE CONTENT =====
   return (
     <div className="min-h-screen text-[var(--text-primary)] pb-12 transition-colors duration-200">
@@ -103,7 +122,7 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
       </div>
 
       {/* Header */}
-      <header className="text-center pt-8 pb-12 px-4 flex flex-col items-center">
+      <header className="text-center pt-8 pb-10 px-4 flex flex-col items-center">
         {tool.logo_url ? (
           <img src={tool.logo_url} alt={tool.name} className="w-28 h-28 rounded-3xl object-cover border-2 border-[var(--border)] bg-white shadow-md hover:scale-105 transition-transform duration-300 mb-6" />
         ) : (
@@ -141,38 +160,89 @@ export default function ToolGuideClient({ slug, hasAccess, loggedIn, isTrial = f
           })()}
         </div>
 
-        <div className="mt-3 inline-block bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold px-3.5 py-1 rounded-full">
-          ⭐ Exclusive for VIP Members
-        </div>
-
-        {/* Purchase Banner for non-unlocked users */}
-        {!isUnlocked && (
-          <div className="mt-6 w-full max-w-xl bg-amber-500/10 border border-amber-500/40 rounded-2xl p-5 text-center">
-            <p className="text-amber-800 dark:text-amber-300 font-bold mb-3">🔒 ลิงก์เครื่องมือถูกซ่อนไว้ — ซื้อเพื่อปลดล็อก!</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href={`/checkout/${slug}`} className="puppap-btn-primary px-6 py-2.5 text-sm font-bold shadow-md">
-                🛒 สั่งซื้อในเว็บ
-              </Link>
-              <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="puppap-btn-secondary px-6 py-2.5 text-sm font-bold shadow-xs">
-                💬 สั่งซื้อผ่าน Messenger
-              </a>
+        {/* Unlocked Direct Launch Card */}
+        {isUnlocked && (
+          <div className="mt-6 w-full max-w-xl puppap-card p-5 border-2 border-emerald-500/50 text-center space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-700 text-white">
+              <span>✓</span>
+              <span>ปลดล็อกแล้ว · พร้อมใช้งาน</span>
             </div>
-            {/* Legacy password */}
-            <div className="mt-4 border-t border-[var(--border-light)] pt-4">
-              <p className="text-[var(--text-muted)] text-xs mb-2">มีรหัสผ่านแล้ว?</p>
-              <form onSubmit={handleUnlock} className="flex gap-2 max-w-xs mx-auto">
+            {unlockNotice && (
+              <p className="text-xs sm:text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                {unlockNotice}
+              </p>
+            )}
+            {activeFlowUrl && (
+              <div className="pt-1">
+                <a
+                  href={activeFlowUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="puppap-btn-primary px-6 py-3 text-sm sm:text-base font-black inline-flex items-center justify-center gap-2 shadow-md"
+                >
+                  <span>🚀 เปิดใช้งานเครื่องมือ Google Flow ทันที</span>
+                  <span>↗</span>
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Returning Customer & Unlock / Purchase Banner for non-unlocked users */}
+        {!isUnlocked && (
+          <div className="mt-6 w-full max-w-xl puppap-card p-5 sm:p-6 text-center space-y-5 border-2 border-[var(--border-accent)]">
+            {/* Section 1: Existing Customers (Login or Enter Code) */}
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                <span>🔑 สำหรับลูกค้าที่ซื้อแล้ว (ไม่ต้องซื้อซ้ำ)</span>
+              </div>
+
+              {!loggedIn ? (
+                <div className="space-y-2.5">
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                    หากคุณเคยซื้อเครื่องมือนี้แล้ว กดเข้าสู่ระบบด้วย Gmail เดิม หรือกรอกรหัสปลดล็อกด้านล่างเพื่อเปิดใช้งานได้ทันทีครับ
+                  </p>
+                  <Link
+                    href={`/login?next=/tool/${slug}`}
+                    className="puppap-btn-primary w-full sm:w-auto px-6 py-3 text-sm font-black inline-flex items-center justify-center gap-2 shadow-md"
+                  >
+                    <span>⚡ เข้าสู่ระบบด้วย Google (เช็กสิทธิ์อัตโนมัติ)</span>
+                  </Link>
+                </div>
+              ) : (
+                <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+                  คุณกำลังล็อกอินด้วยอีเมล <strong className="text-[var(--text-primary)]">{userEmail}</strong> — หากคุณมีรหัสผ่านเครื่องมือเดิม หรือ License Key กรอกด้านล่างเพื่อผูกสิทธิ์เข้ากับอีเมลนี้ถาวรได้เลยครับ
+                </p>
+              )}
+
+              <form onSubmit={handleUnlock} className={`flex flex-col sm:flex-row gap-2 max-w-md mx-auto pt-1 ${isShaking ? 'animate-pulse' : ''}`}>
                 <input
-                  type="password"
+                  type="text"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="ใส่รหัสผ่าน"
-                  className="flex-1 bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg px-3 py-2 text-center text-[var(--text-primary)] text-sm font-mono focus:outline-none focus:border-[var(--accent)]"
+                  placeholder="กรอกรหัสผ่านเครื่องมือ หรือ PHM-XXXX-XXXX"
+                  className="flex-1 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl px-3.5 py-2.5 text-center sm:text-left text-[var(--text-primary)] text-sm font-mono focus:outline-none focus:border-[var(--accent)]"
                 />
-                <button type="submit" className="puppap-btn-secondary px-4 py-2 text-sm font-semibold">
-                  ปลดล็อก
+                <button type="submit" className="puppap-btn-primary px-5 py-2.5 text-sm font-bold shrink-0">
+                  🔑 ปลดล็อกทันที
                 </button>
               </form>
               {error && <p className="text-[var(--danger)] text-xs mt-1 font-semibold">{error}</p>}
+            </div>
+
+            {/* Section 2: New Customers */}
+            <div className="border-t border-[var(--border-light)] pt-4 space-y-2.5">
+              <p className="text-xs font-bold text-[var(--text-muted)]">
+                สำหรับลูกค้าใหม่ที่ยังไม่มีรหัสใช้งาน:
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+                <Link href={`/checkout/${slug}`} className="puppap-btn-secondary px-5 py-2 text-xs sm:text-sm font-bold">
+                  🛒 สั่งซื้อในเว็บ {tool.price ? `(${tool.price})` : ''}
+                </Link>
+                <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="puppap-btn-secondary px-5 py-2 text-xs sm:text-sm font-bold">
+                  💬 สอบถามทาง Messenger
+                </a>
+              </div>
             </div>
           </div>
         )}

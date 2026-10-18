@@ -7,7 +7,21 @@ export const dynamic = 'force-dynamic';
 
 export default async function StorePage() {
   const supabase = await createClient()
-  const { data: tools } = await supabase.from('tools').select('*').order('sort_order')
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
+
+  const ownedToolIds = new Set<string>()
+  if (user) {
+    const { data: userTools } = await supabase
+      .from('user_tools')
+      .select('tool_id')
+      .eq('user_id', user.id)
+    for (const ut of userTools || []) {
+      ownedToolIds.add(ut.tool_id)
+    }
+  }
+
+  const tools = (allTools || []).filter((t: any) => t.is_active || ownedToolIds.has(t.id) || t.slug === 'tiktok-ai-affiliate')
 
   return (
     <div className="min-h-screen text-[var(--text-primary)] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
@@ -39,6 +53,11 @@ export default async function StorePage() {
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle size="sm" />
+              {!user && (
+                <Link href="/login" className="puppap-btn-primary px-3.5 py-1.5 text-xs font-bold">
+                  เข้าสู่ระบบ
+                </Link>
+              )}
             </div>
           </div>
 
@@ -102,7 +121,7 @@ export default async function StorePage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] flex items-center gap-2">
                 <span className="text-[var(--accent)]">🛠️</span>
-                <span>เครื่องมือเดี่ยวทั้งหมด</span>
+                <span>เครื่องมือและคอร์สเรียนทั้งหมด</span>
               </h2>
               <p className="text-sm text-[var(--text-muted)] mt-0.5">
                 เลือกซื้อเฉพาะเครื่องมือที่คุณต้องการใช้งาน จ่ายครั้งเดียวใช้ได้ตลอดชีพ
@@ -121,11 +140,16 @@ export default async function StorePage() {
               const posterImage = tool.poster_url || null;
               const updateInfo = formatToolUpdateDate(tool.updated_at);
               const isComingSoon = tool.slug === 'coming-soon' || !tool.price;
+              const isOwned = ownedToolIds.has(tool.id);
+              const isCourse = tool.slug === 'tiktok-ai-affiliate' || tool.category === 'course';
+              const openUrl = isCourse ? `/course/${tool.slug}` : `/tool/${tool.slug}`;
 
               return (
                 <div 
                   key={tool.id} 
-                  className="puppap-card overflow-hidden flex flex-col h-full group hover:-translate-y-1 hover:shadow-xl transition-all duration-200 border border-[var(--border-light)]"
+                  className={`puppap-card overflow-hidden flex flex-col h-full group hover:-translate-y-1 hover:shadow-xl transition-all duration-200 border ${
+                    isOwned ? 'border-emerald-500/50' : 'border-[var(--border-light)]'
+                  }`}
                 >
                   {/* Poster Image (Controlled Aspect Ratio) */}
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-stone-900 border-b border-[var(--border-light)] group">
@@ -150,7 +174,12 @@ export default async function StorePage() {
                           📦 {tool.version}
                         </span>
                       )}
-                      {updateInfo?.isRecent && (
+                      {isOwned && (
+                        <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-700 text-white backdrop-blur-md shadow-sm">
+                          ✓ ซื้อแล้ว
+                        </span>
+                      )}
+                      {!isOwned && updateInfo?.isRecent && (
                         <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-700 text-white backdrop-blur-md shadow-sm">
                           {updateInfo.text}
                         </span>
@@ -159,8 +188,8 @@ export default async function StorePage() {
 
                     {/* Price Chip on Top Right */}
                     <div className="absolute top-2.5 right-2.5 z-10">
-                      <span className="px-2.5 py-1 text-xs font-black rounded-lg bg-[var(--accent)] text-white shadow-md">
-                        {tool.price ? (tool.price.includes('บาท') ? tool.price : `฿${tool.price}`) : 'เร็วๆ นี้'}
+                      <span className={`px-2.5 py-1 text-xs font-black rounded-lg text-white shadow-md ${isOwned ? 'bg-emerald-700' : 'bg-[var(--accent)]'}`}>
+                        {isOwned ? 'ปลดล็อกแล้ว' : tool.price ? (tool.price.includes('บาท') ? tool.price : `฿${tool.price}`) : 'เร็วๆ นี้'}
                       </span>
                     </div>
                   </div>
@@ -196,14 +225,14 @@ export default async function StorePage() {
                       <div className="flex items-baseline justify-between">
                         <div>
                           <div className="text-2xl font-black text-[var(--accent)]">
-                            {tool.price ? (tool.price.includes('บาท') ? tool.price : `฿${tool.price}`) : 'เร็วๆ นี้'}
+                            {isOwned ? '✓ มีสิทธิ์แล้ว' : tool.price ? (tool.price.includes('บาท') ? tool.price : `฿${tool.price}`) : 'เร็วๆ นี้'}
                           </div>
                           <div className="text-xs text-[var(--text-muted)]">
-                            {tool.price ? 'ซื้อขาดตลอดชีพ · อัปเดตฟรี' : 'อยู่ระหว่างพัฒนา'}
+                            {isOwned ? 'สิทธิ์ใช้งานตลอดชีพ' : tool.price ? 'ซื้อขาดตลอดชีพ · อัปเดตฟรี' : 'อยู่ระหว่างพัฒนา'}
                           </div>
                         </div>
 
-                        {tool.trial_enabled && (
+                        {!isOwned && tool.trial_enabled && (
                           <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
                             🎁 มีตัวทดลองฟรี
                           </span>
@@ -211,7 +240,14 @@ export default async function StorePage() {
                       </div>
 
                       {/* Action Buttons */}
-                      {isComingSoon ? (
+                      {isOwned ? (
+                        <Link
+                          href={openUrl}
+                          className="w-full py-2.5 puppap-btn-primary text-xs font-black text-center flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                          <span>🚀 เข้าใช้งานทันที</span>
+                        </Link>
+                      ) : isComingSoon ? (
                         <button 
                           disabled 
                           className="w-full py-2.5 puppap-btn-secondary text-xs font-bold opacity-60 cursor-not-allowed text-center"

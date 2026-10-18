@@ -13,6 +13,26 @@ export async function POST(request: Request) {
 
     const { toolId, amount, slipUrl } = await request.json();
 
+    // ป้องกันการสั่งซื้อซ้ำหากมีสิทธิ์ใช้งานเครื่องมือนี้อยู่แล้ว
+    if (toolId) {
+      const { data: existingAccess } = await supabase
+        .from('user_tools')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('tool_id', toolId)
+        .maybeSingle();
+
+      if (existingAccess) {
+        return NextResponse.json(
+          {
+            error: 'คุณมีสิทธิ์ใช้งานรายการนี้อยู่แล้ว ไม่จำเป็นต้องชำระเงินหรือส่งสลิปซ้ำครับ',
+            alreadyOwned: true,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // แปลง amount ให้เป็นตัวเลข (อาจมาเป็น "299 บาท" หรือ "499")
     const numericAmount = parseFloat(String(amount).replace(/[^0-9.]/g, '')) || 0;
 

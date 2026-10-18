@@ -7,6 +7,7 @@ interface FlowToolCardProps {
   tool: any;
   hasAccess?: boolean;
   hasTrial?: boolean;
+  isLoggedIn?: boolean;
   onStartTrial?: (toolId: string) => void;
   isStartingTrial?: boolean;
 }
@@ -15,6 +16,7 @@ export default function FlowToolCard({
   tool,
   hasAccess = false,
   hasTrial = false,
+  isLoggedIn = true,
   onStartTrial,
   isStartingTrial = false,
 }: FlowToolCardProps) {
@@ -197,17 +199,13 @@ export default function FlowToolCard({
 
         {/* Action Buttons */}
         <div className="mt-auto pt-3 border-t border-[var(--border-light)] flex items-center gap-2">
-          {/* Info Button */}
+          {/* Guide / Unlock Info Button */}
           <Link
             href={`/tool/${tool.slug}`}
-            title="ดูข้อมูลคู่มือและรายละเอียด"
-            className="puppap-btn-secondary h-10 px-3.5 flex items-center justify-center text-xs shrink-0 hover:scale-105 transition-transform"
+            title="ดูคู่มือการใช้งานและลิงก์เครื่องมือ"
+            className="puppap-btn-secondary h-10 px-3 flex items-center justify-center gap-1 text-xs font-bold shrink-0 hover:scale-105 transition-transform"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4" />
-              <path d="M12 8h.01" />
-            </svg>
+            <span>{hasAccess ? '📖 คู่มือ' : isLoggedIn ? '🔑 มีรหัส?' : '📖 ดูข้อมูล'}</span>
           </Link>
 
           {/* Primary Action Button */}
@@ -231,13 +229,20 @@ export default function FlowToolCard({
                 href={`/tool/${tool.slug}`}
                 className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5"
               >
-                <span>เข้าใช้งาน</span>
+                <span>🚀 เข้าใช้งาน</span>
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M5 12h14" />
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </Link>
             )
+          ) : !isLoggedIn ? (
+            <Link
+              href="/login"
+              className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md"
+            >
+              <span>🔑 เข้าสู่ระบบเพื่อใช้งาน</span>
+            </Link>
           ) : hasTrial ? (
             <div className="flex-1 flex gap-2">
               <Link
@@ -266,11 +271,7 @@ export default function FlowToolCard({
               href={`/checkout/${tool.slug}`}
               className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md"
             >
-              <span>🔒 ปลดล็อกเครื่องมือ</span>
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
+              <span>🛒 สั่งซื้อ {tool.price ? `(${tool.price})` : ''}</span>
             </Link>
           )}
         </div>

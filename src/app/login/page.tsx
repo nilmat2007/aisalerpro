@@ -15,7 +15,12 @@ function LoginContent() {
   const next = searchParams.get('next') || '/'
 
   useEffect(() => {
-    supabase.from('site_settings').select('*').single()
+    supabase
+      .from('site_settings')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
       .then(({ data }) => {
         if (data) setSettings(data)
       })
@@ -56,7 +61,9 @@ function LoginContent() {
         <h1 className="text-2xl font-black text-[var(--text-primary)] mb-1 tracking-tight">
           {settings?.site_name || 'PUP PAP AI'}
         </h1>
-        <p className="text-[var(--text-secondary)] text-sm mb-6">เข้าสู่ระบบเพื่อใช้งานเครื่องมือสร้างคลิป AI</p>
+        <p className="text-[var(--text-secondary)] text-sm mb-6">
+          เข้าสู่ระบบด้วย Google เพื่อเปิดใช้งานเครื่องมือของคุณทันที
+        </p>
 
         <button
           onClick={handleLogin}
@@ -72,8 +79,8 @@ function LoginContent() {
           {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบด้วย Google'}
         </button>
         
-        <p className="text-xs text-[var(--text-muted)] mt-4 mb-4">
-          กดปุ่มด้านบนเพื่อเข้าสู่ระบบ ไม่ต้องสมัครสมาชิก!
+        <p className="text-xs text-[var(--text-secondary)] mt-4 mb-4 leading-relaxed">
+          💡 <strong>สำหรับลูกค้าที่ซื้อแล้ว:</strong> ใช้บัญชี Gmail เดิมที่เคยปลดล็อก หรือเข้าสู่ระบบแล้วกรอกรหัสผ่าน/License Key ได้ที่หน้าแดชบอร์ด
         </p>
 
         <div className="w-full h-px bg-[var(--border-light)] my-3"></div>

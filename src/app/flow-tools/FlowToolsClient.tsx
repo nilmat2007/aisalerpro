@@ -65,36 +65,55 @@ export default function FlowToolsClient({
     { id: 'trial', label: '🎁 ทดลองฟรี 3 คลิป', icon: '🎁' },
   ];
 
+  const activeFlowTools = useMemo(
+    () =>
+      tools.filter(
+        (tool) =>
+          tool.category !== 'course' &&
+          tool.slug !== 'tiktok-ai-affiliate' &&
+          (tool.is_active || ownedToolIds.has(tool.id))
+      ),
+    [tools, ownedToolIds]
+  );
+
   const filteredTools = useMemo(() => {
-    return tools.filter((tool) => {
-      // Must be active unless it's a preview
-      if (!tool.is_active && !tool.is_coming_soon) return false;
+    return activeFlowTools
+      .filter((tool) => {
+        // Category filter
+        const feat =
+          typeof tool.features === 'object' && tool.features !== null && !Array.isArray(tool.features)
+            ? tool.features
+            : {};
 
-      // Category filter
-      const feat = (typeof tool.features === 'object' && tool.features !== null && !Array.isArray(tool.features))
-        ? tool.features
-        : {};
+        if (selectedCategory === 'trial') {
+          if (!tool.trial_enabled || !tool.trial_flow_url) return false;
+        } else if (selectedCategory !== 'all') {
+          const catMatch = (feat.category || '').toLowerCase() === selectedCategory.toLowerCase();
+          const tagMatch =
+            Array.isArray(feat.tags) &&
+            feat.tags.some((t: string) => t.toLowerCase().includes(selectedCategory.toLowerCase()));
+          if (!catMatch && !tagMatch) return false;
+        }
 
-      if (selectedCategory === 'trial') {
-        if (!tool.trial_enabled || !tool.trial_flow_url) return false;
-      } else if (selectedCategory !== 'all') {
-        const catMatch = (feat.category || '').toLowerCase() === selectedCategory.toLowerCase();
-        const tagMatch = Array.isArray(feat.tags) && feat.tags.some((t: string) => t.toLowerCase().includes(selectedCategory.toLowerCase()));
-        if (!catMatch && !tagMatch) return false;
-      }
+        // Search filter
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const nameMatch = (tool.name || '').toLowerCase().includes(q);
+          const descMatch = (tool.description || '').toLowerCase().includes(q);
+          const tagsMatch =
+            Array.isArray(feat.tags) && feat.tags.some((t: string) => t.toLowerCase().includes(q));
+          if (!nameMatch && !descMatch && !tagsMatch) return false;
+        }
 
-      // Search filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const nameMatch = (tool.name || '').toLowerCase().includes(q);
-        const descMatch = (tool.description || '').toLowerCase().includes(q);
-        const tagsMatch = Array.isArray(feat.tags) && feat.tags.some((t: string) => t.toLowerCase().includes(q));
-        if (!nameMatch && !descMatch && !tagsMatch) return false;
-      }
-
-      return true;
-    });
-  }, [tools, selectedCategory, searchQuery]);
+        return true;
+      })
+      .sort((a, b) => {
+        const aOwned = ownedToolIds.has(a.id) ? 1 : 0;
+        const bOwned = ownedToolIds.has(b.id) ? 1 : 0;
+        if (aOwned !== bOwned) return bOwned - aOwned;
+        return (a.sort_order ?? 99) - (b.sort_order ?? 99);
+      });
+  }, [activeFlowTools, selectedCategory, searchQuery, ownedToolIds]);
 
   return (
     <div className="min-h-screen text-[var(--text-primary)] transition-colors duration-200">
@@ -164,7 +183,7 @@ export default function FlowToolsClient({
           </p>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[var(--text-primary)] leading-tight mb-4">
-            เครื่องมือ Flow พร้อมใช้ <span className="text-[var(--accent)]">{tools.length}+</span> ตัว
+            เครื่องมือ Flow พร้อมใช้ <span className="text-[var(--accent)]">{activeFlowTools.length}</span> ตัว
           </h1>
 
           <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-2xl mx-auto mb-6 leading-relaxed">
@@ -185,7 +204,7 @@ export default function FlowToolsClient({
                 href="/login?next=/flow-tools"
                 className="puppap-btn-primary px-6 py-2.5 font-bold shadow-md flex items-center gap-2"
               >
-                <span>สมัครสมาชิก / เข้าสู่ระบบ → ปลดล็อก Flow Tools</span>
+                <span>🔑 เข้าสู่ระบบสำหรับผู้ที่ซื้อแล้ว / สมัครใช้งาน</span>
               </Link>
             )}
             <a
@@ -253,6 +272,7 @@ export default function FlowToolsClient({
                 key={tool.id}
                 tool={tool}
                 hasAccess={ownedToolIds.has(tool.id)}
+                isLoggedIn={Boolean(user)}
                 hasTrial={trialToolIds.has(tool.id)}
                 onStartTrial={handleStartTrial}
                 isStartingTrial={startingTrialId === tool.id}

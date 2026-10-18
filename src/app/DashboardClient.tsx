@@ -89,7 +89,10 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setLicenseMsg({ type: 'success', text: '✅ ปลดล็อกสำเร็จ!' });
+        setLicenseMsg({
+          type: 'success',
+          text: data.message || '✅ ปลดล็อกสำเร็จ! ผูกสิทธิ์เข้ากับบัญชีของคุณเรียบร้อยแล้ว',
+        });
         setLicenseKey('');
         router.refresh(); // Refresh to get new tools
       } else {
@@ -106,9 +109,20 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
 
   const ownedToolIds = new Set(userTools?.map((ut: any) => ut.tool_id) || []);
   const courseTool = allTools?.find((t: any) => t.slug === 'tiktok-ai-affiliate' || t.category === 'course');
-  const flowTools = allTools?.filter((t: any) => t.category !== 'course' && t.slug !== 'tiktok-ai-affiliate');
+  const flowTools = (allTools || [])
+    .filter((t: any) => t.category !== 'course' && t.slug !== 'tiktok-ai-affiliate' && (t.is_active || ownedToolIds.has(t.id)))
+    .sort((a: any, b: any) => {
+      const aOwned = ownedToolIds.has(a.id) ? 0 : 1;
+      const bOwned = ownedToolIds.has(b.id) ? 0 : 1;
+      return aOwned - bOwned;
+    });
+
+  const isTrueAdmin =
+    profile?.role === 'admin' &&
+    ['nilmat2007@gmail.com', 'nilmat200757@gmail.com'].includes((user?.email || '').toLowerCase());
+
   const hasCourseAccess = Boolean(
-    profile?.role === 'admin' ||
+    isTrueAdmin ||
     (courseTool && ownedToolIds.has(courseTool.id))
   );
 
@@ -136,7 +150,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
               </span>
             </div>
             <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-              สวัสดี, <span className="font-semibold text-[var(--accent)]">{displayName}</span> 👋 · พร้อมสร้างคอนเทนต์ทุกแพลตฟอร์ม
+              สวัสดี, <span className="font-semibold text-[var(--accent)]">{displayName}</span>{' '}
+              {user?.email && <span className="text-[var(--text-muted)]">({user.email})</span>}
             </p>
           </div>
         </div>
@@ -422,28 +437,31 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
         </div>
 
         {/* License Activation */}
-        <div className="puppap-card p-6 mt-12 max-w-xl mx-auto relative overflow-hidden">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-[var(--accent)]">
-            🔑 มีรหัสปลดล็อก?
+        <div id="unlock-box" className="puppap-card p-6 mt-12 max-w-xl mx-auto relative overflow-hidden">
+          <h3 className="text-lg font-bold mb-1.5 flex items-center gap-2 text-[var(--accent)]">
+            🔑 มีรหัสปลดล็อก หรือ รหัสผ่านเดิมที่เคยซื้อไว้?
           </h3>
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4 leading-relaxed">
+            กรอกได้ทั้ง <strong>License Key (PHM-XXXX-XXXX)</strong> และ <strong>รหัสผ่านเครื่องมือเดิม</strong> เพื่อผูกสิทธิ์เข้ากับอีเมล <span className="font-semibold text-[var(--text-primary)]">{user?.email || 'ของคุณ'}</span> แบบถาวรตลอดชีพ (ไม่ต้องกรอกซ้ำอีก)
+          </p>
           <div className="flex gap-3">
             <input
               type="text"
               value={licenseKey}
               onChange={(e) => setLicenseKey(e.target.value)}
-              placeholder="กรอก License Key ของคุณ"
-              className="flex-grow bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl px-4 py-2 focus:outline-none focus:border-[var(--accent)] text-[var(--text-primary)]"
+              placeholder="กรอก License Key หรือรหัสผ่านเครื่องมือเดิม"
+              className="flex-grow bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[var(--accent)] text-[var(--text-primary)]"
             />
             <button
               onClick={handleActivate}
               disabled={!licenseKey}
-              className="puppap-btn-primary px-6 py-2 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="puppap-btn-primary px-6 py-2 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
               ปลดล็อก
             </button>
           </div>
           {licenseMsg.text && (
-            <p className={`mt-3 text-sm font-semibold ${licenseMsg.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--danger)]'}`}>
+            <p className={`mt-3 text-sm font-semibold ${licenseMsg.type === 'success' ? 'text-emerald-700 dark:text-emerald-400' : 'text-[var(--danger)]'}`}>
               {licenseMsg.text}
             </p>
           )}
