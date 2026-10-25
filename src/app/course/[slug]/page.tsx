@@ -6,11 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function CoursePage(props: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { slug } = await props.params;
-  const searchParams = props.searchParams ? await props.searchParams : {};
-  const isDemoParam = searchParams?.demo === '1' || searchParams?.preview === '1';
 
   const supabase = await createClient();
 
@@ -31,9 +28,7 @@ export default async function CoursePage(props: {
 
   const ADMIN_EMAILS = ['nilmat2007@gmail.com', 'nilmat200757@gmail.com'];
 
-  if (isDemoParam) {
-    hasAccess = true;
-  } else if (user) {
+  if (user) {
     // Check if user is admin
     const { data: profile } = await supabase
       .from('profiles')
@@ -100,7 +95,6 @@ export default async function CoursePage(props: {
       tool={tool}
       hasAccess={hasAccess}
       user={user}
-      initialDemoMode={isDemoParam}
     />
   );
 }

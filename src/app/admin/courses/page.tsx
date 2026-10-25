@@ -395,17 +395,17 @@ export default function AdminCoursesPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-cyan-400 mb-1">
-                  🔗 ลิงก์วิดีโอ (YouTube URL หรือ Embed URL)
+                  🔗 ลิงก์วิดีโอ (Google Drive หรือ YouTube URL)
                 </label>
                 <input
                   type="text"
                   value={editingLesson.video_url || ''}
                   onChange={(e) => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
-                  placeholder="เช่น https://www.youtube.com/watch?v=VIDEO_ID หรือ https://youtu.be/..."
+                  placeholder="เช่น https://drive.google.com/file/d/.../preview หรือลิงก์ YouTube"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
                 />
                 <p className="text-[11px] text-slate-500 mt-1">
-                  วางลิงก์ YouTube (แบบ Unlisted หรือสาธารณะ) ระบบจะแปลงเป็น Player 16:9 ให้ทันที
+                  วางลิงก์ไฟล์วิดีโอจาก Google Drive (ที่เปิดแชร์ทุกคนที่มีลิงก์) หรือ YouTube (Unlisted) ระบบจะแปลงเป็น Player 16:9 พร้อมเกราะป้องกันให้ทันที
                 </p>
               </div>
 

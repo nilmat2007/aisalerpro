@@ -239,31 +239,44 @@ export default function CoursesClient({
                                   🎁 ดูตัวอย่างฟรี
                                 </span>
                               )}
-                              {lesson.status === 'coming_soon' && (
-                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 font-semibold">
-                                  ⏳ อยู่ระหว่างผลิตวิดีโอ
-                                </span>
-                              )}
+                                {lesson.status === 'coming_soon' ? (
+                                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 font-semibold">
+                                    ⏳ กำลังอัปเดตวิดีโอ
+                                  </span>
+                                ) : (
+                                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 font-semibold">
+                                    🎬 พร้อมเรียน • {lesson.duration || 'วิดีโอ HD'}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
+                                {lesson.description}
+                              </p>
                             </div>
-                            <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
-                              {lesson.description}
-                            </p>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                          {lesson.flow_tool_slug && (
-                            <span className="text-xs px-2.5 py-0.5 rounded bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--accent)] font-semibold">
-                              ใช้ Flow Tool
-                            </span>
-                          )}
-                          <Link
-                            href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
-                            className="puppap-btn-secondary px-3 py-1 text-xs font-semibold"
-                          >
-                            ดูบทนี้ →
-                          </Link>
-                        </div>
+                          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                            {lesson.flow_tool_slug && (
+                              <span className="text-xs px-2.5 py-0.5 rounded bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--accent)] font-semibold">
+                                ใช้ Flow Tool
+                              </span>
+                            )}
+                            {hasAccess ? (
+                              <Link
+                                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
+                                className="puppap-btn-primary px-3.5 py-1.5 text-xs font-bold"
+                              >
+                                ▶ เข้าเรียนบทนี้
+                              </Link>
+                            ) : (
+                              <Link
+                                href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
+                                className="puppap-btn-secondary px-3 py-1 text-xs font-semibold"
+                              >
+                                🔒 สมัครเพื่อปลดล็อก
+                              </Link>
+                            )}
+                          </div>
                       </div>
                     ))}
                   </div>

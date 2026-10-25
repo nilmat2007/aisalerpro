@@ -22,12 +22,21 @@ interface CourseStudioClientProps {
   tool: any;
   hasAccess: boolean;
   user: any | null;
-  initialDemoMode?: boolean;
 }
 
-// Convert normal youtube links to secure embed
+// Convert Google Drive or YouTube links to secure embed URL
 function getEmbedUrl(url: string): string {
   if (!url) return '';
+
+  // Support Google Drive file links (/file/d/ID/view, /file/d/ID/preview, ?id=ID)
+  const driveMatch =
+    url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+    url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+  }
+
+  // Support YouTube links
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/);
   const videoId = match && match[1] ? match[1] : null;
   if (videoId) {
@@ -40,37 +49,17 @@ function getEmbedUrl(url: string): string {
   return url;
 }
 
-const SAMPLE_DURATIONS = [
-  '11:20 นาที', '13:45 นาที', '09:30 นาที', '15:10 นาที',
-  '12:50 นาที', '14:15 นาที', '16:40 นาที', '18:25 นาที',
-  '15:00 นาที', '10:35 นาที', '14:50 นาที', '17:30 นาที',
-  '19:15 นาที', '22:40 นาที', '26:10 นาที', '20:50 นาที'
-];
-
 export default function CourseStudioClient({
   tool,
   hasAccess = false,
   user,
-  initialDemoMode = false,
 }: CourseStudioClientProps) {
   const feat = (typeof tool?.features === 'object' && tool?.features !== null) ? tool.features : {};
-  const rawLessons: Lesson[] = useMemo(() => Array.isArray(feat.lessons) ? feat.lessons : [], [feat.lessons]);
+  const lessons: Lesson[] = useMemo(() => Array.isArray(feat.lessons) ? feat.lessons : [], [feat.lessons]);
 
-  const [demoMode, setDemoMode] = useState<boolean>(initialDemoMode);
   const [activeLessonId, setActiveLessonId] = useState<number>(1);
   const [completedIds, setCompletedIds] = useState<number[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // When demo mode is on, populate sample video and ready status for all 16 lessons
-  const lessons: Lesson[] = useMemo(() => {
-    if (!demoMode) return rawLessons;
-    return rawLessons.map((l, idx) => ({
-      ...l,
-      status: 'ready' as const,
-      video_url: l.video_url || 'https://www.youtube.com/embed/LsCTTWxuyvg?si=gH63wqDzCN8OoNVd',
-      duration: (l.duration && l.duration !== 'รออัปเดต') ? l.duration : (SAMPLE_DURATIONS[idx] || '15:00 นาที'),
-    }));
-  }, [rawLessons, demoMode]);
 
   // Group lessons by module
   const modules = useMemo(() => {
@@ -129,7 +118,7 @@ export default function CourseStudioClient({
   const prevLesson = activeIndex > 0 ? lessons[activeIndex - 1] : null;
   const nextLesson = activeIndex < lessons.length - 1 ? lessons[activeIndex + 1] : null;
 
-  const effectiveHasAccess = hasAccess || demoMode;
+  const effectiveHasAccess = hasAccess;
   const canViewActiveLesson = effectiveHasAccess || activeLesson?.is_free_preview;
   const progressPercent = lessons.length > 0 ? Math.round((completedIds.length / lessons.length) * 100) : 0;
 
@@ -199,11 +188,11 @@ export default function CourseStudioClient({
                 </h1>
                 {effectiveHasAccess ? (
                   <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
-                    ✓ {demoMode ? 'โหมดจำลอง (พรีวิวครบ 16 บท)' : 'สิทธิ์เรียนตลอดชีพ'}
+                    ✓ สิทธิ์เรียนตลอดชีพ
                   </span>
                 ) : (
                   <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                    🎁 ตัวอย่างฟรี
+                    🔒 สำหรับสมาชิกคอร์ส
                   </span>
                 )}
               </div>
@@ -243,26 +232,6 @@ export default function CourseStudioClient({
         </div>
       </header>
 
-      {/* 🎬 Preview Mode Bar (ให้แอดมินหรือผู้ใช้ทดสอบดูหน้าตาจริงตอนใส่คลิปครบ) */}
-      <div className="bg-[var(--bg-deep)] border-b border-[var(--border-light)] px-4 py-2 text-xs flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="px-2.5 py-0.5 rounded bg-[var(--accent-dim)] text-[var(--accent)] font-bold text-xs">
-            {demoMode ? '🎬 โหมดจำลองเนื้อหาครบ 16 บท' : '📊 โหมดข้อมูลจริงจาก Database'}
-          </span>
-          <span className="text-[var(--text-secondary)] hidden sm:inline">
-            {demoMode 
-              ? 'ระบบจำลองคลิป 16:9 และระยะเวลาให้เสมือนใส่คลิปจริงครบทั้ง 16 บทเรียน' 
-              : 'แสดงผลตามฐานข้อมูลจริงปัจจุบัน (กำลังเตรียมเนื้อหา)'}
-          </span>
-        </div>
-        <button
-          onClick={() => setDemoMode(!demoMode)}
-          className="puppap-btn-secondary px-3 py-1 text-xs font-bold hover:scale-105 active:scale-95 transition-transform flex items-center gap-1.5"
-        >
-          <span>{demoMode ? '🔄 สลับเป็นข้อมูลจริง DB' : '✨ เปิดโหมดจำลองดูคลิปครบ 16 บท'}</span>
-        </button>
-      </div>
-
       {/* Main Studio Body */}
       <div className="flex-1 flex max-w-7xl w-full mx-auto p-4 sm:p-6 gap-6 relative">
         {/* Left Column: 16:9 Video Player & Lesson Content */}
@@ -288,10 +257,18 @@ export default function CourseStudioClient({
                     className="w-full h-full border-0"
                   />
 
-                  {/* 🛡️ Invisible Click Trap: Top Bar */}
-                  {/* ป้องกันการคลิกชื่อคลิป, ไอคอนช่อง, ปุ่ม Share, ปุ่ม Watch Later เพื่อไม่ให้หลุดไป YouTube */}
+                  {/* 🛡️ Invisible Click Trap: Top Bar & Google Drive Pop-out Shield */}
+                  {/* ป้องกันการคลิกปุ่ม Pop-out ของ Google Drive และลิงก์ออกนอกเว็บ */}
                   <div
-                    className="absolute top-0 left-0 right-0 h-14 z-20 cursor-default bg-transparent"
+                    className="absolute top-0 left-0 right-0 h-16 z-20 cursor-default bg-transparent"
+                    title="PUP PAP AI Protected Player"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  />
+                  <div
+                    className="absolute top-0 right-0 w-24 h-20 z-20 cursor-default bg-transparent"
                     title="PUP PAP AI Protected Player"
                     onClick={(e) => {
                       e.preventDefault();
@@ -368,14 +345,24 @@ export default function CourseStudioClient({
                     บทเรียนนี้สำหรับสมาชิกที่สมัครคอร์ส
                   </h3>
                   <p className="text-sm text-stone-300">
-                    ปลดล็อกทั้ง 16 บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร
+                    ปลดล็อกทั้ง 16 บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร เรียนซ้ำได้ตลอดชีพ
                   </p>
-                  <Link
-                    href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
-                    className="puppap-btn-primary inline-flex items-center gap-2 px-6 py-2.5 text-sm font-bold shadow-lg"
-                  >
-                    <span>🛒 สมัครเรียนและปลดล็อกคอร์สนี้</span>
-                  </Link>
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                    {!user && (
+                      <Link
+                        href={`/login?next=${encodeURIComponent(`/course/${tool?.slug || 'tiktok-ai-affiliate'}`)}`}
+                        className="px-5 py-2.5 rounded-full bg-white text-stone-950 hover:bg-stone-100 text-xs sm:text-sm font-bold shadow-md transition-all"
+                      >
+                        🔑 เข้าสู่ระบบ (สำหรับผู้ที่ซื้อแล้ว)
+                      </Link>
+                    )}
+                    <Link
+                      href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
+                      className="puppap-btn-primary inline-flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-lg"
+                    >
+                      <span>🛒 สมัครเรียน 990 บาท</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -549,10 +536,10 @@ export default function CourseStudioClient({
 
               <div className="py-3 last:pb-0 space-y-1">
                 <h4 className="font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                  <span className="text-[var(--accent)]">Q:</span> ถ้าคลิปไม่เล่น หรือดูไม่ได้ต้องทำอย่างไร?
+                  <span className="text-[var(--accent)]">Q:</span> ถ้าคลิปไม่เล่น หรือดูบน iPhone ไม่ขึ้นภาพต้องทำอย่างไร?
                 </h4>
                 <p className="text-[var(--text-secondary)] pl-5 leading-relaxed">
-                  หากวิดีโอนิ่งหรือไม่ยอมเล่น ให้กดปุ่ม Refresh (โหลดหน้าใหม่) หรือตรวจสอบสัญญาณอินเทอร์เน็ตของท่าน หากยังพบปัญหา สามารถกดปุ่มทักแชทแอดมินด้านบนเพื่อให้ทีมงานดูแลได้ทันทีครับ
+                  แนะนำให้เปิดเว็บผ่านแอป <strong>Google Chrome</strong> หรือ <strong>Safari ปกติ</strong> (หลีกเลี่ยงการเปิดผ่านหน้าต่างแชท LINE/Facebook โดยตรง) หากบน iPhone ขึ้นจอดำ สามารถไปที่ <em>การตั้งค่า iPhone &gt; Safari &gt; ปิด &quot;ป้องกันการติดตามข้ามไซต์&quot;</em> หรือเปิดผ่านแอป Chrome จะดูได้ลื่นไหลทันทีครับ
                 </p>
               </div>
             </div>
