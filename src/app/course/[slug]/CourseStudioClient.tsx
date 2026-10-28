@@ -4,12 +4,21 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
+interface PromptPreset {
+  label: string;
+  value: string;
+}
+
 interface LessonPromptStep {
   step: string;
   app?: string;
   instruction?: string;
   prompt: string;
   tip?: string;
+  editable_label?: string;
+  editable_placeholder?: string;
+  default_variable?: string;
+  presets?: PromptPreset[];
 }
 
 interface Lesson {
@@ -70,6 +79,8 @@ export default function CourseStudioClient({
   const [completedIds, setCompletedIds] = useState<number[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [customVars, setCustomVars] = useState<Record<string, string>>({});
+  const [customPrompts, setCustomPrompts] = useState<Record<string, string>>({});
 
   const handleCopyPrompt = async (text: string, key: string) => {
     try {
@@ -81,6 +92,76 @@ export default function CourseStudioClient({
     } catch (err) {
       console.error('Copy failed:', err);
     }
+  };
+
+  const getStepStorageKey = (lessonId: number, idx: number) => `${lessonId}-${idx}`;
+
+  const getEffectivePrompt = (lessonId: number, idx: number, item: LessonPromptStep): string => {
+    const key = getStepStorageKey(lessonId, idx);
+    if (customPrompts[key] !== undefined) {
+      return customPrompts[key];
+    }
+    if (item.default_variable && customVars[key] !== undefined) {
+      return item.prompt.replace(item.default_variable, customVars[key]);
+    }
+    return item.prompt;
+  };
+
+  const getEffectiveVar = (lessonId: number, idx: number, item: LessonPromptStep): string => {
+    const key = getStepStorageKey(lessonId, idx);
+    if (customVars[key] !== undefined) {
+      return customVars[key];
+    }
+    return item.default_variable || '';
+  };
+
+  const persistCustomState = (
+    nextVars: Record<string, string>,
+    nextPrompts: Record<string, string>
+  ) => {
+    if (typeof window !== 'undefined' && tool?.slug) {
+      try {
+        localStorage.setItem(
+          `puppap_course_${tool.slug}_custom_prompts_v1`,
+          JSON.stringify({ vars: nextVars, prompts: nextPrompts })
+        );
+      } catch (e) {}
+    }
+  };
+
+  const handleVarChange = (
+    lessonId: number,
+    idx: number,
+    item: LessonPromptStep,
+    newValue: string
+  ) => {
+    const key = getStepStorageKey(lessonId, idx);
+    const nextVars = { ...customVars, [key]: newValue };
+    const updatedFullPrompt = item.default_variable
+      ? item.prompt.replace(item.default_variable, newValue)
+      : item.prompt;
+    const nextPrompts = { ...customPrompts, [key]: updatedFullPrompt };
+    setCustomVars(nextVars);
+    setCustomPrompts(nextPrompts);
+    persistCustomState(nextVars, nextPrompts);
+  };
+
+  const handleFullPromptChange = (lessonId: number, idx: number, newFullPrompt: string) => {
+    const key = getStepStorageKey(lessonId, idx);
+    const nextPrompts = { ...customPrompts, [key]: newFullPrompt };
+    setCustomPrompts(nextPrompts);
+    persistCustomState(customVars, nextPrompts);
+  };
+
+  const handleResetStepPrompt = (lessonId: number, idx: number) => {
+    const key = getStepStorageKey(lessonId, idx);
+    const nextVars = { ...customVars };
+    const nextPrompts = { ...customPrompts };
+    delete nextVars[key];
+    delete nextPrompts[key];
+    setCustomVars(nextVars);
+    setCustomPrompts(nextPrompts);
+    persistCustomState(nextVars, nextPrompts);
   };
 
   // Group lessons by module
@@ -107,6 +188,14 @@ export default function CourseStudioClient({
           const parsedId = parseInt(lastLesson, 10);
           if (parsedId && lessons.some(l => l.id === parsedId)) {
             setActiveLessonId(parsedId);
+          }
+        }
+        const savedCustom = localStorage.getItem(`puppap_course_${tool.slug}_custom_prompts_v1`);
+        if (savedCustom) {
+          const parsedCustom = JSON.parse(savedCustom);
+          if (parsedCustom && typeof parsedCustom === 'object') {
+            if (parsedCustom.vars) setCustomVars(parsedCustom.vars);
+            if (parsedCustom.prompts) setCustomPrompts(parsedCustom.prompts);
           }
         }
       } catch (e) {
@@ -505,7 +594,7 @@ export default function CourseStudioClient({
                         const allText = activeLesson.prompts!
                           .map(
                             (p, idx) =>
-                              `=== ${p.step} ${p.app ? `(${p.app})` : ''} ===\n${p.instruction ? `วิธีใช้: ${p.instruction}\n` : ''}\n${p.prompt}`
+                              `=== ${p.step} ${p.app ? `(${p.app})` : ''} ===\n${p.instruction ? `วิธีใช้: ${p.instruction}\n` : ''}\n${getEffectivePrompt(activeLesson.id, idx, p)}`
                           )
                           .join('\n\n----------------------------------------\n\n');
                         handleCopyPrompt(allText, `all-${activeLesson.id}`);
@@ -524,6 +613,11 @@ export default function CourseStudioClient({
                     {activeLesson.prompts.map((item, idx) => {
                       const stepKey = `prompt-${activeLesson.id}-${idx}`;
                       const isCopied = copiedKey === stepKey;
+                      const effectivePrompt = getEffectivePrompt(activeLesson.id, idx, item);
+                      const effectiveVar = getEffectiveVar(activeLesson.id, idx, item);
+                      const isModified = effectivePrompt !== item.prompt;
+                      const promptLineCount = Math.max(3, Math.min(10, effectivePrompt.split('\n').length + 1));
+
                       return (
                         <div
                           key={idx}
@@ -539,6 +633,11 @@ export default function CourseStudioClient({
                                 <h4 className="font-bold text-xs sm:text-sm text-[var(--text-primary)]">
                                   {item.step}
                                 </h4>
+                                {isModified && (
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                    ✨ ปรับแต่งเนื้อเรื่องแล้ว
+                                  </span>
+                                )}
                               </div>
                               {item.app && (
                                 <div className="pl-8">
@@ -550,17 +649,29 @@ export default function CourseStudioClient({
                               )}
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleCopyPrompt(item.prompt, stepKey)}
-                              className={`shrink-0 px-4 py-2 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 ${
-                                isCopied
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'puppap-btn-primary'
-                              }`}
-                            >
-                              <span>{isCopied ? '✅ คัดลอกคำสั่งแล้ว!' : '📋 คัดลอกคำสั่งนี้'}</span>
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {isModified && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleResetStepPrompt(activeLesson.id, idx)}
+                                  className="px-2.5 py-2 rounded-lg text-xs font-bold bg-[var(--bg-deep)] hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-light)] transition-all"
+                                  title="คืนค่าคำสั่งต้นฉบับตามคลิปสอน"
+                                >
+                                  ↺ คืนค่าตามคลิป
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleCopyPrompt(effectivePrompt, stepKey)}
+                                className={`px-4 py-2 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 ${
+                                  isCopied
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'puppap-btn-primary'
+                                }`}
+                              >
+                                <span>{isCopied ? '✅ คัดลอกคำสั่งแล้ว!' : '📋 คัดลอกคำสั่งนี้'}</span>
+                              </button>
+                            </div>
                           </div>
 
                           {/* Step Body */}
@@ -575,19 +686,113 @@ export default function CourseStudioClient({
                               </div>
                             )}
 
-                            <div className="relative">
-                              <pre className="p-3.5 rounded-xl bg-stone-950 text-stone-100 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words border border-stone-800 select-all overflow-x-auto">
-                                {item.prompt}
-                              </pre>
+                            {/* Editable Dark Prompt Box */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] px-1">
+                                <span className="font-semibold flex items-center gap-1">
+                                  <span>⌨️</span>
+                                  <span>กล่องคำสั่ง Prompt (จิ้มแก้ไขข้อความในกล่องสีดำนี้ได้โดยตรง)</span>
+                                </span>
+                                {isModified && (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                    ● บันทึกคำสั่งที่คุณแก้ไขไว้แล้ว
+                                  </span>
+                                )}
+                              </div>
+                              <textarea
+                                value={effectivePrompt}
+                                onChange={(e) => handleFullPromptChange(activeLesson.id, idx, e.target.value)}
+                                rows={promptLineCount}
+                                className="w-full p-3.5 rounded-xl bg-stone-950 text-stone-100 font-mono text-xs sm:text-sm leading-relaxed border border-stone-800 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 outline-none resize-y transition-all"
+                              />
                             </div>
 
-                            {item.tip && (
-                              <div className="text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-500/25 flex items-start gap-2">
-                                <span className="shrink-0">💡</span>
-                                <span>
-                                  <strong>จุดที่ปรับเปลี่ยนได้: </strong>
-                                  {item.tip}
-                                </span>
+                            {/* Interactive Customizer Box (Green Tip + Presets + Variable Input) */}
+                            {(item.tip || item.default_variable) && (
+                              <div className="text-xs text-emerald-900 dark:text-emerald-200 bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-500/30 space-y-3">
+                                {item.tip && (
+                                  <div className="flex items-start gap-2">
+                                    <span className="shrink-0 text-sm">💡</span>
+                                    <span>
+                                      <strong className="text-emerald-800 dark:text-emerald-300">จุดที่ปรับเปลี่ยนได้: </strong>
+                                      {item.tip}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {item.default_variable && (
+                                  <div className="pt-2.5 border-t border-emerald-500/20 space-y-2.5">
+                                    {/* Preset Chips */}
+                                    {item.presets && item.presets.length > 0 && (
+                                      <div className="space-y-1.5">
+                                        <div className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                                          <span>✨</span>
+                                          <span>ตัวอย่างไอเดียสำเร็จรูป (กดเลือกสลับเนื้อเรื่องได้ใน 1 คลิก):</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {item.presets.map((preset, pIdx) => {
+                                            const isSelectedPreset = effectiveVar === preset.value;
+                                            return (
+                                              <button
+                                                key={pIdx}
+                                                type="button"
+                                                onClick={() => handleVarChange(activeLesson.id, idx, item, preset.value)}
+                                                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                  isSelectedPreset
+                                                    ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                                                    : 'bg-[var(--bg-card)] hover:bg-emerald-500/20 text-[var(--text-primary)] border-emerald-500/30'
+                                                }`}
+                                              >
+                                                {preset.label}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Dedicated Custom Story / Product Input */}
+                                    <div className="space-y-1.5">
+                                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <label className="text-xs font-extrabold text-emerald-800 dark:text-emerald-300">
+                                          {item.editable_label || '✏️ พิมพ์เนื้อเรื่อง / สินค้าที่คุณต้องการปรับเปลี่ยนตรงนี้:'}
+                                        </label>
+                                        <div className="flex items-center gap-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleVarChange(activeLesson.id, idx, item, '')}
+                                            className="px-2 py-0.5 rounded bg-[var(--bg-card)] hover:bg-red-500/15 text-[var(--text-secondary)] hover:text-red-600 dark:hover:text-red-300 border border-[var(--border-light)] text-[11px] font-semibold transition-colors"
+                                          >
+                                            🧹 ล้างช่องนี้เพื่อพิมพ์ใหม่
+                                          </button>
+                                          {isModified && (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleResetStepPrompt(activeLesson.id, idx)}
+                                              className="px-2 py-0.5 rounded bg-[var(--bg-card)] hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold transition-colors"
+                                            >
+                                              ↺ คืนค่าตามคลิป
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <textarea
+                                        value={effectiveVar}
+                                        onChange={(e) => handleVarChange(activeLesson.id, idx, item, e.target.value)}
+                                        rows={2}
+                                        placeholder={
+                                          item.editable_placeholder ||
+                                          'พิมพ์เนื้อเรื่อง พล็อตละครสั้น หรือชื่อสินค้าของคุณที่นี่ ข้อความจะเข้าไปแทนที่ในกล่องคำสั่งสีดำด้านบนให้อัตโนมัติ...'
+                                        }
+                                        className="w-full p-2.5 rounded-lg bg-[var(--bg-card)] text-[var(--text-primary)] border border-emerald-500/40 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-xs sm:text-sm leading-relaxed transition-all"
+                                      />
+                                      <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80">
+                                        ⚡ เมื่อพิมพ์หรือเลือกไอเดียด้านบน ข้อความจะอัปเดตเข้ากล่องคำสั่งสีดำอัตโนมัติ แล้วกดปุ่ม <strong>&quot;📋 คัดลอกคำสั่งนี้&quot;</strong> ไปวางในแอปได้เลยครับ
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>

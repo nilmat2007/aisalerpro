@@ -639,6 +639,41 @@ export default function AdminCoursesPage() {
                             className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs"
                           />
                         </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] text-amber-400 mb-0.5">
+                              ✏️ หัวข้อช่องกรอกเนื้อเรื่อง/สินค้า (Editable Label)
+                            </label>
+                            <input
+                              type="text"
+                              value={pItem.editable_label || ''}
+                              onChange={(e) => {
+                                const next = [...editingLesson.prompts];
+                                next[pIdx] = { ...next[pIdx], editable_label: e.target.value };
+                                setEditingLesson({ ...editingLesson, prompts: next });
+                              }}
+                              placeholder="เช่น ✏️ กดปรับเปลี่ยนเนื้อเรื่องละครสั้นของคุณตรงนี้:"
+                              className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-amber-400 mb-0.5">
+                              🎯 ข้อความต้นฉบับในพรอมต์ที่จะให้ถูกแทนที่ (Default Variable)
+                            </label>
+                            <input
+                              type="text"
+                              value={pItem.default_variable || ''}
+                              onChange={(e) => {
+                                const next = [...editingLesson.prompts];
+                                next[pIdx] = { ...next[pIdx], default_variable: e.target.value };
+                                setEditingLesson({ ...editingLesson, prompts: next });
+                              }}
+                              placeholder="คัดลอกประโยคเนื้อเรื่อง/สินค้าใน Prompt มาวางเพื่อให้ผู้เรียนพิมพ์แทนที่ได้"
+                              className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs"
+                            />
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
