@@ -4,6 +4,14 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 
+interface LessonPromptStep {
+  step: string;
+  app?: string;
+  instruction?: string;
+  prompt: string;
+  tip?: string;
+}
+
 interface Lesson {
   id: number;
   module_id: number;
@@ -16,6 +24,7 @@ interface Lesson {
   is_free_preview: boolean;
   flow_tool_slug?: string;
   key_points?: string[];
+  prompts?: LessonPromptStep[];
 }
 
 interface CourseStudioClientProps {
@@ -60,6 +69,19 @@ export default function CourseStudioClient({
   const [activeLessonId, setActiveLessonId] = useState<number>(1);
   const [completedIds, setCompletedIds] = useState<number[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopyPrompt = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => {
+        setCopiedKey((prev) => (prev === key ? null : prev));
+      }, 2200);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
 
   // Group lessons by module
   const modules = useMemo(() => {
@@ -457,6 +479,144 @@ export default function CourseStudioClient({
               </div>
             )}
 
+            {/* Step-by-Step Prompts Section */}
+            {activeLesson?.prompts && activeLesson.prompts.length > 0 && (
+              canViewActiveLesson ? (
+                <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border-accent)] space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border-light)]">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm sm:text-base font-black text-[var(--text-primary)] flex items-center gap-1.5">
+                          <span>📋</span>
+                          <span>คำสั่ง Prompt ประจำบทเรียน (กดคัดลอกไปใช้ตามคลิปได้ทันที)</span>
+                        </h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)]">
+                          ครบ {activeLesson.prompts.length} ขั้นตอน
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        คัดลอกคำสั่งด้านล่างไปวางในแอปตามสเต็ปที่สอนในวิดีโอ และเปลี่ยนชื่อสินค้า/เนื้อเรื่องเป็นของคุณได้เลย
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allText = activeLesson.prompts!
+                          .map(
+                            (p, idx) =>
+                              `=== ${p.step} ${p.app ? `(${p.app})` : ''} ===\n${p.instruction ? `วิธีใช้: ${p.instruction}\n` : ''}\n${p.prompt}`
+                          )
+                          .join('\n\n----------------------------------------\n\n');
+                        handleCopyPrompt(allText, `all-${activeLesson.id}`);
+                      }}
+                      className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all shadow-xs ${
+                        copiedKey === `all-${activeLesson.id}`
+                          ? 'bg-emerald-600 text-white border-emerald-700'
+                          : 'bg-[var(--bg-card)] hover:bg-[var(--accent-dim)] text-[var(--text-primary)] border-[var(--border)]'
+                      }`}
+                    >
+                      <span>{copiedKey === `all-${activeLesson.id}` ? '✅ คัดลอกครบทุกขั้นตอนแล้ว!' : '📑 คัดลอกทั้งหมดทุกสเต็ป'}</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {activeLesson.prompts.map((item, idx) => {
+                      const stepKey = `prompt-${activeLesson.id}-${idx}`;
+                      const isCopied = copiedKey === stepKey;
+                      return (
+                        <div
+                          key={idx}
+                          className="rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] overflow-hidden shadow-xs"
+                        >
+                          {/* Step Top Bar */}
+                          <div className="px-4 py-3 bg-[var(--bg-secondary)]/60 border-b border-[var(--border-light)] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="w-6 h-6 rounded-full bg-[var(--accent)] text-white text-xs font-black flex items-center justify-center shrink-0">
+                                  {idx + 1}
+                                </span>
+                                <h4 className="font-bold text-xs sm:text-sm text-[var(--text-primary)]">
+                                  {item.step}
+                                </h4>
+                              </div>
+                              {item.app && (
+                                <div className="pl-8">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                                    <span>🤖 แอปที่ใช้:</span>
+                                    <span>{item.app}</span>
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleCopyPrompt(item.prompt, stepKey)}
+                              className={`shrink-0 px-4 py-2 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 ${
+                                isCopied
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'puppap-btn-primary'
+                              }`}
+                            >
+                              <span>{isCopied ? '✅ คัดลอกคำสั่งแล้ว!' : '📋 คัดลอกคำสั่งนี้'}</span>
+                            </button>
+                          </div>
+
+                          {/* Step Body */}
+                          <div className="p-4 space-y-3">
+                            {item.instruction && (
+                              <div className="text-xs text-[var(--text-secondary)] bg-[var(--bg-deep)] px-3 py-2 rounded-lg border border-[var(--border-light)] flex items-start gap-2">
+                                <span className="shrink-0">📌</span>
+                                <span>
+                                  <strong className="text-[var(--text-primary)]">วิธีทำตามคลิป: </strong>
+                                  {item.instruction}
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="relative">
+                              <pre className="p-3.5 rounded-xl bg-stone-950 text-stone-100 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words border border-stone-800 select-all overflow-x-auto">
+                                {item.prompt}
+                              </pre>
+                            </div>
+
+                            {item.tip && (
+                              <div className="text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-500/25 flex items-start gap-2">
+                                <span className="shrink-0">💡</span>
+                                <span>
+                                  <strong>จุดที่ปรับเปลี่ยนได้: </strong>
+                                  {item.tip}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                      <span>🔒</span>
+                      <span>บทเรียนนี้มีชุดคำสั่ง Prompt แจกฟรี {activeLesson.prompts.length} ขั้นตอน</span>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      สำหรับสมาชิกคอร์ส สามารถกดคัดลอกคำสั่ง Prompt ทีละสเต็ปไปวางใช้งานตามคลิปได้ทันที
+                    </p>
+                  </div>
+                  <Link
+                    href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
+                    className="puppap-btn-primary px-4 py-2 text-xs font-bold shrink-0 text-center"
+                  >
+                    🛒 สมัครเรียนเพื่อปลดล็อก
+                  </Link>
+                </div>
+              )
+            )}
+
             {/* Related Flow Tool Box */}
             {activeLesson?.flow_tool_slug && (
               <div className="p-4 rounded-xl border border-[var(--border-accent)] bg-[var(--accent-dim)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -648,6 +808,9 @@ export default function CourseStudioClient({
                             )}
                             {lesson.flow_tool_slug && (
                               <span className="text-[var(--accent)] font-mono font-bold">• Flow</span>
+                            )}
+                            {lesson.prompts && lesson.prompts.length > 0 && (
+                              <span className="text-emerald-700 dark:text-emerald-400 font-bold">• 📋 Prompt</span>
                             )}
                           </div>
                         </div>

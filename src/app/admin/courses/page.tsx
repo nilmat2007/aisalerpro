@@ -46,14 +46,20 @@ export default function AdminCoursesPage() {
       status: 'coming_soon',
       is_free_preview: false,
       flow_tool_slug: '',
-      key_points: ['', '', ''],
+      key_points: [],
+      prompts: [],
       isNew: true,
     });
     setIsModalOpen(true);
   };
 
   const openEditModal = (lesson: any) => {
-    setEditingLesson({ ...lesson, isNew: false });
+    setEditingLesson({
+      ...lesson,
+      key_points: Array.isArray(lesson.key_points) ? lesson.key_points : [],
+      prompts: Array.isArray(lesson.prompts) ? lesson.prompts.map((p: any) => ({ ...p })) : [],
+      isNew: false,
+    });
     setIsModalOpen(true);
   };
 
@@ -262,7 +268,14 @@ export default function AdminCoursesPage() {
                       {lesson.id}
                     </td>
                     <td className="p-4">
-                      <div className="font-semibold text-white">{lesson.title}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-white">{lesson.title}</span>
+                        {Array.isArray(lesson.prompts) && lesson.prompts.length > 0 && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                            📋 {lesson.prompts.length} Prompt
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-slate-400 line-clamp-1 mt-0.5">
                         {lesson.description}
                       </div>
@@ -347,7 +360,7 @@ export default function AdminCoursesPage() {
       {/* Edit / Add Lesson Modal */}
       {isModalOpen && editingLesson && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 space-y-5 shadow-2xl">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <span>{editingLesson.isNew ? '➕' : '🎬'}</span>
@@ -466,6 +479,174 @@ export default function AdminCoursesPage() {
                   rows={3}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  📌 สิ่งที่ได้เรียนรู้ในบทนี้ (Key Points — พิมพ์บรรทัดละ 1 ข้อ)
+                </label>
+                <textarea
+                  value={Array.isArray(editingLesson.key_points) ? editingLesson.key_points.join('\n') : ''}
+                  onChange={(e) =>
+                    setEditingLesson({
+                      ...editingLesson,
+                      key_points: e.target.value
+                        .split('\n')
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  rows={4}
+                  placeholder="บรรทัดละ 1 หัวข้อสำคัญ..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                />
+              </div>
+
+              {/* Step-by-Step Prompts Editor */}
+              <div className="pt-3 border-t border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-bold text-purple-400">
+                      📋 ชุดคำสั่ง Prompt ประจำบทเรียน (Step-by-Step Prompts)
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      เพิ่มพรอมต์แยกตามสเต็ปเพื่อให้ผู้เรียนกดปุ่มคัดลอกใต้คลิปได้ทันที
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentPrompts = Array.isArray(editingLesson.prompts) ? editingLesson.prompts : [];
+                      setEditingLesson({
+                        ...editingLesson,
+                        prompts: [
+                          ...currentPrompts,
+                          {
+                            step: `พรอมต์ที่ ${currentPrompts.length + 1} (สเต็ปที่ ${currentPrompts.length + 1})`,
+                            app: 'Google Flow / Gemini / ChatGPT',
+                            instruction: '',
+                            prompt: '',
+                            tip: '',
+                          },
+                        ],
+                      });
+                    }}
+                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold flex items-center gap-1"
+                  >
+                    <span>➕ เพิ่มสเต็ป Prompt</span>
+                  </button>
+                </div>
+
+                {Array.isArray(editingLesson.prompts) && editingLesson.prompts.length > 0 ? (
+                  <div className="space-y-3">
+                    {editingLesson.prompts.map((pItem: any, pIdx: number) => (
+                      <div
+                        key={pIdx}
+                        className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-purple-400">
+                            สเต็ปที่ #{pIdx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = editingLesson.prompts.filter((_: any, i: number) => i !== pIdx);
+                              setEditingLesson({ ...editingLesson, prompts: next });
+                            }}
+                            className="text-xs text-red-400 hover:text-red-300 font-semibold"
+                          >
+                            🗑️ ลบสเต็ปนี้
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-0.5">ชื่อสเต็ป</label>
+                            <input
+                              type="text"
+                              value={pItem.step || ''}
+                              onChange={(e) => {
+                                const next = [...editingLesson.prompts];
+                                next[pIdx] = { ...next[pIdx], step: e.target.value };
+                                setEditingLesson({ ...editingLesson, prompts: next });
+                              }}
+                              placeholder="เช่น พรอมต์ที่ 1 (สเต็ปที่ 1): สร้างภาพ 9 ช่อง"
+                              className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-0.5">แอป / โมเดลที่ใช้</label>
+                            <input
+                              type="text"
+                              value={pItem.app || ''}
+                              onChange={(e) => {
+                                const next = [...editingLesson.prompts];
+                                next[pIdx] = { ...next[pIdx], app: e.target.value };
+                                setEditingLesson({ ...editingLesson, prompts: next });
+                              }}
+                              placeholder="เช่น Google Flow (Banana Pro / Veo 3.1)"
+                              className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] text-slate-400 mb-0.5">วิธีใช้ / การแนบรูป</label>
+                          <input
+                            type="text"
+                            value={pItem.instruction || ''}
+                            onChange={(e) => {
+                              const next = [...editingLesson.prompts];
+                              next[pIdx] = { ...next[pIdx], instruction: e.target.value };
+                              setEditingLesson({ ...editingLesson, prompts: next });
+                            }}
+                            placeholder="อธิบายสั้นๆ ว่าต้องแนบรูปอะไร หรือตั้งค่าอย่างไร"
+                            className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] text-cyan-400 font-semibold mb-0.5">
+                            ข้อความคำสั่ง Prompt (สำหรับให้ผู้เรียนกดคัดลอก)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={pItem.prompt || ''}
+                            onChange={(e) => {
+                              const next = [...editingLesson.prompts];
+                              next[pIdx] = { ...next[pIdx], prompt: e.target.value };
+                              setEditingLesson({ ...editingLesson, prompts: next });
+                            }}
+                            placeholder="วางคำสั่ง Prompt เต็มๆ ที่นี่..."
+                            className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] text-emerald-400 mb-0.5">
+                            💡 คำแนะนำจุดที่ปรับเปลี่ยนได้ (Tip)
+                          </label>
+                          <input
+                            type="text"
+                            value={pItem.tip || ''}
+                            onChange={(e) => {
+                              const next = [...editingLesson.prompts];
+                              next[pIdx] = { ...next[pIdx], tip: e.target.value };
+                              setEditingLesson({ ...editingLesson, prompts: next });
+                            }}
+                            placeholder="เช่น เปลี่ยนชื่อสินค้าและจุดเด่นเป็นสินค้าของคุณเอง"
+                            className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500 italic bg-slate-950/60 border border-slate-800/80 rounded-lg p-3 text-center">
+                    บทเรียนนี้ยังไม่มีชุดคำสั่ง Prompt แนบไว้ (กด &quot;+ เพิ่มสเต็ป Prompt&quot; ด้านบนหากต้องการเพิ่ม)
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 border-t border-slate-800">

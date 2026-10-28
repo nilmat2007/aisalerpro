@@ -248,10 +248,25 @@ export default function CoursesClient({
                                     🎬 พร้อมเรียน • {lesson.duration || 'วิดีโอ HD'}
                                   </span>
                                 )}
+                                {lesson.prompts && lesson.prompts.length > 0 && (
+                                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)] font-bold">
+                                    📋 แจกฟรี {lesson.prompts.length} Prompt
+                                  </span>
+                                )}
                               </div>
                               <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
                                 {lesson.description}
                               </p>
+                              {Array.isArray(lesson.key_points) && lesson.key_points.length > 0 && (
+                                <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
+                                  {lesson.key_points.map((pt: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-1.5">
+                                      <span className="text-[var(--accent)] font-bold">•</span>
+                                      <span>{pt}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
                             </div>
                           </div>
 
