@@ -165,10 +165,10 @@ export function buildTrialFollowUpEmail({
         </a>
       </div>
 
-      <!-- Bank Transfer Option -->
+      <!-- PromptPay Option -->
       <div style="margin-top:24px; padding-top:18px; border-top:1px solid #1e293b; color:#94a3b8; font-size:12px; line-height:1.6; text-align:center;">
-        💳 โอนชำระตรงได้ที่: <b>ธ.กรุงศรี</b> เลขที่ <b>775-1-16804-7</b> (ภีมทพัฒน์ นิลมาตย์)<br>
-        โอนแล้วส่งสลิปมาทางหน้าเว็บหรือ Messenger ได้ทันที ทีมงานจะเปิดสิทธิ์ให้ทันทีครับ
+        💳 สแกน QR พร้อมเพย์ (PromptPay): <b>090-555-6356</b> (นาย ภีมฑพัฒน์ นิลมาตย์)<br>
+        โอนแล้วส่งสลิปมาทางหน้าเว็บเพื่อให้ AI ตรวจสอบและเปิดสิทธิ์อัตโนมัติได้ทันทีครับ
       </div>
     </div>
 

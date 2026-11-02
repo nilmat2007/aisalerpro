@@ -127,21 +127,26 @@ export function sha256Short(input: Buffer | string): string {
 }
 
 /**
- * Verify slip receiver account digits (handles bank masking like xxx-x-x6804-7 or 775-1-16804-7)
+ * Verify slip receiver account / PromptPay digits (handles bank masking like xxx-xxx-6356 or 090-555-6356)
  */
-function matchesReceiverAccount(visibleAccountText: string, targetDigits = '7751168047'): boolean {
+function matchesReceiverAccount(visibleAccountText: string, targetDigits = '0905556356'): boolean {
   const digitsOnly = String(visibleAccountText || '').replace(/[^0-9]/g, '');
-  if (!digitsOnly || digitsOnly.length < 3) return false;
+  // If the bank slip does not display receiver digits on a PromptPay transfer, rely on strict receiver name check
+  if (!digitsOnly || digitsOnly.length < 3) return true;
 
-  // Check if any contiguous 3+ digit block of visible digits appears in 7751168047
-  // Typical Krungsri masks: xxx-x-x6804-7 (68047), xxx-1-16804-x (116804), 775-1-16804-7 (7751168047)
-  if (targetDigits.includes(digitsOnly)) return true;
+  // Accept PromptPay number (0905556356) as well as linked bank account (7751168047) in case same-bank PromptPay resolves to account number
+  const allowedTargets = [targetDigits, '0905556356', '7751168047'];
 
-  // Also check sliding window of 4 digits from visibleAccountText
-  for (let i = 0; i <= digitsOnly.length - 4; i++) {
-    const chunk = digitsOnly.slice(i, i + 4);
-    if (targetDigits.includes(chunk)) {
-      return true;
+  for (const target of allowedTargets) {
+    if (target.includes(digitsOnly)) return true;
+
+    // Sliding window of 3+ digits from visibleAccountText (e.g. xxx-xxx-6356 -> 6356)
+    const windowSize = Math.min(4, digitsOnly.length);
+    for (let i = 0; i <= digitsOnly.length - windowSize; i++) {
+      const chunk = digitsOnly.slice(i, i + windowSize);
+      if (target.includes(chunk)) {
+        return true;
+      }
     }
   }
   return false;
@@ -311,7 +316,7 @@ export async function verifySlipAndDecide(params: {
   const prompt = `คุณคือผู้เชี่ยวชาญตรวจสอบสลิปโอนเงินธนาคารไทย (Anti-Fraud Bank Slip Auditor)
 เวลาปัจจุบันของประเทศไทย (Asia/Bangkok) คือ: ${nowThai}
 ยอดเงินที่ลูกค้าต้องโอนคือ: ${expectedAmount} บาท
-บัญชีผู้รับโอนที่ถูกต้องคือ: ชื่อบัญชี "ภีมทพัฒน์ นิลมาตย์" (หรือ PHEEMTHAPHAT NILMAT) ธนาคารกรุงศรีอยุธยา (Krungsri / BAY) เลขที่บัญชี 775-1-16804-7
+บัญชีผู้รับโอนที่ถูกต้องคือ: ชื่อบัญชี "นาย ภีมฑพัฒน์ นิลมาตย์" (หรือ ภีมทพัฒน์ นิลมาตย์ / PHEEMTHAPHAT NILMAT) พร้อมเพย์ (PromptPay) หมายเลข 090-555-6356
 รหัสอ้างอิงที่ถอดรหัสได้จาก QR Code บนสลิปนี้คือ: "${qrTransRef}"
 
 กรุณาตรวจสอบภาพสลิปนี้อย่างละเอียดและตอบกลับเป็น JSON เท่านั้นตามโครงสร้างนี้:
@@ -319,8 +324,8 @@ export async function verifySlipAndDecide(params: {
   "is_completed_transfer_slip": boolean, // true เฉพาะเมื่อเป็นสลิปที่โอนเงินสำเร็จแล้วเท่านั้น (หากเป็นหน้าจอ "ตรวจสอบข้อมูลก่อนโอน" ที่ยังไม่กดยืนยัน หรือไม่ใช่รูปสลิป ให้ตอบ false)
   "is_tampered_or_fake": boolean, // true หากพบร่องรอยตัดต่อฟอนต์ไม่เท่ากัน ตัวเลขลอย หรือภาพสลิปปลอม
   "receiver_name": string, // ชื่อบัญชีผู้รับโอนที่อ่านได้จากภาพสลิป
-  "receiver_account": string, // เลขบัญชีผู้รับโอนที่แสดงบนสลิป (รวมตัว x หรือตัวเลขที่เห็น เช่น xxx-x-x6804-7)
-  "amount": number, // ยอดเงินที่โอน (ตัวเลขทศนิยม เช่น 990.00)
+  "receiver_account": string, // เลขพร้อมเพย์หรือเลขบัญชีผู้รับโอนที่แสดงบนสลิป (รวมตัว x หรือตัวเลขที่เห็น เช่น xxx-xxx-6356)
+  "amount": number, // ยอดเงินที่โอน (ตัวเลขทศนิยม เช่น 299.00)
   "visual_trans_ref": string, // เลขที่รายการ / รหัสอ้างอิงที่พิมพ์อยู่บนภาพสลิป
   "transfer_datetime_text": string, // วันและเวลาโอนที่ระบุบนสลิป
   "estimated_age_minutes": number, // คำนวณว่าเวลาโอนบนสลิปห่างจากเวลาปัจจุบัน (${nowThai}) กี่นาที (หากเป็นคนละวันให้นับตามจริง เช่น ข้ามวัน = 1440+)
@@ -408,23 +413,23 @@ export async function verifySlipAndDecide(params: {
     };
   }
 
-  // Check Receiver Name (ภีมทพัฒน์ นิลมาตย์)
+  // Check Receiver Name (นาย ภีมฑพัฒน์ นิลมาตย์)
   if (!matchesReceiverName(aiParsed.receiver_name, config.receiver_name_keywords)) {
     return {
       decision: 'rejected',
-      reason: `ชื่อบัญชีผู้รับโอนในสลิป (${aiParsed.receiver_name || 'ไม่ระบุ'}) ไม่ตรงกับบัญชี "ภีมทพัฒน์ นิลมาตย์" กรุณาตรวจสอบสลิปที่แนบอีกครั้งครับ`,
+      reason: `ชื่อบัญชีผู้รับโอนในสลิป (${aiParsed.receiver_name || 'ไม่ระบุ'}) ไม่ตรงกับบัญชี "นาย ภีมฑพัฒน์ นิลมาตย์" กรุณาตรวจสอบสลิปที่แนบอีกครั้งครับ`,
       fingerprintTag: `[AI-REJECTED-RECEIVER ref:${qrTransRef} img:${imgHash}]`,
     };
   }
 
-  // Check Receiver Account (775-1-16804-7)
+  // Check Receiver PromptPay (090-555-6356)
   if (
     aiParsed.receiver_account &&
     !matchesReceiverAccount(aiParsed.receiver_account, config.receiver_account_digits)
   ) {
     return {
       decision: 'rejected',
-      reason: `เลขที่บัญชีผู้รับโอนในสลิป (${aiParsed.receiver_account}) ไม่ตรงกับเลขบัญชี 775-1-16804-7 (ธ.กรุงศรีอยุธยา) ครับ`,
+      reason: `หมายเลขผู้รับโอนในสลิป (${aiParsed.receiver_account}) ไม่ตรงกับพร้อมเพย์ 090-555-6356 (นาย ภีมฑพัฒน์ นิลมาตย์) ครับ`,
       fingerprintTag: `[AI-REJECTED-ACCT ref:${qrTransRef} img:${imgHash}]`,
     };
   }

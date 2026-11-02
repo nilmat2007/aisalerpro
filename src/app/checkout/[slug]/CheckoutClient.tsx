@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import jsQR from 'jsqr';
+import QRCode from 'qrcode';
+import {
+  generatePromptPayPayload,
+  PROMPTPAY_ID,
+  PROMPTPAY_DISPLAY,
+  PROMPTPAY_RECEIVER_NAME,
+} from '@/lib/promptpay';
 
 // Multi-zone & high-contrast QR code scanner for Thai Bank Mini-QR codes on slips
 function decodeSlipQrCode(img: HTMLImageElement): string | null {
@@ -156,6 +163,8 @@ export default function CheckoutClient({
   const [preview, setPreview] = useState<string | null>(initialOrder?.slip_url || null);
   const [isUploading, setIsUploading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [downloadingQr, setDownloadingQr] = useState(false);
   const [orderStatus, setOrderStatus] = useState<'idle' | 'pending' | 'approved' | 'rejected'>(
     initialOrder?.status === 'pending'
       ? 'pending'
@@ -210,9 +219,115 @@ export default function CheckoutClient({
   }, [step, orderStatus, tool?.id, router]);
 
   const handleCopyAccount = () => {
-    navigator.clipboard.writeText('7751168047');
+    navigator.clipboard.writeText(PROMPTPAY_ID);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  // Generate Dynamic PromptPay QR Code that locks the exact price
+  useEffect(() => {
+    let active = true;
+    const payload = generatePromptPayPayload(PROMPTPAY_ID, numericPrice > 0 ? numericPrice : undefined);
+    QRCode.toDataURL(payload, {
+      width: 520,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#0A2246',
+        light: '#FFFFFF',
+      },
+    })
+      .then((url) => {
+        if (active) setQrDataUrl(url);
+      })
+      .catch((err) => console.error('Failed to generate PromptPay QR:', err));
+    return () => {
+      active = false;
+    };
+  }, [numericPrice]);
+
+  // Download a complete Thai QR Payment Card PNG for mobile banking apps ("Scan from Gallery")
+  const handleDownloadQrCard = async () => {
+    if (!qrDataUrl) return;
+    setDownloadingQr(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 720;
+      canvas.height = 980;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // White card background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Navy Thai QR Payment top header bar
+      ctx.fillStyle = '#113566';
+      ctx.fillRect(0, 0, canvas.width, 130);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 34px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('THAI QR PAYMENT · พร้อมเพย์', canvas.width / 2, 65);
+
+      ctx.fillStyle = '#93C5FD';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('สแกนจ่ายได้ทุกแอปธนาคาร (ล็อกยอดโอนอัตโนมัติ)', canvas.width / 2, 105);
+
+      // Draw QR Code in the center
+      const qrImg = new Image();
+      await new Promise<void>((resolve, reject) => {
+        qrImg.onload = () => resolve();
+        qrImg.onerror = () => reject(new Error('QR load failed'));
+        qrImg.src = qrDataUrl;
+      });
+
+      const qrSize = 480;
+      const qrX = (canvas.width - qrSize) / 2;
+      const qrY = 165;
+
+      // Subtle border around QR
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(qrX - 12, qrY - 12, qrSize + 24, qrSize + 24);
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+      // Receiver Name & PromptPay Info
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText(`ชื่อบัญชี: ${PROMPTPAY_RECEIVER_NAME}`, canvas.width / 2, 715);
+
+      ctx.fillStyle = '#334155';
+      ctx.font = 'bold 26px monospace';
+      ctx.fillText(`พร้อมเพย์: ${PROMPTPAY_DISPLAY}`, canvas.width / 2, 760);
+
+      // Amount Pill
+      ctx.fillStyle = '#FEF3C7';
+      ctx.fillRect(90, 800, canvas.width - 180, 96);
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(90, 800, canvas.width - 180, 96);
+
+      ctx.fillStyle = '#B45309';
+      ctx.font = 'bold 38px sans-serif';
+      ctx.fillText(`ยอดโอน: ฿${displayPrice}.00 บาท`, canvas.width / 2, 862);
+
+      ctx.fillStyle = '#64748B';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('PUP PAP AI — หลังโอนเสร็จ กรุณาแนบสลิปที่หน้าเว็บไซต์เพื่อรับสิทธิ์ทันที', canvas.width / 2, 945);
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `PromptPay_${numericPrice || displayPrice}THB_PUPPAP_AI.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error('Failed to download QR card:', e);
+    } finally {
+      setDownloadingQr(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -511,52 +626,95 @@ export default function CheckoutClient({
                 </div>
               )}
 
-              {/* Bank Account Card - High Contrast & Crystal Clear */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border)] space-y-4 shadow-sm text-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold text-sm">
-                  <span>🏛️</span>
-                  <span>ธนาคารกรุงศรีอยุธยา (Krungsri)</span>
-                </div>
-
-                <div className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
-                  <span>ชื่อบัญชี: </span>
-                  <span className="text-[var(--accent)] font-black">ภีมทพัฒน์ นิลมาตย์</span>
-                </div>
-
-                {/* Account Number Box (Deep Obsidian Dark background with Bright Amber text for 100% Contrast) */}
-                <div className="bg-stone-950 border-2 border-amber-500/70 py-3.5 px-4 sm:px-6 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
-                  <div className="text-xs text-stone-400 uppercase tracking-widest sm:hidden">
-                    เลขที่บัญชี
+              {/* Dynamic Thai PromptPay QR Code Card - Locks Exact Amount Automatically */}
+              <div className="p-4 sm:p-6 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border)] space-y-4 shadow-sm text-center">
+                {/* Official Thai QR Payment Header Banner */}
+                <div className="max-w-xs mx-auto rounded-2xl overflow-hidden border-2 border-[#113566]/30 bg-white shadow-lg">
+                  <div className="bg-[#113566] text-white py-2.5 px-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🇹🇭</span>
+                      <span className="font-black tracking-wide text-sm sm:text-base">
+                        THAI QR PAYMENT
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-white/15 text-[11px] font-bold tracking-wider">
+                      PromptPay
+                    </span>
                   </div>
-                  <span className="text-2xl sm:text-3xl font-mono font-black text-amber-300 tracking-wider select-all">
-                    775-1-16804-7
-                  </span>
+
+                  {/* QR Code Image Container */}
+                  <div className="p-4 sm:p-5 flex flex-col items-center bg-white">
+                    {qrDataUrl ? (
+                      <img
+                        src={qrDataUrl}
+                        alt={`PromptPay QR ${displayPrice} THB`}
+                        className="w-52 h-52 sm:w-56 sm:h-56 object-contain select-all"
+                      />
+                    ) : (
+                      <div className="w-52 h-52 sm:w-56 sm:h-56 flex items-center justify-center text-slate-400 text-xs font-semibold">
+                        กำลังสร้าง QR Code...
+                      </div>
+                    )}
+
+                    <div className="mt-2 pt-2 border-t border-slate-200 w-full text-center space-y-0.5">
+                      <div className="text-xs font-bold text-slate-500">
+                        สแกนจ่ายได้ทุกแอปธนาคาร (ล็อกยอดอัตโนมัติ)
+                      </div>
+                      <div className="text-base font-black text-slate-900">
+                        {PROMPTPAY_RECEIVER_NAME}
+                      </div>
+                      <div className="text-xs font-mono font-bold text-slate-600">
+                        พร้อมเพย์: {PROMPTPAY_DISPLAY}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Locked Amount Highlight Banner */}
+                <div className="pt-1 flex flex-col items-center gap-1">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-bold">
+                    <span>🔒</span>
+                    <span>ล็อกยอดโอนอัตโนมัติ (สแกนแล้วกดโอนได้ทันที ไม่ต้องกรอกตัวเลข)</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+                    <span className="text-base sm:text-lg font-bold text-[var(--text-secondary)]">
+                      💰 ยอดชำระ:
+                    </span>
+                    <span className="text-2xl sm:text-3xl font-black text-[var(--accent)]">
+                      ฿{displayPrice}.00
+                    </span>
+                    <span className="text-sm font-semibold text-[var(--text-secondary)]">
+                      บาท
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons: Save QR Image (for mobile users) + Copy PromptPay Number */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDownloadQrCard}
+                    disabled={!qrDataUrl || downloadingQr}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-[#113566] hover:bg-[#1a498b] text-white shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                  >
+                    <span>💾</span>
+                    <span>{downloadingQr ? 'กำลังบันทึกรูป...' : 'บันทึกรูป QR ลงมือถือ'}</span>
+                  </button>
 
                   <button
                     type="button"
                     onClick={handleCopyAccount}
-                    className={`text-xs sm:text-sm font-bold px-3.5 py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95 ${
+                    className={`w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 border ${
                       copied
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-amber-400 hover:bg-amber-300 text-stone-950'
+                        ? 'bg-emerald-500 text-white border-emerald-500'
+                        : 'bg-[var(--bg-primary)] hover:border-[var(--accent)] text-[var(--text-primary)] border-[var(--border)]'
                     }`}
                   >
                     <span>{copied ? '✅' : '📋'}</span>
-                    <span>{copied ? 'คัดลอกสำเร็จ!' : 'คัดลอกเลขบัญชี'}</span>
+                    <span>
+                      {copied ? 'คัดลอกเบอร์พร้อมเพย์แล้ว!' : `คัดลอกพร้อมเพย์ (${PROMPTPAY_DISPLAY})`}
+                    </span>
                   </button>
-                </div>
-
-                {/* Payment Amount Row */}
-                <div className="pt-3 border-t border-[var(--border-light)] flex items-center justify-center gap-2 flex-wrap">
-                  <span className="text-base sm:text-lg font-bold text-[var(--text-secondary)]">
-                    💰 ยอดที่ต้องโอน:
-                  </span>
-                  <span className="text-2xl sm:text-3xl font-black text-[var(--accent)]">
-                    ฿{displayPrice}
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--text-secondary)]">
-                    บาท
-                  </span>
                 </div>
               </div>
 

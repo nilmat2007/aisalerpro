@@ -31,13 +31,14 @@ const DEFAULT_CONFIG: AiSlipConfig = {
   slipok_api_key: process.env.SLIPOK_API_KEY || '',
   max_slip_age_minutes: 30,
   receiver_name_keywords: [
+    'ภีมฑพัฒน์',
     'ภีมทพัฒน์',
     'นิลมาตย์',
     'PHEEMTHAPHAT',
     'PHEEMTAPAT',
     'NILMAT',
   ],
-  receiver_account_digits: '7751168047',
+  receiver_account_digits: '0905556356',
 };
 
 function getEncryptionKey(): Buffer {
