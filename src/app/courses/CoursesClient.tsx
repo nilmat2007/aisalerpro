@@ -280,10 +280,17 @@ export default function CoursesClient({
                             )}
                             {hasAccess ? (
                               <Link
-                                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
+                                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=${lesson.id}`}
                                 className="puppap-btn-primary px-3.5 py-1.5 text-xs font-bold"
                               >
                                 ▶ เข้าเรียนบทนี้
+                              </Link>
+                            ) : lesson.is_free_preview ? (
+                              <Link
+                                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=${lesson.id}`}
+                                className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white border border-emerald-800 text-xs font-bold transition-all shadow-xs"
+                              >
+                                🎁 ดูตัวอย่างบทนี้ฟรี
                               </Link>
                             ) : (
                               <Link

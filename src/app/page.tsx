@@ -13,14 +13,16 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    // Landing Page
-    const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
-    const { data: settings } = await supabase
-      .from('site_settings')
-      .select('*')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
+    // Landing Page (Parallelized queries)
+    const [{ data: allTools }, { data: settings }] = await Promise.all([
+      supabase.from('tools').select('*').order('sort_order'),
+      supabase
+        .from('site_settings')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ])
     
     return (
       <div className="min-h-screen text-[var(--text-primary)] font-sans flex flex-col items-center transition-colors duration-200">
@@ -198,9 +200,47 @@ export default async function HomePage() {
     )
   }
 
-  // Dashboard
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-  
+  // Dashboard (Parallelized queries to eliminate sequential waterfall)
+  const [
+    { data: profile },
+    { data: initialUserTools },
+    { data: allTools },
+    { data: announcements },
+    { data: userTrials },
+    { data: rawOrders },
+    { data: emailKeys },
+    { data: approvedOrders },
+  ] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+    supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id),
+    supabase.from('tools').select('*').order('sort_order'),
+    supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+    supabase.from('user_trials').select('*').eq('user_id', user.id),
+    supabase
+      .from('orders')
+      .select('*, tools(name, slug)')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'rejected'])
+      .order('created_at', { ascending: false })
+      .limit(5),
+    user.email
+      ? supabase
+          .from('license_keys')
+          .select('id, tool_id')
+          .eq('status', 'activated')
+          .ilike('activated_email', user.email)
+      : Promise.resolve({ data: [] as any[] }),
+    user.email
+      ? supabase
+          .from('orders')
+          .select('tool_id, license_key_id')
+          .eq('status', 'approved')
+          .ilike('user_email', user.email)
+      : Promise.resolve({ data: [] as any[] }),
+  ])
+
+  let userTools = initialUserTools
+
   // แจ้ง Telegram ถ้าเป็นสมาชิกใหม่ (ยังไม่มี profile)
   if (!profile) {
     notifyNewMember(
@@ -208,25 +248,10 @@ export default async function HomePage() {
       user.email || ''
     )
   }
-  
-  let { data: userTools } = await supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id)
 
   // Auto-heal entitlements: if user has activated license_keys or approved orders by email/id that aren't in user_tools yet
   const ownedSet = new Set((userTools || []).map((ut: any) => ut.tool_id))
   if (user.email) {
-    const [{ data: emailKeys }, { data: approvedOrders }] = await Promise.all([
-      supabase
-        .from('license_keys')
-        .select('id, tool_id')
-        .eq('status', 'activated')
-        .ilike('activated_email', user.email),
-      supabase
-        .from('orders')
-        .select('tool_id, license_key_id')
-        .eq('status', 'approved')
-        .ilike('user_email', user.email),
-    ])
-
     let healed = false
     for (const k of emailKeys || []) {
       if (k.tool_id && !ownedSet.has(k.tool_id)) {
@@ -253,17 +278,6 @@ export default async function HomePage() {
       userTools = refreshed.data || userTools
     }
   }
-
-  const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
-  const { data: announcements } = await supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false })
-  const { data: userTrials } = await supabase.from('user_trials').select('*').eq('user_id', user.id)
-  const { data: rawOrders } = await supabase
-    .from('orders')
-    .select('*, tools(name, slug)')
-    .eq('user_id', user.id)
-    .in('status', ['pending', 'rejected'])
-    .order('created_at', { ascending: false })
-    .limit(5)
 
   // Only show pending/rejected banners for tools the user does NOT already own
   const userOrders = (rawOrders || []).filter((o: any) => !ownedSet.has(o.tool_id))

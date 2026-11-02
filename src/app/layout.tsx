@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from '@supabase/supabase-js'
+import NavigationProgress from '@/components/NavigationProgress'
 
 async function getSettings() {
   try {
@@ -63,6 +64,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen antialiased">
+        <NavigationProgress />
         {children}
       </body>
     </html>

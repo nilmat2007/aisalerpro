@@ -45,6 +45,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
   const supabase = createClient();
   const [licenseKey, setLicenseKey] = useState('');
   const [licenseMsg, setLicenseMsg] = useState({ type: '', text: '' });
+  const [isActivating, setIsActivating] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [activeAnnouncements, setActiveAnnouncements] = useState(announcements);
   const [trialToolIds, setTrialToolIds] = useState<Set<string>>(new Set(userTrials?.map((t: any) => t.tool_id) || []));
   const [startingTrial, setStartingTrial] = useState<string | null>(null);
@@ -73,19 +75,26 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || null;
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      router.push('/login');
+      router.refresh();
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const handleActivate = async () => {
-    if (!licenseKey) return;
+    if (!licenseKey.trim() || isActivating) return;
+    setIsActivating(true);
     try {
       setLicenseMsg({ type: '', text: '' });
       const res = await fetch('/api/activate-license', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyCode: licenseKey })
+        body: JSON.stringify({ keyCode: licenseKey.trim() })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -100,6 +109,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
       }
     } catch (err) {
       setLicenseMsg({ type: 'error', text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ' });
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -167,8 +178,12 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
             <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover border-[1.5px] border-[var(--border)]" />
           )}
           <ThemeToggle size="md" />
-          <button onClick={handleLogout} className="puppap-btn-secondary px-4 py-1.5 text-xs">
-            ออกจากระบบ
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="puppap-btn-secondary px-4 py-1.5 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isLoggingOut ? '⏳ กำลังออก...' : 'ออกจากระบบ'}
           </button>
         </div>
       </header>
@@ -388,7 +403,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
               <div className="space-y-1">
                 <h4 className="text-sm font-bold text-[var(--text-primary)]">กดปุ่มเข้าห้องเรียน</h4>
                 <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
-                  กดปุ่มสีแดง &quot;เข้าห้องเรียน&quot; ด้านบน จะพบสารบัญวิดีโอ 16 บทเรียนพร้อมเรียนทันที
+                  กดปุ่มสีแดง &quot;เข้าห้องเรียน&quot; ด้านบน จะพบสารบัญวิดีโอ 22 บทเรียนพร้อมเรียนทันที
                 </p>
               </div>
             </div>
@@ -454,10 +469,10 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
             />
             <button
               onClick={handleActivate}
-              disabled={!licenseKey}
+              disabled={!licenseKey.trim() || isActivating}
               className="puppap-btn-primary px-6 py-2 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
             >
-              ปลดล็อก
+              {isActivating ? '⏳ กำลังตรวจสอบ...' : 'ปลดล็อก'}
             </button>
           </div>
           {licenseMsg.text && (

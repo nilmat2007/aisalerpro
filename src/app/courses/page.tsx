@@ -10,44 +10,45 @@ export const metadata = {
 
 export default async function CoursesPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // Fetch the course tool
-  const { data: course } = await supabase
-    .from('tools')
-    .select('*')
-    .eq('slug', 'tiktok-ai-affiliate')
-    .maybeSingle();
+  const [
+    { data: { user } },
+    { data: course },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from('tools')
+      .select('*')
+      .eq('slug', 'tiktok-ai-affiliate')
+      .maybeSingle(),
+  ]);
 
   let hasAccess = false;
 
   const ADMIN_EMAILS = ['nilmat2007@gmail.com', 'nilmat200757@gmail.com'];
 
   if (user && course) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    const isTrueAdmin =
-      profile?.role === 'admin' &&
-      ADMIN_EMAILS.includes((user.email || '').toLowerCase());
-
-    if (isTrueAdmin) {
-      hasAccess = true;
-    } else {
-      const { data: userTool } = await supabase
+    const [{ data: profile }, { data: userTool }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle(),
+      supabase
         .from('user_tools')
         .select('id')
         .eq('user_id', user.id)
         .eq('tool_id', course.id)
         .eq('is_active', true)
-        .maybeSingle();
+        .maybeSingle(),
+    ]);
 
-      if (userTool) {
-        hasAccess = true;
-      } else if (user.email) {
+    const isTrueAdmin =
+      profile?.role === 'admin' &&
+      ADMIN_EMAILS.includes((user.email || '').toLowerCase());
+
+    if (isTrueAdmin || userTool) {
+      hasAccess = true;
+    } else if (user.email) {
         const [{ data: keyMatch }, { data: orderMatch }] = await Promise.all([
           supabase
             .from('license_keys')
@@ -79,7 +80,6 @@ export default async function CoursesPage() {
           );
           hasAccess = true;
         }
-      }
     }
   }
 

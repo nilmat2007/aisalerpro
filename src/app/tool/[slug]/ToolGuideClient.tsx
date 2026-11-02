@@ -28,6 +28,7 @@ export default function ToolGuideClient({
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(hasAccess);
   const [password, setPassword] = useState('');
+  const [isUnlocking, setIsUnlocking] = useState(false);
   const [error, setError] = useState('');
   const [unlockNotice, setUnlockNotice] = useState('');
   const [isShaking, setIsShaking] = useState(false);
@@ -65,13 +66,14 @@ export default function ToolGuideClient({
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password) return;
+    if (!password.trim() || isUnlocking) return;
 
+    setIsUnlocking(true);
     try {
       const res = await fetch('/api/verify-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolId: tool.id, password }),
+        body: JSON.stringify({ toolId: tool.id, password: password.trim() }),
       });
 
       const data = await res.json();
@@ -89,6 +91,8 @@ export default function ToolGuideClient({
       }
     } catch {
       showError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+    } finally {
+      setIsUnlocking(false);
     }
   };
 
@@ -223,8 +227,12 @@ export default function ToolGuideClient({
                   placeholder="กรอกรหัสผ่านเครื่องมือ หรือ PHM-XXXX-XXXX"
                   className="flex-1 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl px-3.5 py-2.5 text-center sm:text-left text-[var(--text-primary)] text-sm font-mono focus:outline-none focus:border-[var(--accent)]"
                 />
-                <button type="submit" className="puppap-btn-primary px-5 py-2.5 text-sm font-bold shrink-0">
-                  🔑 ปลดล็อกทันที
+                <button
+                  type="submit"
+                  disabled={!password.trim() || isUnlocking}
+                  className="puppap-btn-primary px-5 py-2.5 text-sm font-bold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUnlocking ? '⏳ กำลังปลดล็อก...' : '🔑 ปลดล็อกทันที'}
                 </button>
               </form>
               {error && <p className="text-[var(--danger)] text-xs mt-1 font-semibold">{error}</p>}

@@ -218,3 +218,28 @@ body {
 .animate-shake {
   animation: shake 0.3s ease-in-out;
 }
+
+/* Instant click feedback & anti-double-click on internal links */
+a[data-nav-loading="true"] {
+  pointer-events: none !important;
+  opacity: 0.78 !important;
+  transform: scale(0.98) !important;
+  cursor: wait !important;
+}
+
+@keyframes puppapShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.puppap-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-deep) 25%,
+    var(--border-light) 50%,
+    var(--bg-deep) 75%
+  );
+  background-size: 200% 100%;
+  animation: puppapShimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}

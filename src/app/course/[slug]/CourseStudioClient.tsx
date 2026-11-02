@@ -81,6 +81,18 @@ export default function CourseStudioClient({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [customVars, setCustomVars] = useState<Record<string, string>>({});
   const [customPrompts, setCustomPrompts] = useState<Record<string, string>>({});
+  const [isVideoLoading, setIsVideoLoading] = useState<boolean>(true);
+
+  const selectLesson = (lessonId: number) => {
+    setSidebarOpen(false);
+    if (lessonId !== activeLessonId) {
+      setIsVideoLoading(true);
+      setActiveLessonId(lessonId);
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleCopyPrompt = async (text: string, key: string) => {
     try {
@@ -175,7 +187,7 @@ export default function CourseStudioClient({
     return Array.from(map.entries()).map(([title, items]) => ({ title, items }));
   }, [lessons]);
 
-  // Load completed lessons & last viewed lesson (Auto-Resume) from localStorage
+  // Load completed lessons & last viewed lesson (URL ?lesson=X takes priority over Auto-Resume)
   useEffect(() => {
     if (typeof window !== 'undefined' && tool?.slug) {
       try {
@@ -183,13 +195,23 @@ export default function CourseStudioClient({
         if (saved) {
           setCompletedIds(JSON.parse(saved));
         }
-        const lastLesson = localStorage.getItem(`puppap_course_${tool.slug}_last_lesson`);
-        if (lastLesson) {
-          const parsedId = parseInt(lastLesson, 10);
-          if (parsedId && lessons.some(l => l.id === parsedId)) {
-            setActiveLessonId(parsedId);
+
+        const params = new URLSearchParams(window.location.search);
+        const queryLesson = params.get('lesson');
+        const queryLessonId = queryLesson ? parseInt(queryLesson, 10) : NaN;
+
+        if (queryLessonId && lessons.some(l => l.id === queryLessonId)) {
+          setActiveLessonId(queryLessonId);
+        } else {
+          const lastLesson = localStorage.getItem(`puppap_course_${tool.slug}_last_lesson`);
+          if (lastLesson) {
+            const parsedId = parseInt(lastLesson, 10);
+            if (parsedId && lessons.some(l => l.id === parsedId)) {
+              setActiveLessonId(parsedId);
+            }
           }
         }
+
         const savedCustom = localStorage.getItem(`puppap_course_${tool.slug}_custom_prompts_v1`);
         if (savedCustom) {
           const parsedCustom = JSON.parse(savedCustom);
@@ -202,15 +224,19 @@ export default function CourseStudioClient({
         console.error(e);
       }
     }
-  }, [tool?.slug]);
+  }, [tool?.slug, lessons]);
 
-  // Save last active lesson for Auto-Resume
+  // Save last active lesson for Auto-Resume + safety fallback for video loading spinner
   useEffect(() => {
     if (typeof window !== 'undefined' && tool?.slug && activeLessonId) {
       try {
         localStorage.setItem(`puppap_course_${tool.slug}_last_lesson`, String(activeLessonId));
       } catch (e) {}
     }
+    const timer = setTimeout(() => {
+      setIsVideoLoading(false);
+    }, 3200);
+    return () => clearTimeout(timer);
   }, [tool?.slug, activeLessonId]);
 
   // Toggle completion
@@ -360,11 +386,26 @@ export default function CourseStudioClient({
             {canViewActiveLesson ? (
               isVideoReady ? (
                 <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  {/* Video Loading Spinner Overlay when switching lessons */}
+                  {isVideoLoading && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-stone-950/90 text-white p-4 text-center pointer-events-none">
+                      <div className="w-11 h-11 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin mb-3" />
+                      <p className="text-xs sm:text-sm font-bold text-white">
+                        🎬 กำลังโหลดวิดีโอบทที่ {activeLesson?.id}: {activeLesson?.title}
+                      </p>
+                      <p className="text-[11px] text-stone-400 mt-1">
+                        กรุณารอสักครู่...
+                      </p>
+                    </div>
+                  )}
+
                   <iframe
+                    key={embedUrl}
                     src={embedUrl}
                     title={activeLesson.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
+                    onLoad={() => setIsVideoLoading(false)}
                     className="w-full h-full border-0"
                   />
 
@@ -483,7 +524,7 @@ export default function CourseStudioClient({
           <div className="puppap-card p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start flex-wrap">
               <button
-                onClick={() => prevLesson && setActiveLessonId(prevLesson.id)}
+                onClick={() => prevLesson && selectLesson(prevLesson.id)}
                 disabled={!prevLesson}
                 className="puppap-btn-secondary px-4 py-2.5 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-xs"
               >
@@ -492,7 +533,7 @@ export default function CourseStudioClient({
               </button>
 
               <button
-                onClick={() => nextLesson && setActiveLessonId(nextLesson.id)}
+                onClick={() => nextLesson && selectLesson(nextLesson.id)}
                 disabled={!nextLesson}
                 className={`px-5 py-2.5 text-xs font-black disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 rounded-full transition-transform ${
                   nextLesson
@@ -968,10 +1009,7 @@ export default function CourseStudioClient({
                     return (
                       <button
                         key={lesson.id}
-                        onClick={() => {
-                          setActiveLessonId(lesson.id);
-                          setSidebarOpen(false);
-                        }}
+                        onClick={() => selectLesson(lesson.id)}
                         className={`w-full text-left p-2.5 rounded-xl text-xs transition-all flex items-start gap-2.5 border ${
                           isActive
                             ? 'bg-[var(--accent-dim)] border-[var(--border-accent)] text-[var(--accent)] font-bold shadow-xs'
@@ -1041,14 +1079,6 @@ export default function CourseStudioClient({
           )}
         </aside>
       </div>
-
-      {/* Backdrop for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-        ></div>
-      )}
     </div>
   );
 }
