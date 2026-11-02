@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import { getPriceInfo } from '@/lib/price-utils';
 
 interface PromptPreset {
   label: string;
@@ -258,6 +259,7 @@ export default function CourseStudioClient({
   const effectiveHasAccess = hasAccess;
   const canViewActiveLesson = effectiveHasAccess || activeLesson?.is_free_preview;
   const progressPercent = lessons.length > 0 ? Math.round((completedIds.length / lessons.length) * 100) : 0;
+  const priceInfo = getPriceInfo(tool?.price || '299', tool?.features);
 
   const embedUrl = activeLesson ? getEmbedUrl(activeLesson.video_url) : '';
   const isVideoReady = Boolean(embedUrl) && activeLesson?.status === 'ready';
@@ -340,6 +342,18 @@ export default function CourseStudioClient({
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
+            {!effectiveHasAccess && (
+              <Link
+                href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
+                className="puppap-btn-primary px-3.5 py-1.5 text-xs font-black flex items-center gap-1.5 shadow-sm"
+              >
+                <span>🛒 สมัครเรียน ฿{priceInfo.formattedPrice}</span>
+                <span className="hidden sm:inline text-[11px] opacity-80 line-through">
+                  ฿{priceInfo.formattedOriginal}
+                </span>
+              </Link>
+            )}
+
             {/* Progress Pill on Desktop */}
             <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-deep)] border border-[var(--border-light)] text-xs font-medium">
               <span className="text-[var(--accent)] font-bold">{progressPercent}%</span>
@@ -499,6 +513,15 @@ export default function CourseStudioClient({
                   <p className="text-sm text-stone-300">
                     ปลดล็อกทั้ง {lessons.length || 22} บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร เรียนซ้ำได้ตลอดชีพ
                   </p>
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-900 border border-amber-500/40">
+                    <span className="text-xs text-stone-400 line-through">ปกติ ฿{priceInfo.formattedOriginal}</span>
+                    <span className="text-base sm:text-lg font-black text-amber-300">
+                      พิเศษ ฿{priceInfo.formattedPrice} บาท
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-black">
+                      ลด {priceInfo.discountPercent}%
+                    </span>
+                  </div>
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                     {!user && (
                       <Link
@@ -510,9 +533,9 @@ export default function CourseStudioClient({
                     )}
                     <Link
                       href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
-                      className="puppap-btn-primary inline-flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-lg"
+                      className="puppap-btn-primary inline-flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-black shadow-lg"
                     >
-                      <span>🛒 สมัครเรียน 990 บาท</span>
+                      <span>🛒 สมัครเรียนพิเศษ ฿{priceInfo.formattedPrice} บาท</span>
                     </Link>
                   </div>
                 </div>
@@ -1068,12 +1091,23 @@ export default function CourseStudioClient({
           {/* Footer CTA for non-members */}
           {!effectiveHasAccess && (
             <div className="mt-6 pt-4 border-t border-[var(--border-light)] text-center space-y-2">
-              <p className="text-xs text-[var(--text-muted)]">สมัครเรียนเพื่อปลดล็อกครบทั้ง {lessons.length || 22} บท</p>
+              <div className="p-3 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-accent)]">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xs text-[var(--text-muted)] line-through">ปกติ ฿{priceInfo.formattedOriginal}</span>
+                  <span className="px-1.5 py-0.2 rounded bg-rose-600 text-white text-[10px] font-black">
+                    ลด {priceInfo.discountPercent}%
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-[var(--accent)] mt-0.5">
+                  ฿{priceInfo.formattedPrice} <span className="text-xs font-bold text-[var(--text-secondary)]">บาท</span>
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)]">ปลดล็อกครบทั้ง {lessons.length || 22} บท ตลอดชีพ</p>
+              </div>
               <Link
                 href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
-                className="puppap-btn-primary w-full py-2 text-xs font-bold block"
+                className="puppap-btn-primary w-full py-2.5 text-xs sm:text-sm font-black block shadow-md"
               >
-                🛒 สมัครเรียน 990 บาท
+                🛒 สมัครเรียนพิเศษ ฿{priceInfo.formattedPrice} บาท
               </Link>
             </div>
           )}

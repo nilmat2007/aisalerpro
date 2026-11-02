@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import { getPriceInfo } from '@/lib/price-utils';
 
 interface CoursesClientProps {
   course: any;
@@ -17,6 +18,7 @@ export default function CoursesClient({
 }: CoursesClientProps) {
   const feat = (typeof course?.features === 'object' && course?.features !== null) ? course.features : {};
   const lessons = Array.isArray(feat.lessons) ? feat.lessons : [];
+  const priceInfo = getPriceInfo(course?.price || '299', feat);
 
   const [expandedModule, setExpandedModule] = useState<number | null>(1);
 
@@ -102,19 +104,15 @@ export default function CoursesClient({
                 <span>เข้าห้องเรียน</span>
                 <span>→</span>
               </Link>
-            ) : user ? (
-              <Link
-                href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
-                className="puppap-btn-primary px-4 py-1.5 text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-sm"
-              >
-                <span>สมัครเรียน 990฿</span>
-              </Link>
             ) : (
               <Link
-                href="/login"
-                className="puppap-btn-primary px-4 py-1.5 text-xs sm:text-sm font-bold"
+                href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
+                className="puppap-btn-primary px-4 py-1.5 text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-sm"
               >
-                เข้าสู่ระบบ
+                <span>🛒 สมัครเรียน ฿{priceInfo.formattedPrice}</span>
+                <span className="text-[11px] opacity-80 line-through hidden sm:inline">
+                  ฿{priceInfo.formattedOriginal}
+                </span>
               </Link>
             )}
           </nav>
@@ -153,23 +151,55 @@ export default function CoursesClient({
             </div>
           </div>
 
-          {/* Call to Actions */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-            {hasAccess ? (
-              <Link
-                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
-                className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-black shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
-              >
-                <span>🚀 เข้าสู่ห้องเรียนของคุณ</span>
-              </Link>
-            ) : (
-              <Link
-                href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
-                className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-black shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
-              >
-                <span>🛒 สมัครเรียน 990 บาท (ครั้งเดียวจบ)</span>
-              </Link>
+          {/* Prominent Flash Promo Price Box & Call to Actions */}
+          <div className="pt-4 flex flex-col items-center gap-4">
+            {!hasAccess && (
+              <div className="puppap-card px-6 py-4 border-2 border-[var(--border-accent)] bg-[var(--bg-card)] shadow-md inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
+                <div className="text-center sm:text-left">
+                  <div className="flex items-center justify-center sm:justify-start gap-2">
+                    <span className="text-xs sm:text-sm text-[var(--text-muted)] line-through font-bold">
+                      ราคาปกติ ฿{priceInfo.formattedOriginal}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-xs font-black">
+                      🔥 ลด {priceInfo.discountPercent}%
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold text-[var(--text-secondary)] mt-0.5">
+                    จ่ายครั้งเดียวจบ · เรียนได้ครบ {lessons.length || 22} บทตลอดชีพ
+                  </div>
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-[var(--accent)] leading-none">
+                  ฿{priceInfo.formattedPrice}{' '}
+                  <span className="text-sm font-bold text-[var(--text-secondary)]">บาท</span>
+                </div>
+              </div>
             )}
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {hasAccess ? (
+                <Link
+                  href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
+                  className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-black shadow-lg flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
+                >
+                  <span>🚀 เข้าสู่ห้องเรียนของคุณ</span>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
+                    className="puppap-btn-primary px-8 py-4 text-sm sm:text-base font-black shadow-xl flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
+                  >
+                    <span>🛒 สมัครเรียนพิเศษ ฿{priceInfo.formattedPrice} (จาก ฿{priceInfo.formattedOriginal})</span>
+                  </Link>
+                  <Link
+                    href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=1`}
+                    className="puppap-btn-secondary px-5 py-3.5 text-xs sm:text-sm font-bold flex items-center gap-1.5"
+                  >
+                    <span>🎁 ทดลองดูบทที่ 1 ฟรี</span>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
           <p className="text-xs text-[var(--text-muted)] pt-1">
@@ -295,9 +325,9 @@ export default function CoursesClient({
                             ) : (
                               <Link
                                 href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
-                                className="puppap-btn-secondary px-3 py-1 text-xs font-semibold"
+                                className="puppap-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1"
                               >
-                                🔒 สมัครเพื่อปลดล็อก
+                                <span>🔒 ปลดล็อก ฿{priceInfo.formattedPrice}</span>
                               </Link>
                             )}
                           </div>
@@ -348,12 +378,18 @@ export default function CoursesClient({
           </div>
 
           {/* Bottom CTA */}
-          <div className="pt-4 border-t border-[var(--border-light)] text-center">
+          <div className="pt-4 border-t border-[var(--border-light)] text-center space-y-2">
+            {!hasAccess && (
+              <div className="text-sm font-bold text-[var(--text-secondary)]">
+                ราคาปกติ <span className="line-through text-[var(--text-muted)]">฿{priceInfo.formattedOriginal}</span>{' '}
+                ➔ พิเศษวันนี้เพียง <span className="text-xl font-black text-[var(--accent)]">฿{priceInfo.formattedPrice} บาท</span> (ลด {priceInfo.discountPercent}%)
+              </div>
+            )}
             <Link
               href={hasAccess ? `/course/${course?.slug || 'tiktok-ai-affiliate'}` : `/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
               className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-bold shadow-lg inline-flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
             >
-              <span>{hasAccess ? '🚀 เข้าสู่ห้องเรียนของคุณ' : `🛒 สมัครเรียน 990 บาท (ซื้อครั้งเดียวจบ)`}</span>
+              <span>{hasAccess ? '🚀 เข้าสู่ห้องเรียนของคุณ' : `🛒 สมัครเรียนพิเศษ ฿${priceInfo.formattedPrice} บาท (ซื้อครั้งเดียวจบ)`}</span>
             </Link>
           </div>
         </section>
@@ -375,9 +411,9 @@ export default function CoursesClient({
                 1
               </span>
               <div>
-                <h4 className="text-sm font-bold text-[var(--text-primary)]">สมัครและแนบสลิป</h4>
+                <h4 className="text-sm font-bold text-[var(--text-primary)]">สมัครและสแกน QR พร้อมเพย์</h4>
                 <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
-                  กดปุ่มสมัครเรียน โอนเงิน 990 บาท และแนบรูปสลิปในเว็บได้ทันที
+                  กดปุ่มสมัครเรียน สแกน QR โอนเงิน {priceInfo.formattedPrice} บาท และแนบรูปสลิปในเว็บได้ทันที
                 </p>
               </div>
             </div>

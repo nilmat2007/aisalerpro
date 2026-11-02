@@ -13,6 +13,7 @@ import {
   PROMPTPAY_DISPLAY,
   PROMPTPAY_RECEIVER_NAME,
 } from '@/lib/promptpay';
+import { getPriceInfo } from '@/lib/price-utils';
 
 // Multi-zone & high-contrast QR code scanner for Thai Bank Mini-QR codes on slips
 function decodeSlipQrCode(img: HTMLImageElement): string | null {
@@ -186,6 +187,7 @@ export default function CheckoutClient({
   const rawPrice = String(tool.price || '0').replace(/[^0-9.]/g, '');
   const numericPrice = parseFloat(rawPrice) || 0;
   const displayPrice = numericPrice > 0 ? numericPrice.toLocaleString() : String(tool.price || '0').replace(/บาท/g, '').trim();
+  const priceInfo = getPriceInfo(tool.price, tool.features);
 
   // Real-time 5-second auto-polling while waiting on Step 3
   useEffect(() => {
@@ -671,12 +673,22 @@ export default function CheckoutClient({
                 </div>
 
                 {/* Locked Amount Highlight Banner */}
-                <div className="pt-1 flex flex-col items-center gap-1">
+                <div className="pt-1 flex flex-col items-center gap-1.5">
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-bold">
                     <span>🔒</span>
                     <span>ล็อกยอดโอนอัตโนมัติ (สแกนแล้วกดโอนได้ทันที ไม่ต้องกรอกตัวเลข)</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+                  <div className="flex items-center justify-center gap-2.5 flex-wrap pt-1">
+                    {priceInfo.hasPrice && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs sm:text-sm text-[var(--text-muted)] line-through font-semibold">
+                          ปกติ ฿{priceInfo.formattedOriginal}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black">
+                          ลด {priceInfo.discountPercent}%
+                        </span>
+                      </div>
+                    )}
                     <span className="text-base sm:text-lg font-bold text-[var(--text-secondary)]">
                       💰 ยอดชำระ:
                     </span>

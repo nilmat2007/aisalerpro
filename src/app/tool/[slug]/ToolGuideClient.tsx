@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
+import { getPriceInfo } from '@/lib/price-utils';
 
 export default function ToolGuideClient({
   slug,
@@ -113,6 +114,7 @@ export default function ToolGuideClient({
   if (!tool) return null;
 
   const activeFlowUrl = isTrial && trialFlowUrl ? trialFlowUrl : tool.flow_url;
+  const priceInfo = getPriceInfo(tool.price, tool.features);
 
   // ===== MAIN GUIDE CONTENT =====
   return (
@@ -195,8 +197,51 @@ export default function ToolGuideClient({
         {/* Returning Customer & Unlock / Purchase Banner for non-unlocked users */}
         {!isUnlocked && (
           <div className="mt-6 w-full max-w-xl puppap-card p-5 sm:p-6 text-center space-y-5 border-2 border-[var(--border-accent)]">
-            {/* Section 1: Existing Customers (Login or Enter Code) */}
-            <div className="space-y-3">
+            {/* Section 1: New Customers — Prominent Price & Instant Buy CTA */}
+            {priceInfo.hasPrice && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border-accent)] space-y-3 shadow-sm">
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-xs font-black">
+                    🔥 โปรโมชันลด {priceInfo.discountPercent}%
+                  </span>
+                  <span className="text-xs font-bold text-[var(--text-secondary)]">
+                    ซื้อขาดครั้งเดียว · ใช้งานและอัปเดตฟรีตลอดชีพ
+                  </span>
+                </div>
+
+                <div className="flex items-baseline justify-center gap-3 flex-wrap">
+                  <span className="text-sm sm:text-base text-[var(--text-muted)] line-through font-semibold">
+                    ราคาปกติ ฿{priceInfo.formattedOriginal}
+                  </span>
+                  <span className="text-3xl sm:text-4xl font-black text-[var(--accent)] leading-none">
+                    ฿{priceInfo.formattedPrice}
+                  </span>
+                  <span className="text-sm font-bold text-[var(--text-secondary)]">
+                    บาท
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-1">
+                  <Link
+                    href={`/checkout/${slug}`}
+                    className="puppap-btn-primary px-6 py-3.5 text-sm sm:text-base font-black shadow-lg flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+                  >
+                    <span>🛒 สั่งซื้อและเปิดสิทธิ์ทันที ฿{priceInfo.formattedPrice}</span>
+                  </Link>
+                  <a
+                    href="https://m.me/100083126689322"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="puppap-btn-secondary px-4 py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5"
+                  >
+                    <span>💬 สอบถามทาง Messenger</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Section 2: Existing Customers (Login or Enter Code) */}
+            <div className="space-y-3 pt-1">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
                 <span>🔑 สำหรับลูกค้าที่ซื้อแล้ว (ไม่ต้องซื้อซ้ำ)</span>
               </div>
@@ -208,7 +253,7 @@ export default function ToolGuideClient({
                   </p>
                   <Link
                     href={`/login?next=/tool/${slug}`}
-                    className="puppap-btn-primary w-full sm:w-auto px-6 py-3 text-sm font-black inline-flex items-center justify-center gap-2 shadow-md"
+                    className="puppap-btn-secondary w-full sm:w-auto px-6 py-2.5 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2"
                   >
                     <span>⚡ เข้าสู่ระบบด้วย Google (เช็กสิทธิ์อัตโนมัติ)</span>
                   </Link>
@@ -236,21 +281,6 @@ export default function ToolGuideClient({
                 </button>
               </form>
               {error && <p className="text-[var(--danger)] text-xs mt-1 font-semibold">{error}</p>}
-            </div>
-
-            {/* Section 2: New Customers */}
-            <div className="border-t border-[var(--border-light)] pt-4 space-y-2.5">
-              <p className="text-xs font-bold text-[var(--text-muted)]">
-                สำหรับลูกค้าใหม่ที่ยังไม่มีรหัสใช้งาน:
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
-                <Link href={`/checkout/${slug}`} className="puppap-btn-secondary px-5 py-2 text-xs sm:text-sm font-bold">
-                  🛒 สั่งซื้อในเว็บ {tool.price ? `(${tool.price})` : ''}
-                </Link>
-                <a href="https://m.me/100083126689322" target="_blank" rel="noopener noreferrer" className="puppap-btn-secondary px-5 py-2 text-xs sm:text-sm font-bold">
-                  💬 สอบถามทาง Messenger
-                </a>
-              </div>
             </div>
           </div>
         )}

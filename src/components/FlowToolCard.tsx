@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { getPriceInfo } from '@/lib/price-utils';
 
 interface FlowToolCardProps {
   tool: any;
@@ -50,6 +51,8 @@ export default function FlowToolCard({
   };
 
   const tierInfo = getTierLabel(tierRequired);
+  const priceInfo = getPriceInfo(tool.price, feat);
+  const isComingSoon = tool.slug === 'coming-soon' || !priceInfo.hasPrice;
 
   return (
     <div className={`puppap-card overflow-hidden flex flex-col h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
@@ -102,6 +105,18 @@ export default function FlowToolCard({
             {tierInfo.label}
           </span>
         </div>
+
+        {/* Bottom Right Prominent Price Tag on Poster */}
+        {!hasAccess && priceInfo.hasPrice && (
+          <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1.5 px-3 py-1 rounded-xl bg-stone-950/90 backdrop-blur-md border border-amber-400/60 shadow-lg">
+            <span className="text-[11px] text-stone-400 line-through font-mono">
+              ฿{priceInfo.formattedOriginal}
+            </span>
+            <span className="text-sm sm:text-base font-black text-amber-300 tracking-tight">
+              ฿{priceInfo.formattedPrice}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Card Body */}
@@ -197,83 +212,135 @@ export default function FlowToolCard({
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="mt-auto pt-3 border-t border-[var(--border-light)] flex items-center gap-2">
-          {/* Guide / Unlock Info Button */}
-          <Link
-            href={`/tool/${tool.slug}`}
-            title="ดูคู่มือการใช้งานและลิงก์เครื่องมือ"
-            className="puppap-btn-secondary h-10 px-3 flex items-center justify-center gap-1 text-xs font-bold shrink-0 hover:scale-105 transition-transform"
-          >
-            <span>{hasAccess ? '📖 คู่มือ' : isLoggedIn ? '🔑 มีรหัส?' : '📖 ดูข้อมูล'}</span>
-          </Link>
-
-          {/* Primary Action Button */}
+        {/* Prominent Pricing Box (Before Action Buttons) */}
+        <div className="mt-auto pt-3 border-t border-[var(--border-light)] space-y-3">
           {hasAccess ? (
-            tool.flow_url ? (
-              <a
-                href={tool.flow_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md"
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                ✅ ปลดล็อกสิทธิ์แล้ว
+              </span>
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                ใช้งานได้ตลอดชีพ
+              </span>
+            </div>
+          ) : priceInfo.hasPrice ? (
+            <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-accent)]">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-[var(--text-muted)] line-through font-medium">
+                    ปกติ ฿{priceInfo.formattedOriginal}
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded bg-rose-600 text-white text-[10px] font-black">
+                    ลด {priceInfo.discountPercent}%
+                  </span>
+                </div>
+                <span className="text-[11px] text-[var(--text-secondary)] font-semibold">
+                  ซื้อขาดตลอดชีพ · อัปเดตฟรี
+                </span>
+              </div>
+
+              <div className="text-right">
+                <div className="text-xl sm:text-2xl font-black text-[var(--accent)] leading-none">
+                  ฿{priceInfo.formattedPrice}
+                </div>
+                <span className="text-[10px] font-bold text-[var(--text-muted)]">
+                  บาท (ครั้งเดียวจบ)
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-light)]">
+              <span className="text-xs font-bold text-[var(--text-muted)]">⏳ เร็วๆ นี้</span>
+              <span className="text-xs text-[var(--text-muted)]">กำลังพัฒนา</span>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Guide / Unlock Info Button */}
+            <Link
+              href={`/tool/${tool.slug}`}
+              title="ดูคู่มือการใช้งานและลิงก์เครื่องมือ"
+              className="puppap-btn-secondary h-10 px-3 flex items-center justify-center gap-1 text-xs font-bold shrink-0 hover:scale-105 transition-transform"
+            >
+              <span>{hasAccess ? '📖 คู่มือ' : isLoggedIn ? '🔑 มีรหัส?' : '📖 ดูข้อมูล'}</span>
+            </Link>
+
+            {/* Primary Action Button */}
+            {hasAccess ? (
+              tool.flow_url ? (
+                <a
+                  href={tool.flow_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md"
+                >
+                  <span>🚀 เปิดใช้ Flow Tool</span>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              ) : (
+                <Link
+                  href={`/tool/${tool.slug}`}
+                  className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5"
+                >
+                  <span>🚀 เข้าใช้งาน</span>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </Link>
+              )
+            ) : isComingSoon ? (
+              <button
+                disabled
+                className="puppap-btn-secondary flex-1 h-10 px-4 text-xs sm:text-sm font-bold opacity-60 cursor-not-allowed"
               >
-                <span>🚀 เปิดใช้ Flow Tool</span>
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
+                ⏳ เปิดตัวเร็วๆ นี้
+              </button>
+            ) : hasTrial ? (
+              <div className="flex-1 flex gap-2">
+                <Link
+                  href={`/tool/${tool.slug}?trial=1`}
+                  className="flex-1 h-10 px-3 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 shadow-sm transition-colors text-center"
+                >
+                  <span>▶️ ทดลอง</span>
+                </Link>
+                <Link
+                  href={`/checkout/${tool.slug}`}
+                  className="puppap-btn-primary px-3.5 h-10 text-xs sm:text-sm font-black flex items-center justify-center shadow-sm"
+                >
+                  <span>🛒 ซื้อ ฿{priceInfo.formattedPrice}</span>
+                </Link>
+              </div>
+            ) : trialAvailable && onStartTrial ? (
+              <div className="flex-1 flex gap-1.5">
+                <button
+                  onClick={() => onStartTrial(tool.id)}
+                  disabled={isStartingTrial}
+                  className="h-10 px-3 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1 border border-emerald-800 shadow-md transition-colors disabled:opacity-50"
+                >
+                  <span>{isStartingTrial ? '⏳...' : '🎁 ทดลองฟรี'}</span>
+                </button>
+                <Link
+                  href={`/checkout/${tool.slug}`}
+                  className="puppap-btn-primary flex-1 h-10 px-3 text-xs sm:text-sm font-black flex items-center justify-center gap-1 shadow-md"
+                >
+                  <span>🛒 ซื้อ ฿{priceInfo.formattedPrice}</span>
+                </Link>
+              </div>
             ) : (
               <Link
-                href={`/tool/${tool.slug}`}
-                className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5"
-              >
-                <span>🚀 เข้าใช้งาน</span>
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M5 12h14" />
-                  <path d="m12 5 7 7-7 7" />
-                </svg>
-              </Link>
-            )
-          ) : !isLoggedIn ? (
-            <Link
-              href="/login"
-              className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md"
-            >
-              <span>🔑 เข้าสู่ระบบเพื่อใช้งาน</span>
-            </Link>
-          ) : hasTrial ? (
-            <div className="flex-1 flex gap-2">
-              <Link
-                href={`/tool/${tool.slug}?trial=1`}
-                className="flex-1 h-10 px-3 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 shadow-sm transition-colors text-center"
-              >
-                <span>▶️ ตัวทดลอง (3 คลิป)</span>
-              </Link>
-              <Link
                 href={`/checkout/${tool.slug}`}
-                className="puppap-btn-primary px-3 h-10 text-xs sm:text-sm flex items-center justify-center shadow-sm"
+                className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm font-black flex items-center justify-center gap-1.5 shadow-md"
               >
-                <span>🛒 สั่งซื้อ</span>
+                <span>🛒 สั่งซื้อทันที ฿{priceInfo.formattedPrice}</span>
               </Link>
-            </div>
-          ) : trialAvailable && onStartTrial ? (
-            <button
-              onClick={() => onStartTrial(tool.id)}
-              disabled={isStartingTrial}
-              className="flex-1 h-10 px-4 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 border border-emerald-800 shadow-md transition-colors disabled:opacity-50"
-            >
-              <span>{isStartingTrial ? '⏳ กำลังเปิด...' : '🎁 ทดลองฟรี 3 คลิป'}</span>
-            </button>
-          ) : (
-            <Link
-              href={`/checkout/${tool.slug}`}
-              className="puppap-btn-primary flex-1 h-10 px-4 text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md"
-            >
-              <span>🛒 สั่งซื้อ {tool.price ? `(${tool.price})` : ''}</span>
-            </Link>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

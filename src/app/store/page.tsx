@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
+import { getPriceInfo } from '@/lib/price-utils'
 
 export const dynamic = 'force-dynamic';
 
@@ -139,7 +140,8 @@ export default async function StorePage() {
               const contactUrl = tool.contact_url || 'https://m.me/100083126689322';
               const posterImage = tool.poster_url || null;
               const updateInfo = formatToolUpdateDate(tool.updated_at);
-              const isComingSoon = tool.slug === 'coming-soon' || !tool.price;
+              const priceInfo = getPriceInfo(tool.price, tool.features);
+              const isComingSoon = tool.slug === 'coming-soon' || !priceInfo.hasPrice;
               const isOwned = ownedToolIds.has(tool.id);
               const isCourse = tool.slug === 'tiktok-ai-affiliate' || tool.category === 'course';
               const openUrl = isCourse ? `/course/${tool.slug}` : `/tool/${tool.slug}`;
@@ -188,9 +190,24 @@ export default async function StorePage() {
 
                     {/* Price Chip on Top Right */}
                     <div className="absolute top-2.5 right-2.5 z-10">
-                      <span className={`px-2.5 py-1 text-xs font-black rounded-lg text-white shadow-md ${isOwned ? 'bg-emerald-700' : 'bg-[var(--accent)]'}`}>
-                        {isOwned ? 'ปลดล็อกแล้ว' : tool.price ? (tool.price.includes('บาท') ? tool.price : `฿${tool.price}`) : 'เร็วๆ นี้'}
-                      </span>
+                      {isOwned ? (
+                        <span className="px-2.5 py-1 text-xs font-black rounded-lg text-white shadow-md bg-emerald-700">
+                          ปลดล็อกแล้ว
+                        </span>
+                      ) : priceInfo.hasPrice ? (
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-stone-950/90 backdrop-blur-md border border-amber-400/60 shadow-lg">
+                          <span className="text-[11px] text-stone-400 line-through font-mono">
+                            ฿{priceInfo.formattedOriginal}
+                          </span>
+                          <span className="text-sm font-black text-amber-300">
+                            ฿{priceInfo.formattedPrice}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="px-2.5 py-1 text-xs font-black rounded-lg text-white shadow-md bg-[var(--accent)]">
+                          เร็วๆ นี้
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -224,11 +241,21 @@ export default async function StorePage() {
                     <div className="pt-4 border-t border-[var(--border-light)] space-y-3 mt-auto">
                       <div className="flex items-baseline justify-between">
                         <div>
+                          {!isOwned && priceInfo.hasPrice && (
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-xs text-[var(--text-muted)] line-through font-medium">
+                                ปกติ ฿{priceInfo.formattedOriginal}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded bg-rose-600 text-white text-[10px] font-black">
+                                ลด {priceInfo.discountPercent}%
+                              </span>
+                            </div>
+                          )}
                           <div className="text-2xl font-black text-[var(--accent)]">
-                            {isOwned ? '✓ มีสิทธิ์แล้ว' : tool.price ? (tool.price.includes('บาท') ? tool.price : `฿${tool.price}`) : 'เร็วๆ นี้'}
+                            {isOwned ? '✓ มีสิทธิ์แล้ว' : priceInfo.hasPrice ? `฿${priceInfo.formattedPrice} บาท` : 'เร็วๆ นี้'}
                           </div>
                           <div className="text-xs text-[var(--text-muted)]">
-                            {isOwned ? 'สิทธิ์ใช้งานตลอดชีพ' : tool.price ? 'ซื้อขาดตลอดชีพ · อัปเดตฟรี' : 'อยู่ระหว่างพัฒนา'}
+                            {isOwned ? 'สิทธิ์ใช้งานตลอดชีพ' : priceInfo.hasPrice ? 'ซื้อขาดตลอดชีพ · อัปเดตฟรี' : 'อยู่ระหว่างพัฒนา'}
                           </div>
                         </div>
 
@@ -261,7 +288,7 @@ export default async function StorePage() {
                             className="puppap-btn-primary py-2.5 px-3 text-xs font-black text-center flex items-center justify-center gap-1 shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-transform"
                           >
                             <span>🛒</span>
-                            <span>สั่งซื้อในเว็บ</span>
+                            <span>ซื้อ ฿{priceInfo.formattedPrice}</span>
                           </Link>
                           <a 
                             href={contactUrl}

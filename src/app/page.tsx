@@ -5,6 +5,7 @@ import { notifyNewMember } from '@/lib/telegram'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import FlowToolCard from '@/components/FlowToolCard'
+import { getPriceInfo } from '@/lib/price-utils'
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,10 @@ export default async function HomePage() {
         .limit(1)
         .maybeSingle(),
     ])
+    const courseItem = (allTools || []).find(
+      (t: any) => t.slug === 'tiktok-ai-affiliate' || t.category === 'course'
+    )
+    const coursePrice = getPriceInfo(courseItem?.price || '299', courseItem?.features)
     
     return (
       <div className="min-h-screen text-[var(--text-primary)] font-sans flex flex-col items-center transition-colors duration-200">
@@ -115,7 +120,9 @@ export default async function HomePage() {
               <span>⚡</span> เข้าสู่ระบบเพื่อใช้งาน
             </Link>
             <Link href="/courses" className="puppap-btn-secondary px-6 py-3.5 rounded-full text-base font-bold text-center flex items-center gap-2 hover:scale-105 transition-transform">
-              <span>🎓</span> ดูคอร์สเรียน 990฿
+              <span>🎓</span>
+              <span>คอร์สเรียนพิเศษ ฿{coursePrice.formattedPrice}</span>
+              <span className="text-xs text-[var(--text-muted)] line-through">฿{coursePrice.formattedOriginal}</span>
             </Link>
           </div>
         </section>
@@ -128,8 +135,11 @@ export default async function HomePage() {
                 <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
                   🎓 คอร์สเรียนแนะนำ
                 </span>
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-600 text-white shadow-xs">
+                  🔥 ลด {coursePrice.discountPercent}% วันนี้
+                </span>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                  💡 ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (22 บทเรียน)
+                  💡 ซื้อครั้งเดียวเรียนได้ตลอดชีพ (22 บทเรียน)
                 </span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)]">
@@ -147,19 +157,46 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full sm:w-auto shrink-0 md:w-64">
+            <div className="flex flex-col gap-3 w-full sm:w-auto shrink-0 md:w-72">
+              {/* Prominent Price Highlight Box */}
+              <div className="p-3.5 rounded-2xl bg-[var(--bg-primary)] border-2 border-[var(--border-accent)] text-center shadow-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xs sm:text-sm text-[var(--text-muted)] line-through font-semibold">
+                    ราคาปกติ ฿{coursePrice.formattedOriginal}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black">
+                    ประหยัด ฿{coursePrice.savingsFormatted}
+                  </span>
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-[var(--accent)] leading-tight mt-0.5">
+                  ฿{coursePrice.formattedPrice}{' '}
+                  <span className="text-sm font-bold text-[var(--text-secondary)]">บาท</span>
+                </div>
+                <div className="text-[11px] font-semibold text-[var(--text-muted)]">
+                  จ่ายครั้งเดียวจบ · ไม่มีค่ารายเดือน
+                </div>
+              </div>
+
               <Link 
-                href="/courses" 
+                href="/checkout/tiktok-ai-affiliate" 
                 className="puppap-btn-primary py-3 px-6 text-center text-sm font-black flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-transform"
               >
-                <span>🎓 ดูสารบัญ 22 บท</span>
+                <span>🛒 สมัครเรียนทันที ฿{coursePrice.formattedPrice}</span>
               </Link>
-              <Link 
-                href="/course/tiktok-ai-affiliate" 
-                className="puppap-btn-secondary py-2.5 px-4 text-center text-xs font-bold"
-              >
-                🎁 ดูตัวอย่างบทแรกฟรี
-              </Link>
+              <div className="grid grid-cols-2 gap-2">
+                <Link 
+                  href="/courses" 
+                  className="puppap-btn-secondary py-2 px-3 text-center text-xs font-bold"
+                >
+                  📑 ดูสารบัญ 22 บท
+                </Link>
+                <Link 
+                  href="/course/tiktok-ai-affiliate" 
+                  className="puppap-btn-secondary py-2 px-3 text-center text-xs font-bold"
+                >
+                  🎁 ดูบทแรกฟรี
+                </Link>
+              </div>
             </div>
           </div>
         </div>
