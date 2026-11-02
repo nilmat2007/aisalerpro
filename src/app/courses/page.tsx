@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'คอร์สนายหน้า TikTok ด้วย AI ปักตะกร้า | PUP PAP AI',
-  description: '16 บทเรียนวิดีโอแนวนอน 16:9 สเต็ปบายสเต็ป ตั้งแต่เริ่มต้นจนถึงปั๊มยอดขายและสเกล 100 คลิป/สัปดาห์',
+  description: '22 บทเรียนวิดีโอแนวนอน 16:9 สเต็ปบายสเต็ป ตั้งแต่เริ่มต้น เจาะลึก Google Flow ตัวใหม่ จนถึงปั๊มยอดขายและสเกล 100 คลิป/สัปดาห์',
 };
 
 export default async function CoursesPage() {

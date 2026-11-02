@@ -187,7 +187,7 @@ export default function AdminCoursesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <span>🎓</span> จัดการคอร์สเรียน & วิดีโอ 16 บทเรียน
+            <span>🎓</span> จัดการคอร์สเรียน & วิดีโอ {lessons.length || 22} บทเรียน
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             คอร์ส: {course?.name || 'คอร์สนายหน้า TikTok ด้วย AI ปักตะกร้า'} • วิดีโอแนวนอน 16:9

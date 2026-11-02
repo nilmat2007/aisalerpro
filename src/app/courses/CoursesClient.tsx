@@ -32,18 +32,20 @@ export default function CoursesClient({
 
     const defaultDescMap: Record<string, string> = {
       'โมดูล 1: ปูพื้นฐาน & กฎเหล็กนายหน้ายุค AI': 'ทำความเข้าใจระบบ TikTok Shop อัลกอริทึม ข้อได้เปรียบของ AI และกฎป้องกันการโดนแบน',
-      'โมดูล 2: เวิร์กโฟลว์ปฏิบัติการสร้างคลิปจริง': 'เจาะลึกวิธีทำคลิป AI ปักตะกร้า, คลิปสไตล์มินิมอล และคลิปสไตล์โรงงาน UGC Batch',
-      'โมดูล 3: การตลาด ปั๊มยอดวิว & สเกลรายได้': 'เทคนิคการโพสต์ แฮชแท็ก การเลือกสินค้าขายดี และวิธีปั๊ม 50-100 คลิปต่อสัปดาห์',
-      'โมดูลพิเศษ: มาสเตอร์คลาสขั้นสูง': 'เทคนิคทำละครสั้นบนมือถือ แอนิเมชั่นการ์ตูน และการทำคลิปรีวิวสถานที่/ร้านค้า/สินค้า',
+      'โมดูล 2: พื้นฐานการใช้งาน Google Flow ตัวใหม่แบบจับมือทำ': 'เจาะลึกทุกปุ่มของ Google Flow ตัวใหม่ วิธีลบลายน้ำถาวร ทำภาพวิว/สัตว์ ล็อกหน้าเรา 100% นางแบบถือสินค้า และผัก 3D พูดได้',
+      'โมดูล 3: เวิร์กโฟลว์ปฏิบัติการสร้างคลิปจริง': 'เจาะลึกวิธีทำคลิป AI ปักตะกร้า, คลิปสไตล์มินิมอล และคลิปสไตล์โรงงานปักตะกร้า',
+      'โมดูล 4: การตลาด ปั๊มยอดวิว & สเกลรายได้': 'เทคนิคการโพสต์ แฮชแท็ก การเลือกสินค้าขายดี และวิธีปั๊ม 50-100 คลิปต่อสัปดาห์',
+      'โมดูล 5: มาสเตอร์คลาสขั้นสูง': 'เทคนิคทำละครสั้นบนมือถือ แอนิเมชั่นการ์ตูน และการทำคลิปรีวิวสถานที่/ร้านค้า/สินค้า',
     };
 
     return Array.from(map.entries()).map(([title, items], index) => {
       let desc = defaultDescMap[title];
       if (!desc) {
         if (title.includes('โมดูล 1')) desc = defaultDescMap['โมดูล 1: ปูพื้นฐาน & กฎเหล็กนายหน้ายุค AI'];
-        else if (title.includes('โมดูล 2')) desc = defaultDescMap['โมดูล 2: เวิร์กโฟลว์ปฏิบัติการสร้างคลิปจริง'];
-        else if (title.includes('โมดูล 3')) desc = defaultDescMap['โมดูล 3: การตลาด ปั๊มยอดวิว & สเกลรายได้'];
-        else if (title.includes('โมดูลพิเศษ') || title.includes('โมดูล 4')) desc = defaultDescMap['โมดูลพิเศษ: มาสเตอร์คลาสขั้นสูง'];
+        else if (title.includes('Google Flow')) desc = defaultDescMap['โมดูล 2: พื้นฐานการใช้งาน Google Flow ตัวใหม่แบบจับมือทำ'];
+        else if (title.includes('เวิร์กโฟลว์') || title.includes('โมดูล 3')) desc = defaultDescMap['โมดูล 3: เวิร์กโฟลว์ปฏิบัติการสร้างคลิปจริง'];
+        else if (title.includes('การตลาด') || title.includes('โมดูล 4')) desc = defaultDescMap['โมดูล 4: การตลาด ปั๊มยอดวิว & สเกลรายได้'];
+        else if (title.includes('มาสเตอร์คลาส') || title.includes('โมดูลพิเศษ') || title.includes('โมดูล 5')) desc = defaultDescMap['โมดูล 5: มาสเตอร์คลาสขั้นสูง'];
         else desc = items[0]?.module_desc || `รวม ${items.length} บทเรียนปฏิบัติการพร้อมเครื่องมือ AI`;
       }
       return {
@@ -131,18 +133,18 @@ export default function CoursesClient({
           </h1>
 
           <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
-            คู่มือสร้างรายได้แบบจับมือทำ {lessons.length || 16} บทเรียนเต็ม ตั้งแต่ก้าวแรก ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์
+            คู่มือสร้างรายได้แบบจับมือทำ {lessons.length || 22} บทเรียนเต็ม ตั้งแต่ก้าวแรก เจาะลึก Google Flow ตัวใหม่ ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์
             และเทคนิคละครสั้น/แอนิเมชั่นบนมือถือ โดยไม่ต้องออกกล้อง เหมาะสำหรับคนทุกเพศทุกวัยแม้ไม่มีพื้นฐานคอมพิวเตอร์
           </p>
 
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-3 gap-3 max-w-xl mx-auto pt-3">
             <div className="puppap-card p-3.5 text-center">
-              <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{lessons.length || 16}</div>
+              <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{lessons.length || 22}</div>
               <div className="text-xs text-[var(--text-muted)] font-medium mt-0.5">บทเรียนเข้มข้น</div>
             </div>
             <div className="puppap-card p-3.5 text-center">
-              <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{modules.length || 4}</div>
+              <div className="text-xl sm:text-2xl font-black text-[var(--accent)]">{modules.length || 5}</div>
               <div className="text-xs text-[var(--text-muted)] font-medium mt-0.5">โมดูลปฏิบัติการ</div>
             </div>
             <div className="puppap-card p-3.5 text-center">
@@ -180,7 +182,7 @@ export default function CoursesClient({
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-10">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-2 flex items-center gap-2">
-            <span className="text-[var(--accent)]">❖</span> สารบัญ {lessons.length || 16} บทเรียน (Curriculum)
+            <span className="text-[var(--accent)]">❖</span> สารบัญ {lessons.length || 22} บทเรียน (Curriculum)
           </h2>
           <p className="text-sm text-[var(--text-secondary)]">
             จัดเรียงตามลำดับการเรียนรู้ จากพื้นฐาน สู่การลงมือปฏิบัติจริง และขยายผลกำไร

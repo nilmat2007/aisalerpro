@@ -279,7 +279,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                     </span>
                   ) : (
                     <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
-                      <span>💡</span> ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (16 บท)
+                      <span>💡</span> ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (22 บท)
                     </span>
                   )}
                 </div>
@@ -290,15 +290,15 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                   </h2>
                   <p className="text-sm text-[var(--text-secondary)] mt-1.5 leading-relaxed">
                     {hasCourseAccess
-                      ? 'คุณมีสิทธิ์เข้าเรียนครบทั้ง 16 บทเรียนตลอดชีพ พร้อมโปรแกรมช่วยผลิตคลิป ดูซ้ำได้ทุกเวลาบนมือถือและคอมพิวเตอร์'
-                      : 'คู่มือสร้างรายได้แบบจับมือทำ 16 บทเรียนเต็ม ตั้งแต่ก้าวแรก ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์ ไม่ต้องออกกล้อง'}
+                      ? 'คุณมีสิทธิ์เข้าเรียนครบทั้ง 22 บทเรียนตลอดชีพ พร้อมโปรแกรมช่วยผลิตคลิป ดูซ้ำได้ทุกเวลาบนมือถือและคอมพิวเตอร์'
+                      : 'คู่มือสร้างรายได้แบบจับมือทำ 22 บทเรียนเต็ม ตั้งแต่ก้าวแรก ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์ ไม่ต้องออกกล้อง'}
                   </p>
                 </div>
 
                 {/* Quick Info Badges */}
                 <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] flex-wrap pt-1">
                   <span className="flex items-center gap-1">
-                    <span>🎬</span> 16 บทเรียนเต็ม
+                    <span>🎬</span> 22 บทเรียนเต็ม
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
@@ -326,7 +326,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                       href="/courses"
                       className="puppap-btn-secondary py-2.5 px-4 text-center text-xs font-bold text-[var(--text-secondary)]"
                     >
-                      📑 ดูสารบัญ 16 บทเรียน
+                      📑 ดูสารบัญ 22 บทเรียน
                     </Link>
                   </>
                 ) : (
@@ -342,7 +342,7 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                       href="/courses"
                       className="puppap-btn-secondary py-2.5 px-4 text-center text-xs font-bold text-[var(--text-secondary)]"
                     >
-                      📑 ดูสารบัญ 16 บทเรียน
+                      📑 ดูสารบัญ 22 บทเรียน
                     </Link>
                   </>
                 )}

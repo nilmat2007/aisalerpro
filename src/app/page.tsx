@@ -127,14 +127,14 @@ export default async function HomePage() {
                   🎓 คอร์สเรียนแนะนำ
                 </span>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                  💡 ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (16 บทเรียน)
+                  💡 ซื้อครั้งเดียว 990฿ เรียนได้ตลอดชีพ (22 บทเรียน)
                 </span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-[var(--text-primary)]">
                 ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า
               </h2>
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                คู่มือสร้างรายได้แบบจับมือทำ 16 บทเรียนเต็ม วิดีโอแนวนอน 16:9 คมชัด เรียนได้ทุกเพศทุกวัย แม้ไม่เก่งคอมพิวเตอร์ ทำตามได้บนมือถือเครื่องเดียว
+                คู่มือสร้างรายได้แบบจับมือทำ 22 บทเรียนเต็ม วิดีโอแนวนอน 16:9 คมชัด เรียนได้ทุกเพศทุกวัย แม้ไม่เก่งคอมพิวเตอร์ ทำตามได้บนมือถือเครื่องเดียว
               </p>
               <div className="flex items-center justify-center md:justify-start gap-3 text-xs text-[var(--text-muted)] flex-wrap pt-1">
                 <span>✓ ไม่มีพื้นฐานก็เรียนได้</span>
@@ -150,7 +150,7 @@ export default async function HomePage() {
                 href="/courses" 
                 className="puppap-btn-primary py-3 px-6 text-center text-sm font-black flex items-center justify-center gap-2 shadow-md hover:scale-105 active:scale-95 transition-transform"
               >
-                <span>🎓 ดูสารบัญ 16 บท</span>
+                <span>🎓 ดูสารบัญ 22 บท</span>
               </Link>
               <Link 
                 href="/course/tiktok-ai-affiliate" 

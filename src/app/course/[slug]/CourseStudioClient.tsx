@@ -456,7 +456,7 @@ export default function CourseStudioClient({
                     บทเรียนนี้สำหรับสมาชิกที่สมัครคอร์ส
                   </h3>
                   <p className="text-sm text-stone-300">
-                    ปลดล็อกทั้ง 16 บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร เรียนซ้ำได้ตลอดชีพ
+                    ปลดล็อกทั้ง {lessons.length || 22} บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร เรียนซ้ำได้ตลอดชีพ
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                     {!user && (
@@ -895,7 +895,7 @@ export default function CourseStudioClient({
                   <span className="text-[var(--accent)]">Q:</span> ซื้อครั้งเดียวเรียนได้ทุกบทจริงไหม มีค่าใช้จ่ายรายเดือนไหม?
                 </h4>
                 <p className="text-[var(--text-secondary)] pl-5 leading-relaxed">
-                  จริงครับ ชำระเงิน 990 บาทครั้งเดียว เรียนได้ครบทั้ง 16 บทเรียนตลอดชีพ ไม่มีค่าธรรมเนียมรายเดือน และหากมีบทเรียนอัปเดตใหม่ในอนาคต ท่านจะได้รับสิทธิ์เข้าดูฟรีทันทีครับ
+                  จริงครับ ชำระเงิน 990 บาทครั้งเดียว เรียนได้ครบทั้ง {lessons.length || 22} บทเรียนตลอดชีพ ไม่มีค่าธรรมเนียมรายเดือน และหากมีบทเรียนอัปเดตใหม่ในอนาคต ท่านจะได้รับสิทธิ์เข้าดูฟรีทันทีครับ
                 </p>
               </div>
 
@@ -1030,7 +1030,7 @@ export default function CourseStudioClient({
           {/* Footer CTA for non-members */}
           {!effectiveHasAccess && (
             <div className="mt-6 pt-4 border-t border-[var(--border-light)] text-center space-y-2">
-              <p className="text-xs text-[var(--text-muted)]">สมัครเรียนเพื่อปลดล็อกครบทั้ง 16 บท</p>
+              <p className="text-xs text-[var(--text-muted)]">สมัครเรียนเพื่อปลดล็อกครบทั้ง {lessons.length || 22} บท</p>
               <Link
                 href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
                 className="puppap-btn-primary w-full py-2 text-xs font-bold block"
