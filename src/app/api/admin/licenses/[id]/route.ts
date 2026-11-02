@@ -1,18 +1,84 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { supabase } from '@/lib/supabase'
+import { getSession } from '@/lib/auth'
+
+async function revokeLinkedAccess(keyId: string) {
+  const { data: keyInfo } = await supabase
+    .from('license_keys')
+    .select('id, tool_id, activated_by, activated_email')
+    .eq('id', keyId)
+    .maybeSingle()
+
+  if (!keyInfo) return
+
+  // 1. Delete user_tools linked by license_key_id or (user_id + tool_id)
+  await supabase.from('user_tools').delete().eq('license_key_id', keyId)
+
+  if (keyInfo.activated_by && keyInfo.tool_id) {
+    await supabase
+      .from('user_tools')
+      .delete()
+      .eq('user_id', keyInfo.activated_by)
+      .eq('tool_id', keyInfo.tool_id)
+  }
+
+  // 2. Also find profile by email if activated_by was null
+  if (keyInfo.activated_email && keyInfo.tool_id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('email', keyInfo.activated_email)
+      .maybeSingle()
+
+    if (profile?.id) {
+      await supabase
+        .from('user_tools')
+        .delete()
+        .eq('user_id', profile.id)
+        .eq('tool_id', keyInfo.tool_id)
+    }
+  }
+
+  // 3. Reject any approved orders linked to this key/user/email so Auto-Heal never resurrects access
+  const revokeNote = 'แอดมินยกเลิกสิทธิ์ผ่านหน้าจัดการ License Key (Revoked)'
+  await supabase
+    .from('orders')
+    .update({ status: 'rejected', admin_note: revokeNote })
+    .eq('license_key_id', keyId)
+    .eq('status', 'approved')
+
+  if (keyInfo.activated_by && keyInfo.tool_id) {
+    await supabase
+      .from('orders')
+      .update({ status: 'rejected', admin_note: revokeNote })
+      .eq('user_id', keyInfo.activated_by)
+      .eq('tool_id', keyInfo.tool_id)
+      .eq('status', 'approved')
+  }
+
+  if (keyInfo.activated_email && keyInfo.tool_id) {
+    await supabase
+      .from('orders')
+      .update({ status: 'rejected', admin_note: revokeNote })
+      .ilike('user_email', keyInfo.activated_email)
+      .eq('tool_id', keyInfo.tool_id)
+      .eq('status', 'approved')
+  }
+}
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
+  const session = await getSession()
 
-  if (!adminToken) {
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { status } = await request.json()
-  const supabase = await createClient()
+
+  if (status === 'revoked') {
+    await revokeLinkedAccess(params.id)
+  }
 
   const { data, error } = await supabase
     .from('license_keys')
@@ -24,19 +90,18 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ key: data[0] })
+  return NextResponse.json({ key: data?.[0] })
 }
 
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
+  const session = await getSession()
 
-  if (!adminToken) {
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = await createClient()
+  await revokeLinkedAccess(params.id)
 
   const { error } = await supabase
     .from('license_keys')

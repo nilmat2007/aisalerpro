@@ -31,9 +31,11 @@ export async function PATCH(
       .single();
       
     if (orderError || !order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    if (order.status !== 'pending') return NextResponse.json({ error: 'Order is not pending' }, { status: 400 });
 
     if (action === 'approve') {
+      if (order.status !== 'pending') {
+        return NextResponse.json({ error: 'Order is not pending' }, { status: 400 });
+      }
       const keyCode = generateLicenseCode();
       
       // 1. Create license key
@@ -61,7 +63,7 @@ export async function PATCH(
             tool_id: order.tool_id,
             license_key_id: newKey.id,
             is_active: true,
-            unlocked_at: new Date().toISOString(),
+            activated_at: new Date().toISOString(),
           },
           { onConflict: 'user_id,tool_id' }
         );
@@ -104,16 +106,76 @@ export async function PATCH(
 
       return NextResponse.json({ success: true, keyCode });
 
-    } else if (action === 'reject') {
+    } else if (action === 'reject' || action === 'revoke') {
+      const finalNote = note || 'แอดมินยกเลิกสิทธิ์การใช้งาน (Revoked)';
+
+      // 1. Delete user_tools access for this user + tool
+      if (order.user_id && order.tool_id) {
+        await supabase
+          .from('user_tools')
+          .delete()
+          .eq('user_id', order.user_id)
+          .eq('tool_id', order.tool_id);
+      }
+      if (order.license_key_id) {
+        await supabase
+          .from('user_tools')
+          .delete()
+          .eq('license_key_id', order.license_key_id);
+      }
+
+      // 2. Revoke any linked license_keys
+      if (order.license_key_id) {
+        await supabase
+          .from('license_keys')
+          .update({ status: 'revoked' })
+          .eq('id', order.license_key_id);
+      }
+      if (order.user_id && order.tool_id) {
+        await supabase
+          .from('license_keys')
+          .update({ status: 'revoked' })
+          .eq('tool_id', order.tool_id)
+          .eq('activated_by', order.user_id)
+          .eq('status', 'activated');
+      }
+      if (order.user_email && order.tool_id) {
+        await supabase
+          .from('license_keys')
+          .update({ status: 'revoked' })
+          .eq('tool_id', order.tool_id)
+          .ilike('activated_email', order.user_email)
+          .eq('status', 'activated');
+      }
+
+      // 3. Update order status to rejected
       const { error: updateError } = await supabase
         .from('orders')
         .update({
           status: 'rejected',
-          admin_note: note
+          admin_note: finalNote
         })
         .eq('id', id);
 
       if (updateError) throw updateError;
+
+      // Also mark any other approved orders for the same user+tool as rejected so Auto-Heal never resurrects access
+      if (order.user_id && order.tool_id) {
+        await supabase
+          .from('orders')
+          .update({ status: 'rejected', admin_note: finalNote })
+          .eq('user_id', order.user_id)
+          .eq('tool_id', order.tool_id)
+          .eq('status', 'approved');
+      }
+      if (order.user_email && order.tool_id) {
+        await supabase
+          .from('orders')
+          .update({ status: 'rejected', admin_note: finalNote })
+          .ilike('user_email', order.user_email)
+          .eq('tool_id', order.tool_id)
+          .eq('status', 'approved');
+      }
 
       // ส่งอีเมลแจ้งเตือนลูกค้ากรณีปฏิเสธ (awaited)
       if (order.user_email && order.user_email.includes('@')) {
@@ -122,7 +184,7 @@ export async function PATCH(
           customerName: order.user_email.split('@')[0],
           toolName: toolInfo?.name || 'เครื่องมือ AI',
           toolSlug: toolInfo?.slug || '',
-          note,
+          note: finalNote,
         });
         await sendEmail({
           to: order.user_email,

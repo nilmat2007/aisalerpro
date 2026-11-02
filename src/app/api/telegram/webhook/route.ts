@@ -400,7 +400,7 @@ async function handleApproveOrder(
       tool_id: order.tool_id,
       license_key_id: newKey.id,
       is_active: true,
-      unlocked_at: new Date().toISOString(),
+      activated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,tool_id' }
   )

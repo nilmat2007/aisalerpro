@@ -190,9 +190,23 @@ export default function AdminOrdersPage() {
                             </button>
                           </div>
                         )}
-                        {order.status === 'approved' && order.license_key_id && (
-                          <div className="text-xs text-green-400">
-                            Key Gen Success
+                        {order.status === 'approved' && (
+                          <div className="flex items-center gap-2">
+                            {order.license_key_id && (
+                              <span className="text-xs text-green-400">
+                                Key Gen Success
+                              </span>
+                            )}
+                            <button
+                              onClick={() => {
+                                setRejectId(order.id);
+                                setRejectNote('แอดมินยกเลิกสิทธิ์การใช้งาน (Revoked)');
+                              }}
+                              disabled={processingId === order.id}
+                              className="px-2.5 py-1 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 rounded text-xs transition-colors disabled:opacity-50"
+                            >
+                              🚫 ยกเลิกสิทธิ์
+                            </button>
                           </div>
                         )}
                         {order.status === 'rejected' && order.admin_note && (

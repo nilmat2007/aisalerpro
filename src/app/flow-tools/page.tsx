@@ -27,14 +27,14 @@ export default async function FlowToolsPage() {
       user.email
         ? supabase
             .from('license_keys')
-            .select('id, tool_id')
-            .eq('status', 'activated')
+            .select('id, tool_id, status')
+            .in('status', ['activated', 'revoked'])
             .ilike('activated_email', user.email)
         : Promise.resolve({ data: [] as any[] }),
       user.email
         ? supabase
             .from('orders')
-            .select('id, tool_id')
+            .select('id, tool_id, license_key_id')
             .eq('status', 'approved')
             .ilike('user_email', user.email)
         : Promise.resolve({ data: [] as any[] }),
@@ -45,12 +45,31 @@ export default async function FlowToolsPage() {
 
     const existingToolIds = new Set(userTools.map((ut: any) => ut.tool_id));
     const recoveredToolIds = new Set<string>();
+    const allEmailKeys = keysByEmailRes.data || [];
+    const activatedToolIds = new Set(
+      allEmailKeys.filter((k: any) => k.status === 'activated').map((k: any) => k.tool_id)
+    );
+    const revokedKeyIds = new Set(
+      allEmailKeys.filter((k: any) => k.status === 'revoked').map((k: any) => k.id)
+    );
+    const revokedToolIds = new Set(
+      allEmailKeys
+        .filter((k: any) => k.status === 'revoked' && !activatedToolIds.has(k.tool_id))
+        .map((k: any) => k.tool_id)
+    );
 
-    for (const k of keysByEmailRes.data || []) {
-      if (k.tool_id && !existingToolIds.has(k.tool_id)) recoveredToolIds.add(k.tool_id);
+    for (const k of allEmailKeys) {
+      if (k.status === 'activated' && k.tool_id && !existingToolIds.has(k.tool_id)) {
+        recoveredToolIds.add(k.tool_id);
+      }
     }
     for (const o of ordersByEmailRes.data || []) {
-      if (o.tool_id && !existingToolIds.has(o.tool_id)) recoveredToolIds.add(o.tool_id);
+      const isRevokedOrder =
+        (o.license_key_id && revokedKeyIds.has(o.license_key_id)) ||
+        revokedToolIds.has(o.tool_id);
+      if (!isRevokedOrder && o.tool_id && !existingToolIds.has(o.tool_id)) {
+        recoveredToolIds.add(o.tool_id);
+      }
     }
 
     if (recoveredToolIds.size > 0) {
@@ -59,7 +78,7 @@ export default async function FlowToolsPage() {
           {
             user_id: user.id,
             tool_id: toolId,
-            unlocked_at: new Date().toISOString(),
+            activated_at: new Date().toISOString(),
             is_active: true,
           },
           { onConflict: 'user_id,tool_id' }

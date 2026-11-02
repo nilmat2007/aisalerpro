@@ -29,30 +29,44 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
         hasAccess = true
       } else if (user.email) {
         // Auto-heal if user has an activated license key or approved order for this tool under their email
-        const [{ data: existingKey }, { data: approvedOrder }] = await Promise.all([
+        const [{ data: keysList }, { data: approvedOrder }] = await Promise.all([
           supabase
             .from('license_keys')
-            .select('id')
+            .select('id, status')
             .eq('tool_id', tool.id)
-            .eq('status', 'activated')
-            .ilike('activated_email', user.email)
-            .maybeSingle(),
+            .in('status', ['activated', 'revoked'])
+            .ilike('activated_email', user.email),
           supabase
             .from('orders')
             .select('id, license_key_id')
             .eq('tool_id', tool.id)
             .eq('status', 'approved')
             .ilike('user_email', user.email)
+            .order('created_at', { ascending: false })
+            .limit(1)
             .maybeSingle(),
         ])
 
-        if (existingKey || approvedOrder) {
+        const existingKey = (keysList || []).find((k: any) => k.status === 'activated')
+        const revokedKeyIds = new Set(
+          (keysList || []).filter((k: any) => k.status === 'revoked').map((k: any) => k.id)
+        )
+        const hasRevokedKeyOnly = !existingKey && revokedKeyIds.size > 0
+        const validOrder =
+          approvedOrder &&
+          !hasRevokedKeyOnly &&
+          (!approvedOrder.license_key_id || !revokedKeyIds.has(approvedOrder.license_key_id))
+            ? approvedOrder
+            : null
+
+        if (existingKey || validOrder) {
           hasAccess = true
           await supabase.from('user_tools').upsert(
             {
               user_id: user.id,
               tool_id: tool.id,
-              license_key_id: existingKey?.id || approvedOrder?.license_key_id || null,
+              license_key_id: existingKey?.id || validOrder?.license_key_id || null,
+              activated_at: new Date().toISOString(),
               is_active: true,
             },
             { onConflict: 'user_id,tool_id' }

@@ -226,8 +226,8 @@ export default async function HomePage() {
     user.email
       ? supabase
           .from('license_keys')
-          .select('id, tool_id')
-          .eq('status', 'activated')
+          .select('id, tool_id, status')
+          .in('status', ['activated', 'revoked'])
           .ilike('activated_email', user.email)
       : Promise.resolve({ data: [] as any[] }),
     user.email
@@ -253,10 +253,29 @@ export default async function HomePage() {
   const ownedSet = new Set((userTools || []).map((ut: any) => ut.tool_id))
   if (user.email) {
     let healed = false
-    for (const k of emailKeys || []) {
-      if (k.tool_id && !ownedSet.has(k.tool_id)) {
+    const allEmailKeys = emailKeys || []
+    const activatedToolIds = new Set(
+      allEmailKeys.filter((k: any) => k.status === 'activated').map((k: any) => k.tool_id)
+    )
+    const revokedKeyIds = new Set(
+      allEmailKeys.filter((k: any) => k.status === 'revoked').map((k: any) => k.id)
+    )
+    const revokedToolIds = new Set(
+      allEmailKeys
+        .filter((k: any) => k.status === 'revoked' && !activatedToolIds.has(k.tool_id))
+        .map((k: any) => k.tool_id)
+    )
+
+    for (const k of allEmailKeys) {
+      if (k.status === 'activated' && k.tool_id && !ownedSet.has(k.tool_id)) {
         await supabase.from('user_tools').upsert(
-          { user_id: user.id, tool_id: k.tool_id, license_key_id: k.id, is_active: true },
+          {
+            user_id: user.id,
+            tool_id: k.tool_id,
+            license_key_id: k.id,
+            activated_at: new Date().toISOString(),
+            is_active: true,
+          },
           { onConflict: 'user_id,tool_id' }
         )
         ownedSet.add(k.tool_id)
@@ -264,9 +283,18 @@ export default async function HomePage() {
       }
     }
     for (const o of approvedOrders || []) {
-      if (o.tool_id && !ownedSet.has(o.tool_id)) {
+      const isRevokedOrder =
+        (o.license_key_id && revokedKeyIds.has(o.license_key_id)) ||
+        revokedToolIds.has(o.tool_id)
+      if (!isRevokedOrder && o.tool_id && !ownedSet.has(o.tool_id)) {
         await supabase.from('user_tools').upsert(
-          { user_id: user.id, tool_id: o.tool_id, license_key_id: o.license_key_id || null, is_active: true },
+          {
+            user_id: user.id,
+            tool_id: o.tool_id,
+            license_key_id: o.license_key_id || null,
+            activated_at: new Date().toISOString(),
+            is_active: true,
+          },
           { onConflict: 'user_id,tool_id' }
         )
         ownedSet.add(o.tool_id)

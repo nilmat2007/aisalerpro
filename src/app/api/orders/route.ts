@@ -156,7 +156,7 @@ export async function POST(request: Request) {
           tool_id: toolId,
           license_key_id: createdKey?.id || null,
           is_active: true,
-          unlocked_at: nowIso,
+          activated_at: nowIso,
         },
         { onConflict: 'user_id,tool_id' }
       );
