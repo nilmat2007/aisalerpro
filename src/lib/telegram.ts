@@ -143,6 +143,68 @@ export function notifyOrderApproved(customerEmail: string, toolName: string) {
   )
 }
 
+export function notifyAiAutoApprovedOrder(
+  customerName: string,
+  customerEmail: string,
+  toolName: string,
+  price: string,
+  slipUrl: string,
+  aiNote: string
+) {
+  const buttons =
+    slipUrl && slipUrl.startsWith('http')
+      ? {
+          inline_keyboard: [[{ text: '🔍 เปิดดูรูปสลิปขนาดเต็ม', url: slipUrl }]],
+        }
+      : undefined
+
+  const caption =
+    `🤖✅ <b>AI ตรวจสลิปผ่าน & อนุมัติอัตโนมัติแล้ว!</b>\n` +
+    `👤 ${customerName}\n` +
+    `📧 ${customerEmail}\n` +
+    `🛠️ ${toolName}\n` +
+    `💰 <b>${price}</b>\n` +
+    `🛡️ <i>${aiNote}</i>\n` +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+
+  if (slipUrl && slipUrl.startsWith('http')) {
+    return sendTelegramPhoto(slipUrl, caption, buttons)
+  }
+  return sendTelegram(caption, buttons)
+}
+
+export function notifyAiAutoRejectedOrder(
+  customerName: string,
+  customerEmail: string,
+  toolName: string,
+  price: string,
+  orderId: string,
+  slipUrl: string,
+  rejectReason: string
+) {
+  const inlineRows: any[] = [
+    [{ text: '✅ อนุมัติแทน AI (Override)', callback_data: `approve_${orderId}` }],
+  ]
+  if (slipUrl && slipUrl.startsWith('http')) {
+    inlineRows.push([{ text: '🔍 เปิดดูรูปสลิปขนาดเต็ม', url: slipUrl }])
+  }
+  const buttons = { inline_keyboard: inlineRows }
+
+  const caption =
+    `🤖❌ <b>AI ปฏิเสธสลิปอัตโนมัติ (ให้ลูกค้าแนบใหม่แล้ว)</b>\n` +
+    `👤 ${customerName}\n` +
+    `📧 ${customerEmail}\n` +
+    `🛠️ ${toolName}\n` +
+    `💰 <b>${price}</b>\n` +
+    `⚠️ <b>สาเหตุ:</b> ${rejectReason}\n` +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+
+  if (slipUrl && slipUrl.startsWith('http')) {
+    return sendTelegramPhoto(slipUrl, caption, buttons)
+  }
+  return sendTelegram(caption, buttons)
+}
+
 export function notifyNewMember(name: string, email: string) {
   return sendTelegram(
     `👤 <b>สมาชิกใหม่ลงทะเบียน!</b>\n` +

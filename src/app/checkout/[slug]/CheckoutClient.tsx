@@ -5,12 +5,63 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import jsQR from 'jsqr';
 
-// Compress and resize mobile slip images (up to 1280px JPEG @ 0.85 quality) for fast, reliable uploads
+// Multi-zone & high-contrast QR code scanner for Thai Bank Mini-QR codes on slips
+function decodeSlipQrCode(img: HTMLImageElement): string | null {
+  try {
+    const zones = [
+      // 1. Full image
+      { sx: 0, sy: 0, sw: 1, sh: 1, scale: 1 },
+      // 2. Bottom half (where most Thai banking apps place Mini-QR)
+      { sx: 0, sy: 0.42, sw: 1, sh: 0.58, scale: 1.5 },
+      // 3. Bottom-right quadrant (K PLUS, SCB, Krungsri, BBL)
+      { sx: 0.35, sy: 0.45, sw: 0.65, sh: 0.55, scale: 2.0 },
+      // 4. Bottom-left quadrant (Krungthai NEXT, TTB, GSB)
+      { sx: 0, sy: 0.45, sw: 0.65, sh: 0.55, scale: 2.0 },
+      // 5. Middle-right zone (short slips)
+      { sx: 0.35, sy: 0.2, sw: 0.65, sh: 0.6, scale: 1.8 },
+    ];
+
+    const scanCanvas = document.createElement('canvas');
+    const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
+    if (!scanCtx) return null;
+
+    for (const z of zones) {
+      const cropX = Math.floor(img.width * z.sx);
+      const cropY = Math.floor(img.height * z.sy);
+      const cropW = Math.max(64, Math.floor(img.width * z.sw));
+      const cropH = Math.max(64, Math.floor(img.height * z.sh));
+
+      const targetW = Math.min(1600, Math.round(cropW * z.scale));
+      const targetH = Math.min(1600, Math.round(cropH * z.scale));
+
+      scanCanvas.width = targetW;
+      scanCanvas.height = targetH;
+      scanCtx.fillStyle = '#FFFFFF';
+      scanCtx.fillRect(0, 0, targetW, targetH);
+      scanCtx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+
+      const imageData = scanCtx.getImageData(0, 0, targetW, targetH);
+      const decoded = jsQR(imageData.data, targetW, targetH, {
+        inversionAttempts: 'attemptBoth',
+      });
+      if (decoded?.data && decoded.data.trim().length >= 18) {
+        return decoded.data.trim();
+      }
+    }
+  } catch (e) {
+    console.warn('QR scan warning:', e);
+  }
+  return null;
+}
+
+// Compress and resize mobile slip images (up to 1280px JPEG @ 0.85 quality) + extract Bank Mini-QR
 async function prepareSlipImage(file: File): Promise<{
   blob: Blob;
   base64: string;
   mimeType: string;
+  qrPayload: string | null;
 }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -19,15 +70,17 @@ async function prepareSlipImage(file: File): Promise<{
       const dataUrl = reader.result as string;
       const img = new Image();
       img.onerror = () => {
-        // Fallback if browser cannot render image onto canvas
         resolve({
           blob: file,
           base64: dataUrl,
           mimeType: file.type || 'image/jpeg',
+          qrPayload: null,
         });
       };
       img.onload = () => {
         try {
+          const qrPayload = decodeSlipQrCode(img);
+
           const maxDim = 1280;
           let width = img.width;
           let height = img.height;
@@ -45,7 +98,12 @@ async function prepareSlipImage(file: File): Promise<{
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           if (!ctx) {
-            resolve({ blob: file, base64: dataUrl, mimeType: file.type || 'image/jpeg' });
+            resolve({
+              blob: file,
+              base64: dataUrl,
+              mimeType: file.type || 'image/jpeg',
+              qrPayload,
+            });
             return;
           }
           ctx.fillStyle = '#FFFFFF';
@@ -58,13 +116,19 @@ async function prepareSlipImage(file: File): Promise<{
                 blob: blob || file,
                 base64: compressedBase64,
                 mimeType: 'image/jpeg',
+                qrPayload,
               });
             },
             'image/jpeg',
             0.85
           );
         } catch (err) {
-          resolve({ blob: file, base64: dataUrl, mimeType: file.type || 'image/jpeg' });
+          resolve({
+            blob: file,
+            base64: dataUrl,
+            mimeType: file.type || 'image/jpeg',
+            qrPayload: null,
+          });
         }
       };
       img.src = dataUrl;
@@ -99,7 +163,10 @@ export default function CheckoutClient({
       ? 'rejected'
       : 'idle'
   );
-  const [rejectionNote, setRejectionNote] = useState<string>(initialOrder?.admin_note || '');
+  const cleanInitialNote = initialOrder?.admin_note
+    ? String(initialOrder.admin_note).replace(/\[[A-Z0-9_-]+[^\]]*\]/g, '').trim()
+    : '';
+  const [rejectionNote, setRejectionNote] = useState<string>(cleanInitialNote);
   const router = useRouter();
 
   const posterImage = tool.poster_url || null;
@@ -182,7 +249,7 @@ export default function CheckoutClient({
         console.warn('Direct client storage upload failed, using server fallback:', uploadError.message);
       }
 
-      // 3. Submit order (includes base64 fallback so server can upload if client storage failed)
+      // 3. Submit order (includes base64 + QR payload for 7-Layer AI Anti-Fraud Verification)
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -190,8 +257,9 @@ export default function CheckoutClient({
           toolId: tool.id,
           amount: numericPrice,
           slipUrl,
-          slipBase64: slipUrl ? undefined : prepared.base64,
+          slipBase64: prepared.base64,
           slipMimeType: prepared.mimeType,
+          qrPayload: prepared.qrPayload,
         }),
       });
 
@@ -208,6 +276,30 @@ export default function CheckoutClient({
       if (result.slip_url) {
         setPreview(result.slip_url);
       }
+
+      // Handle instant AI verification decision
+      if (result.status === 'approved') {
+        setOrderStatus('approved');
+        setRejectionNote('');
+        setStep(3);
+        router.refresh();
+        return;
+      }
+
+      if (result.status === 'rejected') {
+        setOrderStatus('rejected');
+        setRejectionNote(
+          result.rejection_reason ||
+            'สลิปไม่ผ่านการตรวจสอบอัตโนมัติ กรุณาแนบรูปสลิปที่โอนสำเร็จและชัดเจนอีกครั้งครับ'
+        );
+        setFile(null);
+        setStep(2);
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        return;
+      }
+
       setOrderStatus('pending');
       setRejectionNote('');
       setStep(3);
@@ -514,13 +606,13 @@ export default function CheckoutClient({
                 {isUploading ? (
                   <>
                     <span className="animate-spin text-xl">↻</span>
-                    <span>กำลังอัปโหลดและส่งข้อมูล...</span>
+                    <span>🤖 AI กำลังตรวจสอบสลิปและเปิดสิทธิ์อัตโนมัติ (3–5 วินาที)...</span>
                   </>
                 ) : !file ? (
                   <span>⚠️ กรุณาแนบสลิปก่อนกดยืนยัน</span>
                 ) : (
                   <>
-                    <span>📤 ส่งสลิปยืนยันการชำระเงิน</span>
+                    <span>📤 ส่งสลิปเพื่อตรวจสอบและเปิดสิทธิ์ทันที</span>
                     <span className="text-lg">→</span>
                   </>
                 )}

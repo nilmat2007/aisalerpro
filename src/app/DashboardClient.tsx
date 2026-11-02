@@ -239,7 +239,9 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                           คำสั่งซื้อ &quot;{order.tools?.name || 'เครื่องมือ AI'}&quot; ยังไม่ผ่านการอนุมัติ
                         </h4>
                         <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5 leading-relaxed">
-                          {order.admin_note ? `เหตุผล: ${order.admin_note}` : 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ชัดเจน หรือยอดเงินไม่ตรง ท่านสามารถแนบสลิปใหม่อีกครั้งได้ครับ'}
+                          {order.admin_note
+                            ? `เหตุผล: ${String(order.admin_note).replace(/\[[A-Z0-9_-]+[^\]]*\]/g, '').trim()}`
+                            : 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ชัดเจน หรือยอดเงินไม่ตรง ท่านสามารถแนบสลิปใหม่อีกครั้งได้ครับ'}
                         </p>
                       </div>
                     </div>

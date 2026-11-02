@@ -1,32 +1,66 @@
 import { createClient } from '@/lib/supabase/server';
 import { supabase as supabaseAdmin } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
-import { notifyNewOrder } from '@/lib/telegram';
+import {
+  notifyNewOrder,
+  notifyAiAutoApprovedOrder,
+  notifyAiAutoRejectedOrder,
+} from '@/lib/telegram';
+import { verifySlipAndDecide } from '@/lib/slip-verifier';
+import { sendEmail, buildOrderApprovedEmail } from '@/lib/email';
+
+function generateLicenseKeyCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let keyStr = 'PHM-';
+  for (let i = 0; i < 4; i++) keyStr += chars.charAt(Math.floor(Math.random() * chars.length));
+  keyStr += '-';
+  for (let i = 0; i < 4; i++) keyStr += chars.charAt(Math.floor(Math.random() * chars.length));
+  return keyStr;
+}
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนทำรายการ' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { toolId, amount, slipUrl, slipBase64, slipMimeType } = body;
+    const { toolId, amount, slipUrl, slipBase64, slipMimeType, qrPayload } = body;
 
     if (!toolId) {
       return NextResponse.json({ error: 'ไม่พบข้อมูลรายการที่สั่งซื้อ' }, { status: 400 });
     }
 
-    // 1. ป้องกันการสั่งซื้อซ้ำหากมีสิทธิ์ใช้งานเครื่องมือนี้อยู่แล้ว
-    const { data: existingAccess } = await supabaseAdmin
-      .from('user_tools')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('tool_id', toolId)
-      .eq('is_active', true)
-      .maybeSingle();
+    // 1. ดึงข้อมูลสินค้าและตรวจสอบสิทธิ์ที่มีอยู่แล้วพร้อมกัน
+    const [{ data: existingAccess }, { data: toolInfo }, { data: existingOrderRow }] =
+      await Promise.all([
+        supabaseAdmin
+          .from('user_tools')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('tool_id', toolId)
+          .eq('is_active', true)
+          .maybeSingle(),
+        supabaseAdmin
+          .from('tools')
+          .select('id, name, slug, price')
+          .eq('id', toolId)
+          .single(),
+        supabaseAdmin
+          .from('orders')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('tool_id', toolId)
+          .in('status', ['pending', 'rejected'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
     if (existingAccess) {
       return NextResponse.json(
@@ -39,7 +73,8 @@ export async function POST(request: Request) {
     }
 
     // 2. ตรวจสอบรูปสลิป หรืออัปโหลดผ่าน Server Fallback หากฝั่ง Client อัปโหลดไม่ผ่าน
-    let finalSlipUrl = (slipUrl && slipUrl !== 'upload-failed' && slipUrl.startsWith('http')) ? slipUrl : '';
+    let finalSlipUrl =
+      slipUrl && slipUrl !== 'upload-failed' && slipUrl.startsWith('http') ? slipUrl : '';
 
     if (!finalSlipUrl && slipBase64) {
       try {
@@ -74,76 +109,226 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. แปลง amount ให้เป็นตัวเลข
-    const numericAmount = parseFloat(String(amount).replace(/[^0-9.]/g, '')) || 0;
+    // 3. ใช้ราคาจริงจากฐานข้อมูล tools เพื่อป้องกันการแก้ไขตัวเลขจากฝั่ง Client
+    const dbPriceNumeric =
+      parseFloat(String(toolInfo?.price || '').replace(/[^0-9.]/g, '')) || 0;
+    const clientPriceNumeric = parseFloat(String(amount || '0').replace(/[^0-9.]/g, '')) || 0;
+    const expectedAmount = dbPriceNumeric > 0 ? dbPriceNumeric : clientPriceNumeric;
 
-    // 4. เช็กว่ามีออเดอร์ pending ของรายการนี้ค้างอยู่หรือไม่ (ป้องกันการกดส่งสลิปซ้ำซ้อนหลายแถว)
-    const { data: existingPending } = await supabaseAdmin
-      .from('orders')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('tool_id', toolId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // 4. เรียกใช้ระบบ AI + Anti-Fraud 7 ชั้นตรวจสอบสลิป
+    const verification = await verifySlipAndDecide({
+      supabaseAdmin,
+      userId: user.id,
+      toolId,
+      expectedAmount,
+      slipBase64,
+      slipMimeType,
+      slipUrl: finalSlipUrl,
+      qrPayload,
+      excludeOrderId: existingOrderRow?.id,
+    });
+
+    const customerName =
+      user.user_metadata?.full_name || user.email?.split('@')[0] || 'ไม่ทราบชื่อ';
+    const toolName = toolInfo?.name || 'เครื่องมือ AI';
+    const nowIso = new Date().toISOString();
+
+    // ─── CASE A: AI ตรวจสอบสลิปผ่าน 100% -> อนุมัติและปลดล็อกสิทธิ์ทันที ───
+    if (verification.decision === 'approved') {
+      const keyCode = generateLicenseKeyCode();
+      const { data: createdKey } = await supabaseAdmin
+        .from('license_keys')
+        .insert({
+          tool_id: toolId,
+          key_code: keyCode,
+          status: 'activated',
+          activated_at: nowIso,
+          activated_by: user.id,
+          activated_email: user.email || '',
+          note: `AI Auto-Approved (${verification.extracted?.transRef || ''})`,
+        })
+        .select('id, key_code')
+        .maybeSingle();
+
+      await supabaseAdmin.from('user_tools').upsert(
+        {
+          user_id: user.id,
+          tool_id: toolId,
+          license_key_id: createdKey?.id || null,
+          is_active: true,
+          unlocked_at: nowIso,
+        },
+        { onConflict: 'user_id,tool_id' }
+      );
+
+      const approvedPayload = {
+        user_id: user.id,
+        user_email: user.email || '',
+        tool_id: toolId,
+        amount: expectedAmount,
+        slip_url: finalSlipUrl,
+        status: 'approved',
+        approved_at: nowIso,
+        approved_by: 'AI_AUTO_VERIFIER',
+        license_key_id: createdKey?.id || null,
+        admin_note: `${verification.fingerprintTag} ${verification.reason}`,
+      };
+
+      let orderData: any = null;
+      if (existingOrderRow?.id) {
+        const { data: updated } = await supabaseAdmin
+          .from('orders')
+          .update(approvedPayload)
+          .eq('id', existingOrderRow.id)
+          .select()
+          .single();
+        orderData = updated;
+      } else {
+        const { data: inserted } = await supabaseAdmin
+          .from('orders')
+          .insert(approvedPayload)
+          .select()
+          .single();
+        orderData = inserted;
+      }
+
+      // ส่งแจ้งเตือน Telegram แอดมิน + ส่งอีเมลให้ลูกค้าพร้อมกัน
+      const tasks: Promise<any>[] = [
+        notifyAiAutoApprovedOrder(
+          customerName,
+          user.email || '',
+          toolName,
+          `${expectedAmount.toLocaleString()} บาท`,
+          finalSlipUrl,
+          verification.reason
+        ),
+      ];
+
+      if (user.email && user.email.includes('@')) {
+        const emailHtml = buildOrderApprovedEmail({
+          customerName,
+          toolName,
+          toolSlug: toolInfo?.slug || '',
+          keyCode: createdKey?.key_code || keyCode,
+          amount: `${expectedAmount.toLocaleString()} บาท`,
+        });
+        tasks.push(
+          sendEmail({
+            to: user.email,
+            subject: `✅ คำสั่งซื้อ ${toolName} ของคุณได้รับการอนุมัติแล้ว — PUP PAP AI`,
+            html: emailHtml,
+          }).catch((e) => console.error('Auto-approve email error:', e))
+        );
+      }
+
+      await Promise.all(tasks);
+
+      return NextResponse.json({
+        ...orderData,
+        status: 'approved',
+        ai_verified: true,
+        ai_reason: verification.reason,
+      });
+    }
+
+    // ─── CASE B: AI ตรวจพบว่าสลิปไม่ถูกต้อง -> ปฏิเสธทันทีและให้ลูกค้าแนบสลิปใหม่ ───
+    if (verification.decision === 'rejected') {
+      const rejectedPayload = {
+        user_id: user.id,
+        user_email: user.email || '',
+        tool_id: toolId,
+        amount: expectedAmount,
+        slip_url: finalSlipUrl,
+        status: 'rejected',
+        admin_note: `${verification.reason} ${verification.fingerprintTag}`,
+        created_at: nowIso,
+      };
+
+      let orderData: any = null;
+      if (existingOrderRow?.id) {
+        const { data: updated } = await supabaseAdmin
+          .from('orders')
+          .update(rejectedPayload)
+          .eq('id', existingOrderRow.id)
+          .select()
+          .single();
+        orderData = updated;
+      } else {
+        const { data: inserted } = await supabaseAdmin
+          .from('orders')
+          .insert(rejectedPayload)
+          .select()
+          .single();
+        orderData = inserted;
+      }
+
+      await notifyAiAutoRejectedOrder(
+        customerName,
+        user.email || '',
+        toolName,
+        `${expectedAmount.toLocaleString()} บาท`,
+        orderData?.id || '',
+        finalSlipUrl,
+        verification.reason
+      );
+
+      return NextResponse.json({
+        ...orderData,
+        status: 'rejected',
+        ai_rejected: true,
+        rejection_reason: verification.reason,
+      });
+    }
+
+    // ─── CASE C: รอแอดมินตรวจสอบใน Telegram (กรณีปิดโหมด AI หรือยังไม่ได้ใส่คีย์ Gemini) ───
+    const pendingPayload = {
+      user_id: user.id,
+      user_email: user.email || '',
+      tool_id: toolId,
+      amount: expectedAmount,
+      slip_url: finalSlipUrl,
+      status: 'pending',
+      admin_note: `${verification.fingerprintTag} ${verification.reason}`,
+      created_at: nowIso,
+    };
 
     let orderData: any = null;
-
-    if (existingPending) {
-      const { data: updatedOrder, error: updateErr } = await supabaseAdmin
+    if (existingOrderRow?.id) {
+      const { data: updated, error: updateErr } = await supabaseAdmin
         .from('orders')
-        .update({
-          amount: numericAmount,
-          slip_url: finalSlipUrl,
-          created_at: new Date().toISOString(),
-        })
-        .eq('id', existingPending.id)
+        .update(pendingPayload)
+        .eq('id', existingOrderRow.id)
         .select()
         .single();
-
       if (updateErr) {
         return NextResponse.json({ error: updateErr.message }, { status: 500 });
       }
-      orderData = updatedOrder;
+      orderData = updated;
     } else {
-      const { data: insertedOrder, error: insertErr } = await supabaseAdmin
+      const { data: inserted, error: insertErr } = await supabaseAdmin
         .from('orders')
-        .insert({
-          user_id: user.id,
-          user_email: user.email || '',
-          tool_id: toolId,
-          amount: numericAmount,
-          slip_url: finalSlipUrl,
-          status: 'pending',
-        })
+        .insert(pendingPayload)
         .select()
         .single();
-
       if (insertErr) {
-        console.error('Order insert error:', insertErr);
         return NextResponse.json({ error: insertErr.message }, { status: 500 });
       }
-      orderData = insertedOrder;
+      orderData = inserted;
     }
 
-    // 5. ดึงชื่อ tool และแจ้งเตือนเข้า Telegram พร้อมรูปสลิป (ต้อง await เสมอบน Vercel Serverless)
-    const { data: toolInfo } = await supabaseAdmin
-      .from('tools')
-      .select('name')
-      .eq('id', toolId)
-      .single();
-
     await notifyNewOrder(
-      user.user_metadata?.full_name || user.email || 'ไม่ทราบชื่อ',
+      customerName,
       user.email || '',
-      toolInfo?.name || 'ไม่ระบุ',
-      `${numericAmount.toLocaleString()} บาท`,
+      toolName,
+      `${expectedAmount.toLocaleString()} บาท`,
       orderData.id,
       finalSlipUrl
     );
 
-    return NextResponse.json(orderData);
+    return NextResponse.json({
+      ...orderData,
+      status: 'pending',
+    });
   } catch (error: any) {
     console.error('Error creating order:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -153,7 +338,9 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -182,9 +369,19 @@ export async function GET(request: Request) {
       ]);
 
       const hasAccess = Boolean(userTool) || latestOrder?.status === 'approved';
+      // Strip internal [AI-...] fingerprint tags when showing admin_note to the customer
+      const cleanAdminNote = latestOrder?.admin_note
+        ? String(latestOrder.admin_note).replace(/\[[A-Z0-9_-]+[^\]]*\]/g, '').trim()
+        : '';
+
       return NextResponse.json({
         hasAccess,
-        latestOrder: latestOrder || null,
+        latestOrder: latestOrder
+          ? {
+              ...latestOrder,
+              admin_note: cleanAdminNote,
+            }
+          : null,
       });
     }
 

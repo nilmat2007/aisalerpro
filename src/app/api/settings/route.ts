@@ -1,16 +1,28 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
+import { getMaskedAiSlipConfig, saveAiSlipConfig } from '@/lib/ai-slip-config';
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('*')
-    .limit(1)
-    .single();
+  const [{ data, error }, session] = await Promise.all([
+    supabase.from('site_settings').select('*').limit(1).single(),
+    getSession(),
+  ]);
 
-  if (error && error.code !== 'PGRST116') return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data || {});
+  if (error && error.code !== 'PGRST116') {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const baseData = data || {};
+  if (session) {
+    const aiSlipConfig = await getMaskedAiSlipConfig();
+    return NextResponse.json({
+      ...baseData,
+      ai_slip_config: aiSlipConfig,
+    });
+  }
+
+  return NextResponse.json(baseData);
 }
 
 export async function PUT(request: Request) {
@@ -19,7 +31,13 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    
+
+    // Save AI Slip Verification Config if provided
+    let savedAiConfig = undefined;
+    if (body.ai_slip_config && typeof body.ai_slip_config === 'object') {
+      savedAiConfig = await saveAiSlipConfig(body.ai_slip_config);
+    }
+
     // Only send the fields we want to update (not id or other metadata)
     const updateData: Record<string, any> = {
       site_name: body.site_name || '',
@@ -39,7 +57,6 @@ export async function PUT(request: Request) {
       .single();
 
     if (existing) {
-      // Update existing record
       let { data, error } = await supabase
         .from('site_settings')
         .update(updateData)
@@ -47,7 +64,6 @@ export async function PUT(request: Request) {
         .select()
         .single();
 
-      // If failed due to line_oa_url column not existing yet, fallback without it
       if (error && error.message?.includes('line_oa_url')) {
         delete updateData.line_oa_url;
         const retry = await supabase
@@ -61,9 +77,11 @@ export async function PUT(request: Request) {
       }
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json(data);
+      return NextResponse.json({
+        ...data,
+        ai_slip_config: savedAiConfig || (await getMaskedAiSlipConfig()),
+      });
     } else {
-      // Insert new record
       let { data, error } = await supabase
         .from('site_settings')
         .insert(updateData)
@@ -82,9 +100,15 @@ export async function PUT(request: Request) {
       }
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json(data);
+      return NextResponse.json({
+        ...data,
+        ai_slip_config: savedAiConfig || (await getMaskedAiSlipConfig()),
+      });
     }
-  } catch (err) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err?.message || 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

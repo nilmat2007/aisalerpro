@@ -362,8 +362,8 @@ async function handleApproveOrder(
     return NextResponse.json({ ok: true })
   }
 
-  if (order.status !== 'pending') {
-    await answerCallback(callbackId, '⚠️ ออเดอร์นี้ถูกจัดการแล้ว')
+  if (order.status === 'approved') {
+    await answerCallback(callbackId, '⚠️ ออเดอร์นี้ได้รับการอนุมัติไปแล้ว')
     return NextResponse.json({ ok: true })
   }
 

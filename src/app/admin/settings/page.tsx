@@ -13,6 +13,20 @@ export default function AdminSettingsPage() {
     favicon_url: '',
     line_oa_url: ''
   })
+
+  const [aiConfig, setAiConfig] = useState({
+    ai_slip_enabled: true,
+    has_gemini_key: false,
+    gemini_key_masked: '',
+    gemini_api_key_input: '',
+    max_slip_age_minutes: 30,
+    slipok_api_url: '',
+    has_slipok_key: false,
+    slipok_key_masked: '',
+    slipok_api_key_input: '',
+  })
+
+  const [showAdvancedSlipOk, setShowAdvancedSlipOk] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
@@ -44,7 +58,6 @@ export default function AdminSettingsPage() {
       }
       setSettings(newSettings)
       
-      // Auto-save after upload
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -65,7 +78,32 @@ export default function AdminSettingsPage() {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        if (data) setSettings(data)
+        if (data) {
+          setSettings({
+            site_name: data.site_name || '',
+            tagline: data.tagline || '',
+            description: data.description || '',
+            logo_url: data.logo_url || '',
+            og_image_url: data.og_image_url || '',
+            favicon_url: data.favicon_url || '',
+            line_oa_url: data.line_oa_url || '',
+          })
+          if (data.ai_slip_config) {
+            setAiConfig(prev => ({
+              ...prev,
+              ai_slip_enabled:
+                typeof data.ai_slip_config.ai_slip_enabled === 'boolean'
+                  ? data.ai_slip_config.ai_slip_enabled
+                  : true,
+              has_gemini_key: Boolean(data.ai_slip_config.has_gemini_key),
+              gemini_key_masked: data.ai_slip_config.gemini_key_masked || '',
+              max_slip_age_minutes: Number(data.ai_slip_config.max_slip_age_minutes) || 30,
+              slipok_api_url: data.ai_slip_config.slipok_api_url || '',
+              has_slipok_key: Boolean(data.ai_slip_config.has_slipok_key),
+              slipok_key_masked: data.ai_slip_config.slipok_key_masked || '',
+            }))
+          }
+        }
         setLoading(false)
       })
       .catch(err => {
@@ -79,15 +117,47 @@ export default function AdminSettingsPage() {
     setSaving(true)
     
     try {
+      const payload = {
+        ...settings,
+        ai_slip_config: {
+          ai_slip_enabled: aiConfig.ai_slip_enabled,
+          gemini_api_key: aiConfig.gemini_api_key_input.trim()
+            ? aiConfig.gemini_api_key_input.trim()
+            : '__KEEP__',
+          max_slip_age_minutes: aiConfig.max_slip_age_minutes,
+          slipok_api_url: aiConfig.slipok_api_url.trim(),
+          slipok_api_key: aiConfig.slipok_api_key_input.trim()
+            ? aiConfig.slipok_api_key_input.trim()
+            : '__KEEP__',
+        },
+      }
+
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(payload)
       })
       
+      const result = await res.json()
       if (res.ok) {
-        setToast('บันทึกการตั้งค่าสำเร็จ')
-        setTimeout(() => setToast(''), 3000)
+        if (result?.ai_slip_config) {
+          setAiConfig(prev => ({
+            ...prev,
+            ai_slip_enabled: result.ai_slip_config.ai_slip_enabled,
+            has_gemini_key: Boolean(result.ai_slip_config.has_gemini_key),
+            gemini_key_masked: result.ai_slip_config.gemini_key_masked || '',
+            gemini_api_key_input: '',
+            max_slip_age_minutes: Number(result.ai_slip_config.max_slip_age_minutes) || 30,
+            slipok_api_url: result.ai_slip_config.slipok_api_url || '',
+            has_slipok_key: Boolean(result.ai_slip_config.has_slipok_key),
+            slipok_key_masked: result.ai_slip_config.slipok_key_masked || '',
+            slipok_api_key_input: '',
+          }))
+        }
+        setToast('✅ บันทึกการตั้งค่าเว็บไซต์และระบบ AI ตรวจสลิปสำเร็จ!')
+        setTimeout(() => setToast(''), 4000)
+      } else {
+        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่สามารถบันทึกได้'))
       }
     } catch (err) {
       console.error(err)
@@ -101,17 +171,169 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">ตั้งค่าเว็บไซต์</h1>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold text-white">ตั้งค่าเว็บไซต์ & ระบบตรวจสลิปอัตโนมัติ</h1>
 
       {toast && (
-        <div className="mb-6 p-4 bg-green-500/10 border border-green-500/50 text-green-400 rounded-lg text-center font-medium">
+        <div className="p-4 bg-emerald-500/15 border border-emerald-500/50 text-emerald-300 rounded-xl text-center font-bold">
           {toast}
         </div>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* 🤖 แผงควบคุมระบบ AI ตรวจสลิปและอนุมัติอัตโนมัติ 24 ชม. */}
+        <div className="bg-slate-900 border-2 border-emerald-500/40 rounded-2xl p-6 space-y-5 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                  <span>🤖🛡️</span>
+                  <span>ระบบ AI ตรวจสลิป & อนุมัติอัตโนมัติ 24 ชม. (7-Layer Anti-Fraud)</span>
+                </h2>
+                {aiConfig.ai_slip_enabled && aiConfig.has_gemini_key ? (
+                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    🟢 พร้อมอนุมัติอัตโนมัติ 24 ชม.
+                  </span>
+                ) : aiConfig.ai_slip_enabled ? (
+                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    🟡 รอใส่ Gemini API Key (ฟรี)
+                  </span>
+                ) : (
+                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                    ⚪ ปิดอยู่ (แอดมินตรวจเองใน Telegram)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                ตรวจสอบ QR ธนาคารแห่งประเทศไทย (CRC-16) + เช็กสลิปซ้ำ + ใช้ Gemini Vision ตรวจชื่อผู้รับ (<strong>ภีมทพัฒน์ นิลมาตย์ · 775-1-16804-7</strong>) ยอดเงิน และเวลาโอน ก่อนเปิดสิทธิ์ให้ลูกค้าอัตโนมัติตอนคุณหลับ
+              </p>
+            </div>
+
+            <label className="inline-flex items-center gap-2.5 cursor-pointer shrink-0 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800">
+              <input
+                type="checkbox"
+                checked={aiConfig.ai_slip_enabled}
+                onChange={e => setAiConfig({ ...aiConfig, ai_slip_enabled: e.target.checked })}
+                className="w-4 h-4 accent-emerald-500 rounded"
+              />
+              <span className="text-sm font-bold text-white">
+                {aiConfig.ai_slip_enabled ? 'เปิดใช้ AI ตรวจสลิป' : 'ปิด AI (ตรวจเอง)'}
+              </span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Gemini API Key Input */}
+            <div className="md:col-span-2 space-y-1.5">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <label className="block text-sm font-semibold text-emerald-400">
+                  🔑 Google Gemini API Key (ฟรี 100%)
+                </label>
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-cyan-400 hover:underline flex items-center gap-1"
+                >
+                  <span>✨ กดรับคีย์ฟรีที่ Google AI Studio</span>
+                  <span>↗</span>
+                </a>
+              </div>
+              <input
+                type="password"
+                value={aiConfig.gemini_api_key_input}
+                onChange={e => setAiConfig({ ...aiConfig, gemini_api_key_input: e.target.value })}
+                placeholder={
+                  aiConfig.has_gemini_key
+                    ? `ตั้งค่าคีย์ไว้แล้ว (${aiConfig.gemini_key_masked}) — พิมพ์ทับหากต้องการเปลี่ยนคีย์ใหม่`
+                    : 'วางคีย์ AIzaSy... จาก Google AI Studio ที่นี่แล้วกดบันทึกด้านล่าง'
+                }
+                className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-lg px-4 py-2.5 text-white text-sm font-mono focus:outline-none"
+              />
+              <p className="text-xs text-slate-400">
+                {aiConfig.has_gemini_key ? (
+                  <span className="text-emerald-400 font-semibold">
+                    ✓ เข้ารหัสเก็บคีย์ไว้แล้ว ({aiConfig.gemini_key_masked}) ระบบพร้อมตรวจสลิปและอนุมัติอัตโนมัติทันที
+                  </span>
+                ) : (
+                  <span className="text-amber-300">
+                    ⚠️ กรุณากดลิงก์ &quot;กดรับคีย์ฟรีที่ Google AI Studio&quot; ด้านบน แล้วคัดลอกคีย์มาวางช่องนี้เพื่อเปิดระบบ AI อ่านภาพสลิปครับ
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* Max Slip Age Minutes */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-semibold text-slate-300">
+                ⏱️ อายุสลิปสูงสุดที่อนุญาต
+              </label>
+              <select
+                value={aiConfig.max_slip_age_minutes}
+                onChange={e =>
+                  setAiConfig({ ...aiConfig, max_slip_age_minutes: Number(e.target.value) })
+                }
+                className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-lg px-3.5 py-2.5 text-white text-sm focus:outline-none"
+              >
+                <option value={15}>ไม่เกิน 15 นาที (เข้มงวดสูงสุด)</option>
+                <option value={30}>ไม่เกิน 30 นาที (แนะนำ)</option>
+                <option value={60}>ไม่เกิน 60 นาที (1 ชั่วโมง)</option>
+                <option value={120}>ไม่เกิน 120 นาที (2 ชั่วโมง)</option>
+              </select>
+              <p className="text-xs text-slate-500">
+                หากลูกค้าแนบสลิปเก่าที่โอนเกินเวลานี้ AI จะปฏิเสธและให้แนบสลิปใหม่ทันที
+              </p>
+            </div>
+          </div>
+
+          {/* Optional SlipOK Integration Toggle */}
+          <div className="pt-2 border-t border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => setShowAdvancedSlipOk(!showAdvancedSlipOk)}
+              className="text-xs text-slate-400 hover:text-white font-semibold flex items-center gap-1.5"
+            >
+              <span>{showAdvancedSlipOk ? '▼' : '▶'}</span>
+              <span>ตัวเลือกเสริมขั้นสูง: เชื่อมต่อ API ธนาคาร SlipOK (ไม่บังคับ — เว้นว่างไว้ได้)</span>
+            </button>
+
+            {showAdvancedSlipOk && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 p-4 rounded-xl bg-slate-950 border border-slate-800">
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">SlipOK API Endpoint URL</label>
+                  <input
+                    type="url"
+                    value={aiConfig.slipok_api_url}
+                    onChange={e => setAiConfig({ ...aiConfig, slipok_api_url: e.target.value })}
+                    placeholder="https://api.slipok.com/api/line/apikey/XXXX"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">SlipOK API Key (x-authorization)</label>
+                  <input
+                    type="password"
+                    value={aiConfig.slipok_api_key_input}
+                    onChange={e => setAiConfig({ ...aiConfig, slipok_api_key_input: e.target.value })}
+                    placeholder={
+                      aiConfig.has_slipok_key
+                        ? `ตั้งค่าแล้ว (${aiConfig.slipok_key_masked})`
+                        : 'SLIPOK_KEY...'
+                    }
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs font-mono"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ตั้งค่าข้อมูลทั่วไปของเว็บไซต์ */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+          <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">
+            🌐 ข้อมูลทั่วไปของเว็บไซต์
+          </h2>
+
           <div>
             <label className="block text-sm text-slate-400 mb-1">ชื่อเว็บไซต์ (Site Name)</label>
             <input type="text" value={settings.site_name} onChange={e => setSettings({...settings, site_name: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white" />
@@ -186,30 +408,13 @@ export default function AdminSettingsPage() {
             <p className="text-xs text-slate-500 mt-1">แนะนำ: รูป PNG ขนาด 32x32 หรือ 64x64 px</p>
           </div>
 
-          <div className="pt-4 border-t border-slate-800">
-            <h3 className="text-lg font-medium text-white mb-4">ตัวอย่างส่วนหัวของเว็บไซต์</h3>
-            <div className="bg-slate-950 p-8 rounded-xl border border-slate-800 text-center">
-              {settings.logo_url ? (
-                <img src={settings.logo_url} alt="Logo" className="h-16 mx-auto mb-4" />
-              ) : (
-                <div className="text-3xl font-bold text-white mb-4">{settings.site_name || 'ชื่อเว็บไซต์'}</div>
-              )}
-              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
-                {settings.tagline || 'สโลแกนเว็บไซต์'}
-              </h1>
-              <p className="text-slate-400 max-w-xl mx-auto">
-                {settings.description || 'คำอธิบายเว็บไซต์จะแสดงผลที่นี่...'}
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-4 flex justify-end">
-            <button type="submit" disabled={saving} className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white px-6 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity font-medium">
-              {saving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
+          <div className="pt-4 border-t border-slate-800 flex justify-end">
+            <button type="submit" disabled={saving} className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 px-8 py-3 rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity font-extrabold shadow-lg">
+              {saving ? '⏳ กำลังบันทึกการตั้งค่า...' : '💾 บันทึกการตั้งค่าทั้งหมด'}
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   )
 }
