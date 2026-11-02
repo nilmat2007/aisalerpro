@@ -1,27 +1,105 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+
+// Compress and resize mobile slip images (up to 1280px JPEG @ 0.85 quality) for fast, reliable uploads
+async function prepareSlipImage(file: File): Promise<{
+  blob: Blob;
+  base64: string;
+  mimeType: string;
+}> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('ไม่สามารถอ่านไฟล์รูปภาพได้'));
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const img = new Image();
+      img.onerror = () => {
+        // Fallback if browser cannot render image onto canvas
+        resolve({
+          blob: file,
+          base64: dataUrl,
+          mimeType: file.type || 'image/jpeg',
+        });
+      };
+      img.onload = () => {
+        try {
+          const maxDim = 1280;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve({ blob: file, base64: dataUrl, mimeType: file.type || 'image/jpeg' });
+            return;
+          }
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+          canvas.toBlob(
+            (blob) => {
+              resolve({
+                blob: blob || file,
+                base64: compressedBase64,
+                mimeType: 'image/jpeg',
+              });
+            },
+            'image/jpeg',
+            0.85
+          );
+        } catch (err) {
+          resolve({ blob: file, base64: dataUrl, mimeType: file.type || 'image/jpeg' });
+        }
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function CheckoutClient({
   tool,
   userEmail,
   userId,
   alreadyOwned = false,
+  initialOrder = null,
 }: {
   tool: any;
   userEmail: string;
   userId: string;
   alreadyOwned?: boolean;
+  initialOrder?: any;
 }) {
-  const [step, setStep] = useState(2); // Start at step 2 (payment) or step 1
+  const hasInitialPending = initialOrder?.status === 'pending';
+  const [step, setStep] = useState(hasInitialPending ? 3 : 2);
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(initialOrder?.slip_url || null);
   const [isUploading, setIsUploading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [orderStatus, setOrderStatus] = useState<'idle' | 'pending' | 'approved' | 'rejected'>(
+    initialOrder?.status === 'pending'
+      ? 'pending'
+      : initialOrder?.status === 'rejected'
+      ? 'rejected'
+      : 'idle'
+  );
+  const [rejectionNote, setRejectionNote] = useState<string>(initialOrder?.admin_note || '');
   const router = useRouter();
 
   const posterImage = tool.poster_url || null;
@@ -32,6 +110,37 @@ export default function CheckoutClient({
   const rawPrice = String(tool.price || '0').replace(/[^0-9.]/g, '');
   const numericPrice = parseFloat(rawPrice) || 0;
   const displayPrice = numericPrice > 0 ? numericPrice.toLocaleString() : String(tool.price || '0').replace(/บาท/g, '').trim();
+
+  // Real-time 5-second auto-polling while waiting on Step 3
+  useEffect(() => {
+    if (step !== 3 || orderStatus !== 'pending' || !tool?.id) return;
+
+    const checkOrderStatus = async () => {
+      try {
+        const res = await fetch(`/api/orders?toolId=${encodeURIComponent(tool.id)}`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.hasAccess || data.latestOrder?.status === 'approved') {
+          setOrderStatus('approved');
+          router.refresh();
+        } else if (data.latestOrder?.status === 'rejected') {
+          setOrderStatus('rejected');
+          setRejectionNote(
+            data.latestOrder.admin_note ||
+              'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ถูกต้อง หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ'
+          );
+        }
+      } catch (err) {
+        // Ignore transient network errors during polling
+      }
+    };
+
+    const interval = setInterval(checkOrderStatus, 5000);
+    return () => clearInterval(interval);
+  }, [step, orderStatus, tool?.id, router]);
 
   const handleCopyAccount = () => {
     navigator.clipboard.writeText('7751168047');
@@ -51,36 +160,56 @@ export default function CheckoutClient({
     if (!file) return;
     setIsUploading(true);
     try {
+      // 1. Compress & sanitize slip image on client
+      const prepared = await prepareSlipImage(file);
       const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}_${Date.now()}.${fileExt}`;
+      const safeFileName = `${userId}_${Date.now()}.jpg`;
 
       let slipUrl = '';
 
-      // Upload slip
-      const { error: uploadError } = await supabase.storage.from('slips').upload(fileName, file);
+      // 2. Try direct upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('slips')
+        .upload(safeFileName, prepared.blob, {
+          contentType: prepared.mimeType,
+          upsert: true,
+        });
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        slipUrl = 'upload-failed';
-      } else {
-        const { data: { publicUrl } } = supabase.storage.from('slips').getPublicUrl(fileName);
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from('slips').getPublicUrl(safeFileName);
         slipUrl = publicUrl;
+      } else {
+        console.warn('Direct client storage upload failed, using server fallback:', uploadError.message);
       }
 
+      // 3. Submit order (includes base64 fallback so server can upload if client storage failed)
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           toolId: tool.id,
           amount: numericPrice,
-          slipUrl: slipUrl,
+          slipUrl,
+          slipBase64: slipUrl ? undefined : prepared.base64,
+          slipMimeType: prepared.mimeType,
         }),
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed to create order');
+      if (!res.ok) {
+        if (result.alreadyOwned) {
+          setOrderStatus('approved');
+          setStep(3);
+          return;
+        }
+        throw new Error(result.error || 'ไม่สามารถส่งข้อมูลสลิปได้ กรุณาลองใหม่อีกครั้ง');
+      }
 
+      if (result.slip_url) {
+        setPreview(result.slip_url);
+      }
+      setOrderStatus('pending');
+      setRejectionNote('');
       setStep(3);
     } catch (error: any) {
       console.error('Checkout error:', error);
@@ -276,6 +405,20 @@ export default function CheckoutClient({
                 <span className="text-xs text-[var(--text-muted)]">ขั้นตอน 2 จาก 3</span>
               </div>
 
+              {orderStatus === 'rejected' && (
+                <div className="p-4 rounded-xl bg-red-500/15 border-2 border-red-500/40 text-left space-y-1">
+                  <div className="text-sm font-black text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>สลิปก่อนหน้านี้ไม่ผ่านการตรวจสอบ กรุณาแนบรูปสลิปใหม่อีกครั้งครับ</span>
+                  </div>
+                  {rejectionNote && (
+                    <p className="text-xs text-[var(--text-secondary)] pl-6">
+                      เหตุผลจากแอดมิน: <strong>{rejectionNote}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Bank Account Card - High Contrast & Crystal Clear */}
               <div className="p-5 sm:p-6 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border)] space-y-4 shadow-sm text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-bold text-sm">
@@ -385,50 +528,150 @@ export default function CheckoutClient({
             </div>
           )}
 
-          {/* STEP 3: เสร็จสมบูรณ์ */}
+          {/* STEP 3: รอตรวจสอบแบบ Real-time / อนุมัติแล้ว / ปฏิเสธ */}
           {step === 3 && (
-            <div className="text-center space-y-6 py-6 sm:py-8">
-              <div className="w-20 h-20 bg-emerald-500/15 border-2 border-emerald-500 text-emerald-500 rounded-full flex items-center justify-center text-4xl mx-auto shadow-md">
-                ✓
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                  ส่งสลิปเรียบร้อยแล้ว!
-                </h2>
-                <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-                  ระบบได้รับข้อมูลการชำระเงินของคุณแล้ว
-                </p>
-              </div>
+            <div className="text-center space-y-6 py-4 sm:py-6">
+              {orderStatus === 'approved' ? (
+                /* 🎉 สถานะ: อนุมัติเรียบร้อยแล้ว (Real-time Auto-Unlock) */
+                <div className="space-y-6 animate-fade-in">
+                  <div className="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-500 text-emerald-500 rounded-full flex items-center justify-center text-4xl mx-auto shadow-lg">
+                    🎉
+                  </div>
+                  <div className="space-y-2">
+                    <span className="inline-block px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                      ✅ อนุมัติสำเร็จ · ปลดล็อกสิทธิ์ตลอดชีพแล้ว!
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                      ยินดีต้อนรับ! เริ่มเข้าเรียนได้ทันที
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
+                      แอดมินตรวจสอบสลิปและเปิดสิทธิ์ <strong className="text-[var(--text-primary)]">{tool.name}</strong> ให้บัญชี <strong>{userEmail}</strong> เรียบร้อยแล้วครับ
+                    </p>
+                  </div>
 
-              <div className="space-y-2.5 text-xs sm:text-sm text-[var(--text-secondary)] bg-[var(--bg-deep)] border border-[var(--border-light)] p-5 sm:p-6 rounded-2xl inline-block text-left shadow-xs">
-                <p className="flex items-center gap-2">
-                  <span>⏳</span>
-                  <span>ทีมงานจะตรวจสอบและอนุมัติภายใน 5-15 นาที</span>
-                </p>
-                <p className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
-                  <span>⚡</span>
-                  <span>เมื่ออนุมัติแล้ว ระบบจะปลดล็อกเครื่องมือ/คอร์สให้อัตโนมัติ</span>
-                </p>
-                <p className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold">
-                  <span>📧</span>
-                  <span>ระบบจะส่งอีเมลยืนยันผลการอนุมัติไปยัง {userEmail}</span>
-                </p>
-              </div>
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <Link
+                      href={destinationUrl}
+                      className="puppap-btn-primary px-8 py-4 text-base font-black shadow-xl w-full sm:w-auto text-center flex items-center justify-center gap-2 hover:scale-105 transition-transform"
+                    >
+                      <span>🚀 {isCourse ? 'กดตรงนี้เพื่อเข้าสู่ห้องเรียนทันที' : 'กดตรงนี้เพื่อเข้าใช้งานเครื่องมือทันที'}</span>
+                      <span>→</span>
+                    </Link>
+                  </div>
+                </div>
+              ) : orderStatus === 'rejected' ? (
+                /* ⚠️ สถานะ: สลิปถูกปฏิเสธ (ให้แนบสลิปใหม่ได้ทันทีโดยไม่หลุดจากหน้าซื้อ) */
+                <div className="space-y-5">
+                  <div className="w-20 h-20 bg-red-500/15 border-2 border-red-500 text-red-500 rounded-full flex items-center justify-center text-4xl mx-auto shadow-md">
+                    ⚠️
+                  </div>
+                  <div className="space-y-1.5">
+                    <h2 className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">
+                      สลิปไม่ผ่านการตรวจสอบ
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
+                      ไม่ต้องกังวลใจครับ คุณสามารถกดปุ่มด้านล่างเพื่อแนบรูปสลิปที่ถูกต้องใหม่อีกครั้งได้ทันที
+                    </p>
+                  </div>
 
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link
-                  href="/"
-                  className="puppap-btn-primary px-8 py-3 text-sm font-bold shadow-md w-full sm:w-auto text-center"
-                >
-                  กลับหน้าแดชบอร์ด →
-                </Link>
-                <Link
-                  href="/store"
-                  className="puppap-btn-secondary px-6 py-3 text-sm font-semibold w-full sm:w-auto text-center"
-                >
-                  ดูรายการอื่น
-                </Link>
-              </div>
+                  <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-left max-w-md mx-auto space-y-1">
+                    <div className="text-xs font-bold text-red-600 dark:text-red-400">
+                      📝 เหตุผลจากเจ้าหน้าที่:
+                    </div>
+                    <p className="text-xs sm:text-sm text-[var(--text-primary)] font-medium">
+                      {rejectionNote || 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ชัดเจน หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ'}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFile(null);
+                        setPreview(null);
+                        setStep(2);
+                      }}
+                      className="puppap-btn-primary px-8 py-3.5 text-sm sm:text-base font-black shadow-lg w-full sm:w-auto text-center"
+                    >
+                      🔄 กดเพื่อแนบสลิปใหม่อีกครั้ง
+                    </button>
+                    <a
+                      href="https://m.me/100083126689322"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="puppap-btn-secondary px-6 py-3.5 text-xs sm:text-sm font-bold w-full sm:w-auto text-center"
+                    >
+                      💬 ทักแชทติดต่อแอดมิน
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                /* ⏳ สถานะ: กำลังรอตรวจสอบ (เช็กสถานะอัตโนมัติทุก 5 วินาที) */
+                <div className="space-y-5">
+                  <div className="w-20 h-20 bg-emerald-500/15 border-2 border-emerald-500 text-emerald-500 rounded-full flex items-center justify-center text-4xl mx-auto shadow-md">
+                    ✓
+                  </div>
+                  <div className="space-y-1.5">
+                    <h2 className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                      ส่งสลิปเรียบร้อยแล้ว!
+                    </h2>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                      <span>กำลังตรวจสอบสลิปอัตโนมัติ... (หน้านี้จะเปลี่ยนเป็นปุ่มเข้าเรียนทันทีเมื่ออนุมัติ)</span>
+                    </div>
+                  </div>
+
+                  {preview && (
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="max-h-40 rounded-xl overflow-hidden border border-[var(--border)] shadow-sm bg-white">
+                        <img src={preview} alt="Uploaded slip" className="max-h-40 object-contain" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFile(null);
+                          setStep(2);
+                        }}
+                        className="text-xs text-[var(--accent)] hover:underline font-bold"
+                      >
+                        🔄 แนบสลิปผิดรูป? กดตรงนี้เพื่อเปลี่ยนรูปสลิปใหม่
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="space-y-2.5 text-xs sm:text-sm text-[var(--text-secondary)] bg-[var(--bg-deep)] border border-[var(--border-light)] p-5 sm:p-6 rounded-2xl inline-block text-left shadow-xs">
+                    <p className="flex items-center gap-2">
+                      <span>⏳</span>
+                      <span>ทีมงานได้รับรูปสลิปแล้ว ใช้เวลาตรวจสอบเพียง 1–5 นาที</span>
+                    </p>
+                    <p className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
+                      <span>⚡</span>
+                      <span>เปิดหน้านี้ค้างไว้ได้เลย ทันทีที่อนุมัติ ปุ่ม <strong>&quot;เข้าสู่ห้องเรียน&quot;</strong> จะเด้งขึ้นมาอัตโนมัติ</span>
+                    </p>
+                    <p className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold">
+                      <span>📧</span>
+                      <span>และมีอีเมลยืนยันส่งไปที่ {userEmail} อีกหนึ่งช่องทางครับ</span>
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <Link
+                      href="/"
+                      className="puppap-btn-primary px-8 py-3 text-sm font-bold shadow-md w-full sm:w-auto text-center"
+                    >
+                      กลับหน้าแดชบอร์ด →
+                    </Link>
+                    <a
+                      href="https://m.me/100083126689322"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="puppap-btn-secondary px-6 py-3 text-sm font-semibold w-full sm:w-auto text-center"
+                    >
+                      💬 ทักแชทแจ้งแอดมิน
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

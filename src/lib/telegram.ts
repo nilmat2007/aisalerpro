@@ -25,6 +25,34 @@ export async function sendTelegram(message: string, replyMarkup?: any) {
   }
 }
 
+export async function sendTelegramPhoto(photoUrl: string, caption: string, replyMarkup?: any) {
+  if (!BOT_TOKEN || !CHAT_ID) return
+
+  try {
+    const body: any = {
+      chat_id: CHAT_ID,
+      photo: photoUrl,
+      caption,
+      parse_mode: 'HTML',
+    }
+    if (replyMarkup) {
+      body.reply_markup = JSON.stringify(replyMarkup)
+    }
+    const res = await fetch(`${API_BASE}/sendPhoto`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      // Fallback to text message with link if Telegram failed to fetch photo URL
+      await sendTelegram(`${caption}\n\n🧾 <a href="${photoUrl}">กดดูรูปสลิปโอนเงิน</a>`, replyMarkup)
+    }
+  } catch (err) {
+    console.error('Telegram sendPhoto error:', err)
+    await sendTelegram(`${caption}\n\n🧾 <a href="${photoUrl}">กดดูรูปสลิปโอนเงิน</a>`, replyMarkup)
+  }
+}
+
 export async function answerCallback(callbackQueryId: string, text: string) {
   try {
     await fetch(`${API_BASE}/answerCallbackQuery`, {
@@ -37,8 +65,21 @@ export async function answerCallback(callbackQueryId: string, text: string) {
   }
 }
 
-export async function editMessage(chatId: string, messageId: number, text: string) {
+export async function editMessage(chatId: string, messageId: number, text: string, isPhotoMessage = false) {
   try {
+    if (isPhotoMessage) {
+      const res = await fetch(`${API_BASE}/editMessageCaption`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          caption: text,
+          parse_mode: 'HTML',
+        }),
+      })
+      if (res.ok) return
+    }
     await fetch(`${API_BASE}/editMessageText`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,23 +97,41 @@ export async function editMessage(chatId: string, messageId: number, text: strin
 
 // ========== Notification functions ==========
 
-export function notifyNewOrder(customerName: string, customerEmail: string, toolName: string, price: string, orderId?: string) {
-  const buttons = orderId ? {
-    inline_keyboard: [[
-      { text: '✅ อนุมัติ', callback_data: `approve_${orderId}` },
+export function notifyNewOrder(
+  customerName: string,
+  customerEmail: string,
+  toolName: string,
+  price: string,
+  orderId?: string,
+  slipUrl?: string
+) {
+  const inlineRows: any[] = []
+  if (orderId) {
+    inlineRows.push([
+      { text: '✅ อนุมัติทันที', callback_data: `approve_${orderId}` },
       { text: '❌ ปฏิเสธ', callback_data: `reject_${orderId}` }
-    ]]
-  } : undefined
+    ])
+  }
+  if (slipUrl && slipUrl.startsWith('http')) {
+    inlineRows.push([
+      { text: '🔍 เปิดดูรูปสลิปขนาดเต็ม', url: slipUrl }
+    ])
+  }
+  const buttons = inlineRows.length > 0 ? { inline_keyboard: inlineRows } : undefined
 
-  return sendTelegram(
-    `🛒 <b>คำสั่งซื้อใหม่!</b>\n` +
+  const caption =
+    `🛒 <b>คำสั่งซื้อใหม่! (รอตรวจสลิป)</b>\n` +
     `👤 ${customerName}\n` +
     `📧 ${customerEmail}\n` +
     `🛠️ ${toolName}\n` +
-    `💰 ${price}\n` +
-    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
-    buttons
-  )
+    `💰 <b>${price}</b>\n` +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+
+  if (slipUrl && slipUrl.startsWith('http')) {
+    return sendTelegramPhoto(slipUrl, caption, buttons)
+  }
+
+  return sendTelegram(caption, buttons)
 }
 
 export function notifyOrderApproved(customerEmail: string, toolName: string) {

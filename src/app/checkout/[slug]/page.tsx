@@ -57,6 +57,23 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
       )
     }
   }
+
+  // Check if user has a pending or recently rejected order for this tool
+  let initialOrder: any = null
+  if (!alreadyOwned) {
+    const { data: latestOrder } = await supabase
+      .from('orders')
+      .select('id, status, slip_url, admin_note, created_at')
+      .eq('user_id', user.id)
+      .eq('tool_id', tool.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (latestOrder) {
+      initialOrder = latestOrder
+    }
+  }
   
   return (
     <CheckoutClient
@@ -64,6 +81,7 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
       userEmail={user.email || ''}
       userId={user.id}
       alreadyOwned={alreadyOwned}
+      initialOrder={initialOrder}
     />
   )
 }

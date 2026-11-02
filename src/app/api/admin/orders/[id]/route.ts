@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { supabase } from '@/lib/supabase';
+import { getSession } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { notifyOrderApproved } from '@/lib/telegram';
 import { sendEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email';
@@ -17,13 +18,11 @@ export async function PATCH(
   props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { id } = await props.params;
     const { action, note } = await request.json();
-    
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -53,18 +52,22 @@ export async function PATCH(
         
       if (keyError) throw keyError;
 
-      // 2. Auto-activate for user
+      // 2. Auto-activate for user (Upsert to guarantee idempotency)
       const { error: userToolError } = await supabase
         .from('user_tools')
-        .insert({
-          user_id: order.user_id,
-          tool_id: order.tool_id,
-          license_key_id: newKey.id
-        });
+        .upsert(
+          {
+            user_id: order.user_id,
+            tool_id: order.tool_id,
+            license_key_id: newKey.id,
+            is_active: true,
+            unlocked_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,tool_id' }
+        );
         
       if (userToolError) {
         console.error('Auto-activate failed:', userToolError);
-        // Continue anyway to mark order approved
       }
 
       // 3. Update order
@@ -79,11 +82,11 @@ export async function PATCH(
 
       if (updateError) throw updateError;
 
-      // แจ้ง Telegram
-      const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single()
-      notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ')
+      // แจ้ง Telegram (awaited)
+      const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single();
+      await notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ');
 
-      // ส่งอีเมลแจ้งเตือนลูกค้าว่าได้รับการอนุมัติเรียบร้อยแล้ว
+      // ส่งอีเมลแจ้งเตือนลูกค้าว่าได้รับการอนุมัติเรียบร้อยแล้ว (awaited)
       if (order.user_email && order.user_email.includes('@')) {
         const emailHtml = buildOrderApprovedEmail({
           customerName: order.user_email.split('@')[0],
@@ -91,12 +94,12 @@ export async function PATCH(
           toolSlug: toolInfo?.slug || '',
           keyCode,
           amount: order.amount || toolInfo?.price || '',
-        })
-        sendEmail({
+        });
+        await sendEmail({
           to: order.user_email,
           subject: `✅ คำสั่งซื้อ ${toolInfo?.name || 'เครื่องมือ AI'} ของคุณได้รับการอนุมัติแล้ว — PUP PAP AI`,
           html: emailHtml,
-        }).catch(err => console.error('Failed to send order approved email:', err))
+        }).catch(err => console.error('Failed to send order approved email:', err));
       }
 
       return NextResponse.json({ success: true, keyCode });
@@ -112,20 +115,20 @@ export async function PATCH(
 
       if (updateError) throw updateError;
 
-      // ส่งอีเมลแจ้งเตือนลูกค้ากรณีปฏิเสธ
+      // ส่งอีเมลแจ้งเตือนลูกค้ากรณีปฏิเสธ (awaited)
       if (order.user_email && order.user_email.includes('@')) {
-        const { data: toolInfo } = await supabase.from('tools').select('name, slug').eq('id', order.tool_id).single()
+        const { data: toolInfo } = await supabase.from('tools').select('name, slug').eq('id', order.tool_id).single();
         const emailHtml = buildOrderRejectedEmail({
           customerName: order.user_email.split('@')[0],
           toolName: toolInfo?.name || 'เครื่องมือ AI',
           toolSlug: toolInfo?.slug || '',
           note,
-        })
-        sendEmail({
+        });
+        await sendEmail({
           to: order.user_email,
           subject: `⚠️ แจ้งเตือนเกี่ยวกับคำสั่งซื้อ ${toolInfo?.name || 'เครื่องมือ AI'} — PUP PAP AI`,
           html: emailHtml,
-        }).catch(err => console.error('Failed to send order rejected email:', err))
+        }).catch(err => console.error('Failed to send order rejected email:', err));
       }
 
       return NextResponse.json({ success: true });

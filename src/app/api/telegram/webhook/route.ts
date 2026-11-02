@@ -310,16 +310,23 @@ async function handleFollowUp() {
 async function handleCallback(query: any) {
   const data = query.data || ''
   const chatId = String(query.message?.chat?.id)
+  const adminChatId = process.env.TELEGRAM_CHAT_ID || ''
+  if (adminChatId && chatId !== adminChatId) {
+    await answerCallback(query.id, '⛔ เฉพาะแอดมินเท่านั้น')
+    return NextResponse.json({ ok: true })
+  }
+
   const messageId = query.message?.message_id
+  const isPhotoMessage = Boolean(query.message?.photo)
 
   if (data.startsWith('approve_')) {
     const orderId = data.replace('approve_', '')
-    return handleApproveOrder(query.id, chatId, messageId, orderId)
+    return handleApproveOrder(query.id, chatId, messageId, orderId, isPhotoMessage)
   }
 
   if (data.startsWith('reject_')) {
     const orderId = data.replace('reject_', '')
-    return handleRejectOrder(query.id, chatId, messageId, orderId)
+    return handleRejectOrder(query.id, chatId, messageId, orderId, isPhotoMessage)
   }
 
   if (data.startsWith('convert_')) {
@@ -336,7 +343,13 @@ async function handleCallback(query: any) {
   return NextResponse.json({ ok: true })
 }
 
-async function handleApproveOrder(callbackId: string, chatId: string, messageId: number, orderId: string) {
+async function handleApproveOrder(
+  callbackId: string,
+  chatId: string,
+  messageId: number,
+  orderId: string,
+  isPhotoMessage = false
+) {
   // Get order
   const { data: order } = await supabase
     .from('orders')
@@ -380,12 +393,17 @@ async function handleApproveOrder(callbackId: string, chatId: string, messageId:
     return NextResponse.json({ ok: true })
   }
 
-  // Auto-activate for user
-  await supabase.from('user_tools').insert({
-    user_id: order.user_id,
-    tool_id: order.tool_id,
-    license_key_id: newKey.id
-  })
+  // Auto-activate for user (Upsert to prevent duplicate errors)
+  await supabase.from('user_tools').upsert(
+    {
+      user_id: order.user_id,
+      tool_id: order.tool_id,
+      license_key_id: newKey.id,
+      is_active: true,
+      unlocked_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id,tool_id' }
+  )
 
   // Update order
   await supabase.from('orders').update({
@@ -394,9 +412,9 @@ async function handleApproveOrder(callbackId: string, chatId: string, messageId:
     license_key_id: newKey.id
   }).eq('id', orderId)
 
-  await answerCallback(callbackId, '✅ อนุมัติสำเร็จ!')
+  await answerCallback(callbackId, '✅ อนุมัติสำเร็จ! ลูกค้าเข้าเรียนได้ทันที')
 
-  // Send approval email to customer
+  // Send approval email to customer (awaited so serverless does not terminate early)
   if (order.user_email && order.user_email.includes('@')) {
     const emailHtml = buildOrderApprovedEmail({
       customerName: order.user_email.split('@')[0],
@@ -405,7 +423,7 @@ async function handleApproveOrder(callbackId: string, chatId: string, messageId:
       keyCode: keyStr,
       amount: order.amount || (order as any).tools?.price || '',
     })
-    sendEmail({
+    await sendEmail({
       to: order.user_email,
       subject: `✅ คำสั่งซื้อ ${(order as any).tools?.name || 'เครื่องมือ AI'} ของคุณได้รับการอนุมัติแล้ว — PUP PAP AI`,
       html: emailHtml,
@@ -414,18 +432,27 @@ async function handleApproveOrder(callbackId: string, chatId: string, messageId:
 
   // Update message
   const toolName = (order as any).tools?.name || 'ไม่ระบุ'
-  await editMessage(chatId, messageId,
-    `✅ <b>อนุมัติแล้ว!</b>\n\n` +
+  await editMessage(
+    chatId,
+    messageId,
+    `✅ <b>อนุมัติแล้ว! (ปลดล็อกอัตโนมัติสำเร็จ)</b>\n\n` +
     `📧 ${order.user_email}\n` +
     `🛠️ ${toolName}\n` +
     `🔐 Key: <code>${keyStr}</code>\n` +
-    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
+    isPhotoMessage
   )
 
   return NextResponse.json({ ok: true })
 }
 
-async function handleRejectOrder(callbackId: string, chatId: string, messageId: number, orderId: string) {
+async function handleRejectOrder(
+  callbackId: string,
+  chatId: string,
+  messageId: number,
+  orderId: string,
+  isPhotoMessage = false
+) {
   const { data: order } = await supabase
     .from('orders')
     .select('*, tools(name, slug)')
@@ -437,30 +464,38 @@ async function handleRejectOrder(callbackId: string, chatId: string, messageId: 
     return NextResponse.json({ ok: true })
   }
 
-  await supabase.from('orders').update({ status: 'rejected' }).eq('id', orderId)
+  const defaultRejectNote = 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ถูกต้อง หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ กรุณาแนบสลิปใหม่อีกครั้งครับ'
 
-  await answerCallback(callbackId, '❌ ปฏิเสธแล้ว')
+  await supabase.from('orders').update({
+    status: 'rejected',
+    admin_note: defaultRejectNote,
+  }).eq('id', orderId)
 
-  // Send rejection email to customer
+  await answerCallback(callbackId, '❌ ปฏิเสธแล้ว (แจ้งให้ลูกค้าแนบสลิปใหม่ทันที)')
+
+  // Send rejection email to customer (awaited)
   if (order.user_email && order.user_email.includes('@')) {
     const emailHtml = buildOrderRejectedEmail({
       customerName: order.user_email.split('@')[0],
       toolName: (order as any).tools?.name || 'เครื่องมือ AI',
       toolSlug: (order as any).tools?.slug || '',
-      note: 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ถูกต้อง หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ',
+      note: defaultRejectNote,
     })
-    sendEmail({
+    await sendEmail({
       to: order.user_email,
       subject: `⚠️ แจ้งเตือนเกี่ยวกับคำสั่งซื้อ ${(order as any).tools?.name || 'เครื่องมือ AI'} — PUP PAP AI`,
       html: emailHtml,
     }).catch(err => console.error('Telegram reject send email error:', err))
   }
 
-  await editMessage(chatId, messageId,
+  await editMessage(
+    chatId,
+    messageId,
     `❌ <b>ปฏิเสธแล้ว</b>\n\n` +
     `📧 ${order.user_email}\n` +
     `🛠️ ${(order as any).tools?.name || 'ไม่ระบุ'}\n` +
-    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
+    isPhotoMessage
   )
 
   return NextResponse.json({ ok: true })
