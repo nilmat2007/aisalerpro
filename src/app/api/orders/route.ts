@@ -8,6 +8,7 @@ import {
 } from '@/lib/telegram';
 import { verifySlipAndDecide } from '@/lib/slip-verifier';
 import { sendEmail, buildOrderApprovedEmail } from '@/lib/email';
+import { sendMetaCapiEvent } from '@/lib/meta-capi';
 
 function generateLicenseKeyCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -203,7 +204,8 @@ export async function POST(request: Request) {
         orderData = inserted;
       }
 
-      // ส่งแจ้งเตือน Telegram แอดมิน + ส่งอีเมลให้ลูกค้าพร้อมกัน
+      // ส่งแจ้งเตือน Telegram แอดมิน + ส่งอีเมลให้ลูกค้า + ยิง Meta CAPI พร้อมกัน
+      const approvedOrderId = String(orderData?.id || existingOrderRow?.id || Date.now());
       const tasks: Promise<any>[] = [
         notifyAiAutoApprovedOrder(
           customerName,
@@ -213,6 +215,15 @@ export async function POST(request: Request) {
           finalSlipUrl,
           verification.reason
         ),
+        sendMetaCapiEvent({
+          eventName: 'Purchase',
+          eventId: `order_${approvedOrderId}`,
+          orderId: approvedOrderId,
+          value: expectedAmount || 299,
+          req: request,
+          email: user.email || '',
+          contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
+        }),
       ];
 
       if (user.email && user.email.includes('@')) {

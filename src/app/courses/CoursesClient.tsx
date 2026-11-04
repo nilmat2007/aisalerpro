@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getPriceInfo } from '@/lib/price-utils';
+import { captureUtmContent, fbViewContent } from '@/lib/meta-pixel';
 
 interface CoursesClientProps {
   course: any;
@@ -21,6 +22,16 @@ export default function CoursesClient({
   const priceInfo = getPriceInfo(course?.price || '299', feat);
 
   const [expandedModule, setExpandedModule] = useState<number | null>(1);
+
+  useEffect(() => {
+    captureUtmContent();
+    fbViewContent({
+      contentName: course?.slug || 'tiktok-ai-affiliate',
+      contentId: course?.slug || 'tiktok-ai-affiliate',
+      value: priceInfo.numericPrice || 299,
+      currency: 'THB',
+    });
+  }, [course?.slug, priceInfo.numericPrice]);
 
   const modules = useMemo(() => {
     if (!lessons.length) return [];

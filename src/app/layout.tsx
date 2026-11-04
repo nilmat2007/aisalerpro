@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from '@supabase/supabase-js'
 import NavigationProgress from '@/components/NavigationProgress'
+import MetaPixel from '@/components/MetaPixel'
 
 async function getSettings() {
   try {
@@ -66,6 +67,7 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <NavigationProgress />
         {children}
+        <MetaPixel />
       </body>
     </html>
   );

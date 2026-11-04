@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/auth/require-admin';
 import { NextResponse } from 'next/server';
 import { notifyOrderApproved } from '@/lib/telegram';
 import { sendEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email';
+import { sendMetaCapiEvent } from '@/lib/meta-capi';
 
 function generateLicenseCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -84,9 +85,22 @@ export async function PATCH(
 
       if (updateError) throw updateError;
 
-      // แจ้ง Telegram (awaited)
+      // แจ้ง Telegram + ยิง Meta CAPI (non-blocking)
       const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single();
-      await notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ');
+      const numericOrderValue =
+        parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) || 299;
+      await Promise.all([
+        notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ'),
+        sendMetaCapiEvent({
+          eventName: 'Purchase',
+          eventId: `order_${order.id}`,
+          orderId: String(order.id),
+          value: numericOrderValue,
+          req: request,
+          email: order.user_email || '',
+          contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
+        }),
+      ]);
 
       // ส่งอีเมลแจ้งเตือนลูกค้าว่าได้รับการอนุมัติเรียบร้อยแล้ว (awaited)
       if (order.user_email && order.user_email.includes('@')) {

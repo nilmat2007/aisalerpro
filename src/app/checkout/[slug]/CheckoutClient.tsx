@@ -15,6 +15,7 @@ import {
 } from '@/lib/promptpay';
 import { getPriceInfo } from '@/lib/price-utils';
 import { getToolFlowLink } from '@/lib/sanitize-tool';
+import { captureUtmContent, fbInitiateCheckout, fbPurchase } from '@/lib/meta-pixel';
 
 // Multi-zone & high-contrast QR code scanner for Thai Bank Mini-QR codes on slips
 function decodeSlipQrCode(img: HTMLImageElement): string | null {
@@ -190,6 +191,18 @@ export default function CheckoutClient({
   const displayPrice = numericPrice > 0 ? numericPrice.toLocaleString() : String(tool.price || '0').replace(/บาท/g, '').trim();
   const priceInfo = getPriceInfo(tool.price, tool.features);
 
+  useEffect(() => {
+    captureUtmContent();
+    if (!alreadyOwned && initialOrder?.status !== 'approved') {
+      fbInitiateCheckout({
+        contentName: tool?.slug || 'tiktok-ai-affiliate',
+        contentId: tool?.slug || 'tiktok-ai-affiliate',
+        value: numericPrice || 299,
+        currency: 'THB',
+      });
+    }
+  }, [alreadyOwned, initialOrder?.status, numericPrice, tool?.slug]);
+
   // Real-time 5-second auto-polling while waiting on Step 3
   useEffect(() => {
     if (step !== 3 || orderStatus !== 'pending' || !tool?.id) return;
@@ -203,6 +216,13 @@ export default function CheckoutClient({
         const data = await res.json();
 
         if (data.hasAccess || data.latestOrder?.status === 'approved') {
+          if (data.latestOrder?.id) {
+            fbPurchase({
+              orderId: String(data.latestOrder.id),
+              value: numericPrice || 299,
+              contentId: tool?.slug || 'tiktok-ai-affiliate',
+            });
+          }
           setOrderStatus('approved');
           router.refresh();
         } else if (data.latestOrder?.status === 'rejected') {
@@ -397,6 +417,12 @@ export default function CheckoutClient({
 
       // Handle instant AI verification decision
       if (result.status === 'approved') {
+        captureUtmContent();
+        fbPurchase({
+          orderId: String(result.id || Date.now()),
+          value: numericPrice || 299,
+          contentId: tool?.slug || 'tiktok-ai-affiliate',
+        });
         setOrderStatus('approved');
         setRejectionNote('');
         setStep(3);
