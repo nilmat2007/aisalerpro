@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { computeTrafficAnalytics, type PvRow } from '@/lib/visitor-analytics'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,19 @@ export default async function AdminDashboard() {
 
   // Orders (secondary)
   const { count: pendingOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+
+  // Visitor & Page View Analytics (last 7 days from rate_limit_attempts pv:*)
+  const sevenDaysAgoIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: rawPvRows } = await supabase
+    .from('rate_limit_attempts')
+    .select('endpoint, ip_hash, created_at')
+    .like('endpoint', 'pv:%')
+    .gte('created_at', sevenDaysAgoIso)
+    .order('created_at', { ascending: false })
+    .limit(10000)
+
+  const traffic = computeTrafficAnalytics((rawPvRows as PvRow[]) || [])
+  const maxDailyUv = Math.max(...traffic.dailySeries.map(d => d.uv), 1)
 
   // Build unified revenue records from license keys
   const revenueRecords: { date: string; toolName: string; amount: number; source: string; email?: string }[] = []
@@ -141,6 +155,97 @@ export default async function AdminDashboard() {
         <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
           <div className="text-slate-400 text-sm mb-1">🎟️ Keys ว่าง</div>
           <div className="text-2xl font-bold text-green-400">{availableKeys || 0}</div>
+        </div>
+      </div>
+
+      {/* Visitor & Page View Analytics Section */}
+      <div className="bg-slate-900/90 border border-cyan-500/30 rounded-xl p-5 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span>👁️ สถิติผู้เข้าชมเว็บไซต์ (Visitor Analytics)</span>
+          </h2>
+          <span className="text-xs text-slate-400">
+            7 วันล่าสุด: <strong className="text-cyan-400">{traffic.sevenDayUv.toLocaleString()} คน (UV)</strong> · <strong className="text-slate-200">{traffic.sevenDayPv.toLocaleString()} ครั้ง (PV)</strong>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-xl">
+            <div className="text-cyan-400 text-xs mb-1">👤 คนเข้าเว็บวันนี้ (Unique)</div>
+            <div className="text-2xl font-bold text-white">{traffic.todayUv.toLocaleString()} <span className="text-xs font-normal text-slate-400">คน</span></div>
+            <div className="text-[11px] text-slate-500 mt-1">ไม่ซ้ำ IP ในวันนี้</div>
+          </div>
+          <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-xl">
+            <div className="text-indigo-400 text-xs mb-1">📄 เปิดหน้าเว็บวันนี้ (PV)</div>
+            <div className="text-2xl font-bold text-white">{traffic.todayPv.toLocaleString()} <span className="text-xs font-normal text-slate-400">ครั้ง</span></div>
+            <div className="text-[11px] text-slate-500 mt-1">รวมทุกหน้าวันนี้</div>
+          </div>
+          <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-xl">
+            <div className="text-amber-400 text-xs mb-1">🎓 ดูหน้าคอร์สวันนี้ (/courses)</div>
+            <div className="text-2xl font-bold text-amber-300">{traffic.todayCourseUv.toLocaleString()} <span className="text-xs font-normal text-slate-400">คน</span></div>
+            <div className="text-[11px] text-slate-500 mt-1">ผู้สนใจดูรายละเอียดคอร์ส</div>
+          </div>
+          <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-xl">
+            <div className="text-emerald-400 text-xs mb-1">🛒 เข้าหน้าจ่ายเงินวันนี้ (/checkout)</div>
+            <div className="text-2xl font-bold text-emerald-300">{traffic.todayCheckoutUv.toLocaleString()} <span className="text-xs font-normal text-slate-400">คน</span></div>
+            <div className="text-[11px] text-slate-500 mt-1">กดปุ่มสมัครเรียน/ซื้อเครื่องมือ</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 7-Day Daily Visitor Chart */}
+          <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-slate-300 mb-3">📅 ผู้เข้าชมย้อนหลัง 7 วัน (คน / ครั้ง)</h3>
+            <div className="flex items-end gap-2 h-36">
+              {traffic.dailySeries.map((d) => (
+                <div key={d.dateKey} className="flex-1 flex flex-col items-center">
+                  <div className="text-[11px] text-cyan-300 font-mono mb-1">
+                    {d.uv > 0 ? `${d.uv}` : '0'}
+                  </div>
+                  <div
+                    className="w-full bg-gradient-to-t from-cyan-600 to-teal-400 rounded-t-md transition-all min-h-[4px]"
+                    style={{ height: `${Math.max((d.uv / maxDailyUv) * 96, 4)}px` }}
+                    title={`${d.label}: ${d.uv} คน (${d.pv} ครั้ง)`}
+                  />
+                  <div className="text-[10px] text-slate-400 mt-1">{d.label}</div>
+                  <div className="text-[9px] text-slate-500">{d.pv} PV</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top Pages & UTM Breakdown */}
+          <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-300 mb-2">🔥 หน้าที่มีคนเข้าดูมากที่สุด (7 วันล่าสุด)</h3>
+              {traffic.topPages.length === 0 ? (
+                <p className="text-xs text-slate-500">กำลังเริ่มเก็บข้อมูลผู้เข้าชม...</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {traffic.topPages.map((p) => (
+                    <div key={p.pathname} className="flex items-center justify-between text-xs bg-slate-900/80 px-3 py-1.5 rounded-lg">
+                      <span className="text-slate-300 truncate max-w-[65%]">{p.label}</span>
+                      <span className="text-cyan-400 font-mono">{p.uv} คน <span className="text-slate-500">({p.pv} ครั้ง)</span></span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {traffic.utmBreakdown.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-amber-300 mb-2">🎯 คนเข้าจากแอด (UTM Content)</h3>
+                <div className="space-y-1.5">
+                  {traffic.utmBreakdown.map((u) => (
+                    <div key={u.utm} className="flex items-center justify-between text-xs bg-slate-900/80 px-3 py-1.5 rounded-lg">
+                      <span className="text-amber-300 font-mono">{u.utm}</span>
+                      <span className="text-white font-mono">{u.uv} คน <span className="text-slate-500">({u.pv} ครั้ง)</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

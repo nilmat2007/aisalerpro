@@ -2,12 +2,14 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ''
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID || ''
 const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`
 
-export async function sendTelegram(message: string, replyMarkup?: any) {
-  if (!BOT_TOKEN || !CHAT_ID) return
+export async function sendTelegram(message: string, replyMarkup?: any): Promise<boolean> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN || BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID || CHAT_ID
+  if (!botToken || !chatId) return false
 
   try {
     const body: any = {
-      chat_id: CHAT_ID,
+      chat_id: chatId,
       text: message,
       parse_mode: 'HTML',
       disable_web_page_preview: true
@@ -15,13 +17,15 @@ export async function sendTelegram(message: string, replyMarkup?: any) {
     if (replyMarkup) {
       body.reply_markup = JSON.stringify(replyMarkup)
     }
-    await fetch(`${API_BASE}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     })
+    return res.ok
   } catch (err) {
     console.error('Telegram send error:', err)
+    return false
   }
 }
 
@@ -205,7 +209,7 @@ export function notifyAiAutoRejectedOrder(
   return sendTelegram(caption, buttons)
 }
 
-export function notifyNewMember(name: string, email: string) {
+export function notifyNewMember(name: string, email: string): Promise<boolean> {
   return sendTelegram(
     `👤 <b>สมาชิกใหม่ลงทะเบียน!</b>\n` +
     `🙋 ${name}\n` +

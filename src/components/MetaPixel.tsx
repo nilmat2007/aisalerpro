@@ -10,8 +10,26 @@ function MetaPixelRouteTracker() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    captureUtmContent();
+    const utmContent = captureUtmContent();
     fbPageView();
+
+    // Guard against tracking in development or on /admin routes
+    if (
+      process.env.NODE_ENV === 'development' ||
+      !pathname ||
+      pathname.startsWith('/admin')
+    ) {
+      return;
+    }
+
+    fetch('/api/track-visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pathname, utmContent }),
+      keepalive: true,
+    }).catch(() => {
+      // Non-blocking visitor analytics
+    });
   }, [pathname, searchParams]);
 
   return null;

@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import DashboardClient from './DashboardClient'
-import { notifyNewMember } from '@/lib/telegram'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import FlowToolCard from '@/components/FlowToolCard'
@@ -285,14 +284,6 @@ export default async function HomePage() {
   ])
 
   let userTools = initialUserTools
-
-  // แจ้ง Telegram ถ้าเป็นสมาชิกใหม่ (ยังไม่มี profile)
-  if (!profile) {
-    notifyNewMember(
-      user.user_metadata?.full_name || user.user_metadata?.name || 'ไม่ทราบชื่อ',
-      user.email || ''
-    )
-  }
 
   // Auto-heal entitlements: if user has activated license_keys or approved orders by email/id that aren't in user_tools yet
   const ownedSet = new Set((userTools || []).map((ut: any) => ut.tool_id))
