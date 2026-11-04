@@ -53,4 +53,4 @@
 - ☑ curl `/_next/static/chunks/main.js.map` → `404` บน production (`productionBrowserSourceMaps: false`, `poweredByHeader: false`)
 - ☑ curl `/api/cron/cleanup-rate-limits` ไม่ใส่ secret → `401`, ใส่ `Authorization: Bearer $CRON_SECRET` → `200 {"ok":true}`
 - ☑ `anon` ลบ `rate_limit_attempts` ไม่ได้ (`42501 permission denied for table rate_limit_attempts`)
-- ☐ Post-deploy external URL verification (รันซ้ำบนโดเมนจริงหลัง deploy ขึ้น Vercel)
+- ☑ Post-deploy external URL verification (รันซ้ำบนโดเมนจริง `https://puppapai.vercel.app` หลัง deploy ขึ้น Vercel)
