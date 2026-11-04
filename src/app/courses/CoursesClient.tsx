@@ -280,9 +280,9 @@ export default function CoursesClient({
                                     🎬 พร้อมเรียน • {lesson.duration || 'วิดีโอ HD'}
                                   </span>
                                 )}
-                                {lesson.prompts && lesson.prompts.length > 0 && (
+                                {(lesson.promptStepCount ?? lesson.prompts?.length ?? 0) > 0 && (
                                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)] font-bold">
-                                    📋 แจกฟรี {lesson.prompts.length} Prompt
+                                    📋 แจกฟรี {lesson.promptStepCount ?? lesson.prompts?.length ?? 0} Prompt
                                   </span>
                                 )}
                               </div>

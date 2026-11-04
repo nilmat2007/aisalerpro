@@ -5,6 +5,12 @@ import { createClient } from '@/lib/supabase/client'
 import { showSuccess, showError, showConfirmDelete, showLoading, closeLoading } from '@/lib/swal'
 import { LoadingSpinner } from '@/components/AdminUI'
 import { formatToolUpdateDate } from '@/lib/date-utils'
+import {
+  buildAdminToolSavePayload,
+  getToolFlowLink,
+  getToolSecretCode,
+  getToolTrialFlowLink,
+} from '@/lib/sanitize-tool'
 
 export default function AdminToolsPage() {
   const [tools, setTools] = useState<any[]>([])
@@ -13,11 +19,11 @@ export default function AdminToolsPage() {
   const [editingTool, setEditingTool] = useState<any>(null)
   
   const [formData, setFormData] = useState({
-    name: '', slug: '', icon: '', description: '', price: '', password: '',
+    name: '', slug: '', icon: '', description: '', price: '', secret_code: '',
     version: 'v1.0',
-    badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
+    badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_link: '', youtube_url: '',
     is_active: true, is_coming_soon: false, sort_order: 0,
-    trial_enabled: false, trial_flow_url: '',
+    trial_enabled: false, trial_flow_link: '',
     category: 'hardsell',
     tier_required: 'pro',
     video_model: 'Omni 1.1 Flash · Veo 3.1',
@@ -103,10 +109,7 @@ export default function AdminToolsPage() {
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...cleanFormData,
-        features: featuresPayload
-      })
+      body: JSON.stringify(buildAdminToolSavePayload(cleanFormData, featuresPayload))
     })
     
     if (!res.ok) {
@@ -157,11 +160,11 @@ export default function AdminToolsPage() {
   const openAddModal = () => {
     setEditingTool(null)
     setFormData({
-      name: '', slug: '', icon: '', description: '', price: '', password: '',
+      name: '', slug: '', icon: '', description: '', price: '', secret_code: '',
       version: 'v1.0',
-      badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_url: '', youtube_url: '',
+      badge_text: '', badge_color: 'cyan', poster_url: '', logo_url: '', flow_link: '', youtube_url: '',
       is_active: true, is_coming_soon: false, sort_order: 0,
-      trial_enabled: false, trial_flow_url: '',
+      trial_enabled: false, trial_flow_link: '',
       category: 'hardsell',
       tier_required: 'pro',
       video_model: 'Omni 1.1 Flash · Veo 3.1',
@@ -182,6 +185,9 @@ export default function AdminToolsPage() {
 
     setFormData({
       ...tool,
+      secret_code: getToolSecretCode(tool),
+      flow_link: getToolFlowLink(tool),
+      trial_flow_link: getToolTrialFlowLink(tool),
       category: feat.category || 'video',
       tier_required: feat.tier_required || 'pro',
       video_model: videoModel,
@@ -246,7 +252,7 @@ export default function AdminToolsPage() {
                     </div>
                   </td>
                   <td className="p-4 text-slate-300">{tool.price}</td>
-                  <td className="p-4 text-slate-300">{tool.password || '-'}</td>
+                  <td className="p-4 text-slate-300">{getToolSecretCode(tool) || '-'}</td>
                   <td className="p-4">
                     <span className="inline-block px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono text-xs border border-slate-700">
                       {tool.version || 'v1.0'}
@@ -302,7 +308,7 @@ export default function AdminToolsPage() {
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">รหัสผ่าน</label>
-                  <input type="text" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" />
+                  <input type="text" value={formData.secret_code} onChange={(e) => setFormData({...formData, secret_code: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" />
                 </div>
                 <div>
                   <label className="block text-sm text-cyan-400 mb-1 font-medium">📦 เวอร์ชัน (Version)</label>
@@ -351,7 +357,7 @@ export default function AdminToolsPage() {
 
               <div>
                 <label className="block text-sm text-amber-400 mb-1 font-semibold">🔗 ลิงก์เครื่องมือ (Flow URL) — อัปเดตลิงก์ Tool ใหม่ได้ตรงนี้</label>
-                <input type="text" value={formData.flow_url || ''} onChange={(e) => setFormData({...formData, flow_url: e.target.value})} placeholder="https://labs.google/fx/tools/flow/shared/tool/..." className="w-full bg-slate-800 border border-amber-500/50 rounded px-3 py-2 text-white" />
+                <input type="text" value={formData.flow_link || ''} onChange={(e) => setFormData({...formData, flow_link: e.target.value})} placeholder="https://labs.google/fx/tools/flow/shared/tool/..." className="w-full bg-slate-800 border border-amber-500/50 rounded px-3 py-2 text-white" />
               </div>
 
               <div>
@@ -443,7 +449,7 @@ export default function AdminToolsPage() {
                 {formData.trial_enabled && (
                   <div>
                     <label className="block text-sm text-green-400 mb-1 font-semibold">🔗 ลิงก์เครื่องมือทดลอง (จำกัด 3 คลิป)</label>
-                    <input type="text" value={formData.trial_flow_url || ''} onChange={(e) => setFormData({...formData, trial_flow_url: e.target.value})} placeholder="https://labs.google/fx/tools/flow/shared/tool/..." className="w-full bg-slate-800 border border-green-500/50 rounded px-3 py-2 text-white" />
+                    <input type="text" value={formData.trial_flow_link || ''} onChange={(e) => setFormData({...formData, trial_flow_link: e.target.value})} placeholder="https://labs.google/fx/tools/flow/shared/tool/..." className="w-full bg-slate-800 border border-green-500/50 rounded px-3 py-2 text-white" />
                     <p className="text-xs text-slate-500 mt-1">ลิงก์ Tool ที่จำกัดการใช้งาน (เช่น 3 คลิป) สำหรับให้ลูกค้าทดลอง</p>
                   </div>
                 )}

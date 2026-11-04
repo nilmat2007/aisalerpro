@@ -6,6 +6,11 @@ import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import FlowToolCard from '@/components/FlowToolCard'
 import { getPriceInfo } from '@/lib/price-utils'
+import {
+  PUBLIC_TOOL_SELECT_COLUMNS,
+  sanitizeToolForPublic,
+  type Tool,
+} from '@/lib/sanitize-tool'
 
 export const dynamic = 'force-dynamic';
 
@@ -15,15 +20,18 @@ export default async function HomePage() {
 
   if (!user) {
     // Landing Page (Parallelized queries)
-    const [{ data: allTools }, { data: settings }] = await Promise.all([
-      supabase.from('tools').select('*').order('sort_order'),
+    const [{ data: rawAllTools }, { data: settings }] = await Promise.all([
+      supabase.from('tools').select(PUBLIC_TOOL_SELECT_COLUMNS).order('sort_order'),
       supabase
         .from('site_settings')
-        .select('*')
+        .select('id, site_name, tagline, description, logo_url, og_image_url, favicon_url')
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle(),
     ])
+    const allTools = ((rawAllTools || []) as unknown as Tool[]).map((t) =>
+      sanitizeToolForPublic(t, { session: null, hasAccess: false, isTrial: false })
+    )
     const courseItem = (allTools || []).find(
       (t: any) => t.slug === 'tiktok-ai-affiliate' || t.category === 'course'
     )
@@ -241,21 +249,21 @@ export default async function HomePage() {
   const [
     { data: profile },
     { data: initialUserTools },
-    { data: allTools },
+    { data: rawAllTools },
     { data: announcements },
     { data: userTrials },
     { data: rawOrders },
     { data: emailKeys },
     { data: approvedOrders },
   ] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-    supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id),
-    supabase.from('tools').select('*').order('sort_order'),
-    supabase.from('announcements').select('*').eq('is_active', true).order('created_at', { ascending: false }),
-    supabase.from('user_trials').select('*').eq('user_id', user.id),
+    supabase.from('profiles').select('id, email, full_name, role, display_name, avatar_url').eq('id', user.id).maybeSingle(),
+    supabase.from('user_tools').select(`id, user_id, tool_id, license_key_id, activated_at, is_active, tools(${PUBLIC_TOOL_SELECT_COLUMNS})`).eq('user_id', user.id),
+    supabase.from('tools').select(PUBLIC_TOOL_SELECT_COLUMNS).order('sort_order'),
+    supabase.from('announcements').select('id, title, content, tool_id, badge_text, badge_color, status, created_at').eq('is_active', true).order('created_at', { ascending: false }),
+    supabase.from('user_trials').select('id, user_id, tool_id, status, started_at').eq('user_id', user.id),
     supabase
       .from('orders')
-      .select('*, tools(name, slug)')
+      .select('id, user_id, tool_id, status, admin_note, created_at, tools(name, slug)')
       .eq('user_id', user.id)
       .in('status', ['pending', 'rejected'])
       .order('created_at', { ascending: false })
@@ -339,13 +347,21 @@ export default async function HomePage() {
       }
     }
     if (healed) {
-      const refreshed = await supabase.from('user_tools').select('*, tools(*)').eq('user_id', user.id)
+      const refreshed = await supabase.from('user_tools').select(`id, user_id, tool_id, license_key_id, activated_at, is_active, tools(${PUBLIC_TOOL_SELECT_COLUMNS})`).eq('user_id', user.id)
       userTools = refreshed.data || userTools
     }
   }
 
   // Only show pending/rejected banners for tools the user does NOT already own
   const userOrders = (rawOrders || []).filter((o: any) => !ownedSet.has(o.tool_id))
+  const trialSet = new Set((userTrials || []).map((tr: any) => tr.tool_id))
+  const allTools = ((rawAllTools || []) as unknown as Tool[]).map((t) =>
+    sanitizeToolForPublic(t, {
+      session: null,
+      hasAccess: ownedSet.has(t.id),
+      isTrial: trialSet.has(t.id),
+    })
+  )
 
   return (
     <DashboardClient 

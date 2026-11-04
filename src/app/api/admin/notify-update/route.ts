@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { cookies } from 'next/headers'
 import { sendEmail, buildToolUpdateEmail } from '@/lib/email'
+import { requireAdmin } from '@/lib/auth/require-admin'
+
+export async function GET() {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
+  return NextResponse.json({ ok: true })
+}
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
-
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
   try {
     const { toolId, toolName, updateNote } = await request.json()

@@ -1,24 +1,15 @@
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/auth/require-admin';
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
+
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if admin (you might want to add a proper admin check here)
-    const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
-    if (!profile?.is_admin) {
-       // Just proceeding for now, you can enforce admin later
-    }
-
     const { data, error } = await supabase
       .from('orders')
-      .select('*, tools(name, slug, price)')
+      .select('id, user_id, user_email, tool_id, package_type, amount, slip_url, status, admin_note, license_key_id, created_at, approved_at, approved_by, tools(name, slug, price)')
       .order('created_at', { ascending: false });
 
     if (error) throw error;

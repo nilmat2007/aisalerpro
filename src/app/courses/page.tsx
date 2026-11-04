@@ -1,5 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import CoursesClient from './CoursesClient';
+import {
+  PUBLIC_TOOL_SELECT_COLUMNS,
+  sanitizeToolForPublic,
+  type PublicTool,
+  type Tool,
+} from '@/lib/sanitize-tool';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +23,7 @@ export default async function CoursesPage() {
     supabase.auth.getUser(),
     supabase
       .from('tools')
-      .select('*')
+      .select(PUBLIC_TOOL_SELECT_COLUMNS)
       .eq('slug', 'tiktok-ai-affiliate')
       .maybeSingle(),
   ]);
@@ -95,9 +101,17 @@ export default async function CoursesPage() {
     }
   }
 
+  const sanitizedCourse: PublicTool | null = course
+    ? sanitizeToolForPublic(course as unknown as Tool, {
+        session: null,
+        hasAccess,
+        isTrial: false,
+      })
+    : null;
+
   return (
     <CoursesClient
-      course={course}
+      course={sanitizedCourse}
       hasAccess={hasAccess}
       user={user}
     />

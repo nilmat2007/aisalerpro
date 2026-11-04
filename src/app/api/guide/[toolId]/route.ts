@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth/require-admin';
+
+const SECTION_COLUMNS = 'id, tool_id, title, icon, description, sort_order, style_variant, created_at, updated_at';
+const STEP_COLUMNS = 'id, section_id, step_number, label, title, content, sub_items, image_urls, image_caption, highlight_style, code_block, sort_order, created_at, updated_at';
 
 export async function GET(request: Request, { params }: { params: Promise<{ toolId: string }> }) {
   const resolvedParams = await params;
   
   const { data: sections, error: sectionsError } = await supabase
     .from('guide_sections')
-    .select('*')
+    .select(SECTION_COLUMNS)
     .eq('tool_id', resolvedParams.toolId)
     .order('sort_order', { ascending: true });
 
@@ -18,7 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tool
   const sectionIds = sections.map(s => s.id);
   const { data: steps, error: stepsError } = await supabase
     .from('guide_steps')
-    .select('*')
+    .select(STEP_COLUMNS)
     .in('section_id', sectionIds)
     .order('sort_order', { ascending: true });
 
@@ -33,8 +36,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ tool
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ toolId: string }> }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   try {
     const resolvedParams = await params;
@@ -43,12 +46,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ too
     const { data, error } = await supabase
       .from('guide_sections')
       .insert({ ...body, tool_id: resolvedParams.toolId })
-      .select()
+      .select(SECTION_COLUMNS)
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

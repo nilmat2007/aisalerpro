@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { getSession } from '@/lib/auth'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const session = await getSession()
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
+  try {
     const { id: memberId } = await params
     const { user_tool_id } = await request.json()
 

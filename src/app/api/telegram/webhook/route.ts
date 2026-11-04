@@ -123,9 +123,9 @@ async function handleStats() {
   })
 
   // Counts
-  const { count: totalMembers } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
-  const { count: pendingOrders } = await supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending')
-  const { count: activeTrials } = await supabase.from('user_trials').select('*', { count: 'exact', head: true }).eq('status', 'active')
+  const { count: totalMembers } = await supabase.from('profiles').select('id', { count: 'exact', head: true })
+  const { count: pendingOrders } = await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+  const { count: activeTrials } = await supabase.from('user_trials').select('id', { count: 'exact', head: true }).eq('status', 'active')
 
   await sendTelegram(
     `📊 <b>สรุปยอดขาย AI SALER PRO</b>\n\n` +
@@ -144,7 +144,7 @@ async function handleStats() {
 async function handlePending() {
   const { data: orders } = await supabase
     .from('orders')
-    .select('*, tools(name)')
+    .select('id, user_id, user_email, tool_id, amount, status, created_at, tools(name)')
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
     .limit(10)
@@ -239,7 +239,7 @@ async function handleGenKey(text: string) {
 async function handleTrials() {
   const { data: trials, error } = await supabase
     .from('user_trials')
-    .select('*, tools(name, price, slug)')
+    .select('id, user_id, tool_id, user_email, user_name, status, started_at, created_at, tools(name, price, slug)')
     .eq('status', 'active')
     .order('started_at', { ascending: false })
     .limit(10)
@@ -353,7 +353,7 @@ async function handleApproveOrder(
   // Get order
   const { data: order } = await supabase
     .from('orders')
-    .select('*, tools(name, slug, price)')
+    .select('id, user_id, user_email, tool_id, amount, status, license_key_id, tools(name, slug, price)')
     .eq('id', orderId)
     .single()
 
@@ -455,7 +455,7 @@ async function handleRejectOrder(
 ) {
   const { data: order } = await supabase
     .from('orders')
-    .select('*, tools(name, slug)')
+    .select('id, user_id, user_email, tool_id, status, tools(name, slug)')
     .eq('id', orderId)
     .single()
 
@@ -561,7 +561,7 @@ async function handleConvertTrial(callbackId: string, chatId: string, messageId:
 async function handleSendDeal(callbackId: string, chatId: string, messageId: number, trialId: string) {
   const { data: trial, error } = await supabase
     .from('user_trials')
-    .select('*, tools(name, price, slug)')
+    .select('id, user_id, tool_id, user_email, user_name, status, tools(name, price, slug)')
     .eq('id', trialId)
     .single()
 
@@ -570,9 +570,10 @@ async function handleSendDeal(callbackId: string, chatId: string, messageId: num
     return NextResponse.json({ ok: true })
   }
 
-  const toolName = trial.tools?.name || 'เครื่องมือ AI'
-  const toolSlug = trial.tools?.slug
-  const toolPrice = trial.tools?.price
+  const toolInfo = Array.isArray(trial.tools) ? trial.tools[0] : (trial as any).tools
+  const toolName = toolInfo?.name || 'เครื่องมือ AI'
+  const toolSlug = toolInfo?.slug
+  const toolPrice = toolInfo?.price
 
   const html = buildTrialFollowUpEmail({
     customerName: trial.user_name,
@@ -688,7 +689,7 @@ async function handleBroadcast(text: string) {
 async function handleContacts() {
   const { data: contacts } = await supabase
     .from('fb_contacts')
-    .select('*')
+    .select('psid, name, first_message_at, last_message_at')
     .order('last_message_at', { ascending: false })
     .limit(10)
 
@@ -699,13 +700,13 @@ async function handleContacts() {
 
   const { count: totalCount } = await supabase
     .from('fb_contacts')
-    .select('*', { count: 'exact', head: true })
+    .select('psid', { count: 'exact', head: true })
 
   const now = new Date()
   const h24ago = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
   const { count: reachableCount } = await supabase
     .from('fb_contacts')
-    .select('*', { count: 'exact', head: true })
+    .select('psid', { count: 'exact', head: true })
     .gte('last_message_at', h24ago)
 
   let msg = `👥 <b>รายชื่อลูกค้า Facebook</b>\n`

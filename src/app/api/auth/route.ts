@@ -5,7 +5,8 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const { username, password } = body || {};
 
     // ใช้ RPC verify_admin (ถ้ามี) หรือ fallback เป็น plain query
     let isValid = false;
@@ -27,30 +28,37 @@ export async function POST(request: Request) {
     if (!isValid) {
       const { data: users, error: queryError } = await supabase
         .from('admin_users')
-        .select('*')
+        .select('id, username, password_hash')
         .eq('username', username)
         .limit(1);
 
       if (!queryError && users && users.length > 0) {
         const user = users[0];
-        // ลองเทียบ plain text ก่อน
         if (user.password_hash === password) {
           isValid = true;
         }
       }
     }
 
+    const cookieStore = await cookies();
+
     if (!isValid) {
+      cookieStore.set('admin_token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 0,
+      });
       return NextResponse.json({ error: 'รหัสผ่านไม่ถูกต้อง' }, { status: 401 });
     }
 
-    const token = await createToken({ username, role: 'admin' });
-    
-    const cookieStore = await cookies();
+    const token = await createToken({ username, role: 'admin', is_admin: true });
+
     cookieStore.set('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 // 24 hours
     });
@@ -64,6 +72,12 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   const cookieStore = await cookies();
-  cookieStore.delete('admin_token');
+  cookieStore.set('admin_token', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
   return NextResponse.json({ success: true });
 }

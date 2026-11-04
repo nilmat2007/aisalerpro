@@ -52,7 +52,11 @@ export default function FlowToolCard({
 
   const tierInfo = getTierLabel(tierRequired);
   const priceInfo = getPriceInfo(tool.price, feat);
-  const isComingSoon = tool.slug === 'coming-soon' || !priceInfo.hasPrice;
+  const isComingSoon =
+    tool.slug === 'coming-soon' ||
+    !tool.is_active ||
+    (Boolean(tool.is_coming_soon) && tool.slug !== 'tiktok-ai-affiliate') ||
+    !priceInfo.hasPrice;
 
   return (
     <div className={`puppap-card overflow-hidden flex flex-col h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${

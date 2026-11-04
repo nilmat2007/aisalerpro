@@ -1,18 +1,14 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function GET() {
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
-
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
   const { data, error } = await supabase
     .from('announcements')
-    .select('*, tools(name, slug)')
+    .select('id, title, content, tool_id, badge_text, badge_color, status, created_at, tools(name, slug)')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -23,12 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
-
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
   const { title, content, tool_id, badge_text, badge_color } = await request.json()
 
@@ -43,7 +35,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from('announcements')
     .insert(insertData)
-    .select()
+    .select('id, title, content, tool_id, badge_text, badge_color, status, created_at')
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

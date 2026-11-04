@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { supabase } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function GET() {
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const supabase = await createClient()
-  
   const { data, error } = await supabase
     .from('profiles')
-    .select('*, user_tools(*, tools(name, slug))')
+    .select('id, email, full_name, role, created_at, updated_at, display_name, avatar_url, is_blocked, last_login_at, user_tools(id, user_id, tool_id, license_key_id, activated_at, is_active, tools(name, slug))')
     .order('created_at', { ascending: false })
 
   if (error) {

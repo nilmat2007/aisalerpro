@@ -4,6 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { showSuccess, showError, showLoading, closeLoading, showConfirmDelete } from '@/lib/swal';
 import { LoadingSpinner } from '@/components/AdminUI';
+import {
+  getLessonVideoLink,
+  hasLessonVideoLink,
+  withLessonVideoLink,
+} from '@/lib/sanitize-tool';
 
 export default function AdminCoursesPage() {
   const [course, setCourse] = useState<any>(null);
@@ -35,21 +40,25 @@ export default function AdminCoursesPage() {
   const openAddModal = () => {
     const nextId = lessons.length > 0 ? Math.max(...lessons.map(l => l.id)) + 1 : 1;
     const lastLesson = lessons[lessons.length - 1];
-    setEditingLesson({
-      id: nextId,
-      title: '',
-      description: '',
-      module_id: lastLesson?.module_id || 4,
-      module_title: lastLesson?.module_title || 'โมดูลพิเศษ: มาสเตอร์คลาสขั้นสูง',
-      video_url: '',
-      duration: '15:00 นาที',
-      status: 'coming_soon',
-      is_free_preview: false,
-      flow_tool_slug: '',
-      key_points: [],
-      prompts: [],
-      isNew: true,
-    });
+    setEditingLesson(
+      withLessonVideoLink(
+        {
+          id: nextId,
+          title: '',
+          description: '',
+          module_id: lastLesson?.module_id || 4,
+          module_title: lastLesson?.module_title || 'โมดูลพิเศษ: มาสเตอร์คลาสขั้นสูง',
+          duration: '15:00 นาที',
+          status: 'coming_soon',
+          is_free_preview: false,
+          flow_tool_slug: '',
+          key_points: [],
+          prompts: [],
+          isNew: true,
+        },
+        ''
+      )
+    );
     setIsModalOpen(true);
   };
 
@@ -137,7 +146,7 @@ export default function AdminCoursesPage() {
       const { isNew, ...lessonData } = editingLesson;
       const cleanLesson = {
         ...lessonData,
-        status: lessonData.video_url?.trim() ? (lessonData.status || 'ready') : (lessonData.status || 'coming_soon'),
+        status: hasLessonVideoLink(lessonData) ? (lessonData.status || 'ready') : (lessonData.status || 'coming_soon'),
       };
       updatedLessons = [...lessons, cleanLesson];
     } else {
@@ -146,7 +155,7 @@ export default function AdminCoursesPage() {
           const { isNew, ...lessonData } = editingLesson;
           return {
             ...lessonData,
-            status: lessonData.video_url?.trim() ? (lessonData.status || 'ready') : lessonData.status,
+            status: hasLessonVideoLink(lessonData) ? (lessonData.status || 'ready') : lessonData.status,
           };
         }
         return l;
@@ -177,7 +186,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const readyCount = lessons.filter(l => l.status === 'ready' && Boolean(l.video_url)).length;
+  const readyCount = lessons.filter(l => l.status === 'ready' && hasLessonVideoLink(l)).length;
   const inProgressCount = lessons.length - readyCount;
   const freePreviewCount = lessons.filter(l => l.is_free_preview).length;
 
@@ -259,7 +268,7 @@ export default function AdminCoursesPage() {
             </thead>
             <tbody className="divide-y divide-slate-800 text-sm">
               {lessons.map((lesson, index) => {
-                const hasVideo = Boolean(lesson.video_url?.trim());
+                const hasVideo = hasLessonVideoLink(lesson);
                 const isReady = lesson.status === 'ready' && hasVideo;
 
                 return (
@@ -281,7 +290,7 @@ export default function AdminCoursesPage() {
                       </div>
                       {hasVideo && (
                         <div className="text-[11px] text-cyan-400 font-mono mt-1 truncate max-w-md">
-                          🔗 {lesson.video_url}
+                          🔗 {getLessonVideoLink(lesson)}
                         </div>
                       )}
                     </td>
@@ -412,8 +421,8 @@ export default function AdminCoursesPage() {
                 </label>
                 <input
                   type="text"
-                  value={editingLesson.video_url || ''}
-                  onChange={(e) => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
+                  value={getLessonVideoLink(editingLesson)}
+                  onChange={(e) => setEditingLesson(withLessonVideoLink(editingLesson, e.target.value))}
                   placeholder="เช่น https://drive.google.com/file/d/.../preview หรือลิงก์ YouTube"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
                 />
@@ -461,11 +470,11 @@ export default function AdminCoursesPage() {
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
                 >
                   <option value="">- ไม่มีเครื่องมือเจาะจง -</option>
-                  <option value="ugc-batch">Ai SALER PRO - UGC Batch (คลิปขายดุ)</option>
-                  <option value="ai-content-factory">AI Content Factory (ละครสั้น/แอนิเมชั่น)</option>
-                  <option value="pup-minimal-ads">PUP AI Minimal Ads (คลิปมินิมอล)</option>
-                  <option value="pup-showhow-demo">PUP AI Showhow Demo (คลิปโชว์สินค้า/รีวิว)</option>
-                  <option value="pup-podcast-studio">PUP AI Podcast Studio (พอดแคสต์)</option>
+                  <option value="ugc-batch">Ai SALER PRO - UGC Batch (เปิดใช้งาน)</option>
+                  <option value="ai-content-factory">AI Content Factory (เปิดใช้งาน)</option>
+                  <option value="pup-minimal-ads">PUP AI Minimal Ads (ปิดอยู่ - จะซ่อนปุ่มในบทเรียนอัตโนมัติ)</option>
+                  <option value="pup-showhow-demo">PUP AI Showhow Demo (ปิดอยู่ - จะซ่อนปุ่มในบทเรียนอัตโนมัติ)</option>
+                  <option value="pup-podcast-studio">PUP AI Podcast Studio (ปิดอยู่ - จะซ่อนปุ่มในบทเรียนอัตโนมัติ)</option>
                 </select>
               </div>
 

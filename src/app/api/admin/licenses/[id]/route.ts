@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { getSession } from '@/lib/auth'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 async function revokeLinkedAccess(keyId: string) {
   const { data: keyInfo } = await supabase
@@ -67,13 +67,10 @@ async function revokeLinkedAccess(keyId: string) {
 }
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
   const params = await props.params
-  const session = await getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const { status } = await request.json()
 
   if (status === 'revoked') {
@@ -84,7 +81,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     .from('license_keys')
     .update({ status })
     .eq('id', params.id)
-    .select()
+    .select('id, key_code, tool_id, package_type, status, activated_by, activated_email, activated_at, note, created_at, created_by')
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -94,12 +91,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 }
 
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params
-  const session = await getSession()
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const params = await props.params
 
   await revokeLinkedAccess(params.id)
 

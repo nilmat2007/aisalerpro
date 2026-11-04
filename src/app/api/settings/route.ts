@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { getMaskedAiSlipConfig, saveAiSlipConfig } from '@/lib/ai-slip-config';
+
+const SITE_SETTINGS_COLUMNS = 'id, site_name, tagline, description, logo_url, og_image_url, favicon_url, created_at, updated_at';
 
 export async function GET() {
   const [{ data, error }, session] = await Promise.all([
-    supabase.from('site_settings').select('*').limit(1).single(),
+    supabase.from('site_settings').select(SITE_SETTINGS_COLUMNS).limit(1).single(),
     getSession(),
   ]);
 
@@ -14,7 +17,7 @@ export async function GET() {
   }
 
   const baseData = data || {};
-  if (session) {
+  if (session?.is_admin) {
     const aiSlipConfig = await getMaskedAiSlipConfig();
     return NextResponse.json({
       ...baseData,
@@ -26,8 +29,8 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   try {
     const body = await request.json();
@@ -61,7 +64,7 @@ export async function PUT(request: Request) {
         .from('site_settings')
         .update(updateData)
         .eq('id', existing.id)
-        .select()
+        .select(SITE_SETTINGS_COLUMNS)
         .single();
 
       if (error && error.message?.includes('line_oa_url')) {
@@ -70,7 +73,7 @@ export async function PUT(request: Request) {
           .from('site_settings')
           .update(updateData)
           .eq('id', existing.id)
-          .select()
+          .select(SITE_SETTINGS_COLUMNS)
           .single();
         data = retry.data;
         error = retry.error;
@@ -85,7 +88,7 @@ export async function PUT(request: Request) {
       let { data, error } = await supabase
         .from('site_settings')
         .insert(updateData)
-        .select()
+        .select(SITE_SETTINGS_COLUMNS)
         .single();
 
       if (error && error.message?.includes('line_oa_url')) {
@@ -93,7 +96,7 @@ export async function PUT(request: Request) {
         const retry = await supabase
           .from('site_settings')
           .insert(updateData)
-          .select()
+          .select(SITE_SETTINGS_COLUMNS)
           .single();
         data = retry.data;
         error = retry.error;

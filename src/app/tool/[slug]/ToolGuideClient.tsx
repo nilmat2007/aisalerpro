@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getPriceInfo } from '@/lib/price-utils';
+import { getToolFlowLink } from '@/lib/sanitize-tool';
 
 export default function ToolGuideClient({
   slug,
@@ -14,6 +15,7 @@ export default function ToolGuideClient({
   userEmail = '',
   isTrial = false,
   trialFlowUrl = '',
+  initialFlowUrl = '',
 }: {
   slug: string;
   hasAccess: boolean;
@@ -21,6 +23,7 @@ export default function ToolGuideClient({
   userEmail?: string;
   isTrial?: boolean;
   trialFlowUrl?: string;
+  initialFlowUrl?: string;
 }) {
   const router = useRouter();
 
@@ -28,6 +31,7 @@ export default function ToolGuideClient({
   const [guideSections, setGuideSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(hasAccess);
+  const [unlockedFlowUrl, setUnlockedFlowUrl] = useState(initialFlowUrl);
   const [password, setPassword] = useState('');
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [error, setError] = useState('');
@@ -42,8 +46,8 @@ export default function ToolGuideClient({
         const tools = await res.json();
         const currentTool = tools.find((t: any) => t.slug === slug);
         
-        if (!currentTool) {
-          router.push('/');
+        if (!currentTool || ((!currentTool.is_active || currentTool.is_coming_soon) && !hasAccess)) {
+          router.push('/store');
           return;
         }
         setTool(currentTool);
@@ -80,6 +84,10 @@ export default function ToolGuideClient({
       const data = await res.json();
       if (res.ok && data.success) {
         setIsUnlocked(true);
+        const returnedFlowLink = getToolFlowLink(data.tool || data);
+        if (returnedFlowLink) {
+          setUnlockedFlowUrl(returnedFlowLink);
+        }
         setError('');
         setUnlockNotice(
           data.boundToAccount
@@ -113,7 +121,7 @@ export default function ToolGuideClient({
 
   if (!tool) return null;
 
-  const activeFlowUrl = isTrial && trialFlowUrl ? trialFlowUrl : tool.flow_url;
+  const activeFlowUrl = isTrial && trialFlowUrl ? trialFlowUrl : (unlockedFlowUrl || getToolFlowLink(tool));
   const priceInfo = getPriceInfo(tool.price, tool.features);
 
   // ===== MAIN GUIDE CONTENT =====
@@ -197,8 +205,8 @@ export default function ToolGuideClient({
         {/* Returning Customer & Unlock / Purchase Banner for non-unlocked users */}
         {!isUnlocked && (
           <div className="mt-6 w-full max-w-xl puppap-card p-5 sm:p-6 text-center space-y-5 border-2 border-[var(--border-accent)]">
-            {/* Section 1: New Customers — Prominent Price & Instant Buy CTA */}
-            {priceInfo.hasPrice && (
+            {/* Section 1: New Customers — Prominent Price & Instant Buy CTA (only if tool is active & not coming soon) */}
+            {priceInfo.hasPrice && tool.is_active && !tool.is_coming_soon && (
               <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border-accent)] space-y-3 shadow-sm">
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-xs font-black">
@@ -380,9 +388,7 @@ export default function ToolGuideClient({
 
                         {/* Code Block (Tool Link) */}
                         {step.code_block && !isVideo && (() => {
-                          // ใช้ flow_url จาก tool เป็นหลัก ถ้ามี ถ้าไม่มีใช้ code_block จาก step
-                          // ถ้าเป็น trial → ใช้ trialFlowUrl แทน
-                          const displayUrl = isTrial && trialFlowUrl ? trialFlowUrl : (tool?.flow_url || step.code_block);
+                          const displayUrl = isTrial && trialFlowUrl ? trialFlowUrl : (activeFlowUrl || step.code_block);
                           return isUnlocked ? (
                             <div className="bg-slate-950 p-3 rounded-lg mt-2 text-sm text-slate-400 break-all border border-slate-800">
                               <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">

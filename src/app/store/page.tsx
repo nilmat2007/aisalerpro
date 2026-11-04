@@ -3,13 +3,18 @@ import Link from 'next/link'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import { getPriceInfo } from '@/lib/price-utils'
+import {
+  PUBLIC_TOOL_SELECT_COLUMNS,
+  sanitizeToolForPublic,
+  type Tool,
+} from '@/lib/sanitize-tool'
 
 export const dynamic = 'force-dynamic';
 
 export default async function StorePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: allTools } = await supabase.from('tools').select('*').order('sort_order')
+  const { data: rawAllTools } = await supabase.from('tools').select(PUBLIC_TOOL_SELECT_COLUMNS).order('sort_order')
 
   const ownedToolIds = new Set<string>()
   if (user) {
@@ -21,6 +26,14 @@ export default async function StorePage() {
       ownedToolIds.add(ut.tool_id)
     }
   }
+
+  const allTools = ((rawAllTools || []) as unknown as Tool[]).map((t) =>
+    sanitizeToolForPublic(t, {
+      session: null,
+      hasAccess: ownedToolIds.has(t.id),
+      isTrial: false,
+    })
+  )
 
   const tools = (allTools || []).filter((t: any) => t.is_active || ownedToolIds.has(t.id) || t.slug === 'tiktok-ai-affiliate')
 
@@ -141,9 +154,13 @@ export default async function StorePage() {
               const posterImage = tool.poster_url || null;
               const updateInfo = formatToolUpdateDate(tool.updated_at);
               const priceInfo = getPriceInfo(tool.price, tool.features);
-              const isComingSoon = tool.slug === 'coming-soon' || !priceInfo.hasPrice;
-              const isOwned = ownedToolIds.has(tool.id);
               const isCourse = tool.slug === 'tiktok-ai-affiliate' || tool.category === 'course';
+              const isComingSoon =
+                tool.slug === 'coming-soon' ||
+                !tool.is_active ||
+                (Boolean(tool.is_coming_soon) && !isCourse) ||
+                !priceInfo.hasPrice;
+              const isOwned = ownedToolIds.has(tool.id);
               const openUrl = isCourse ? `/course/${tool.slug}` : `/tool/${tool.slug}`;
 
               return (

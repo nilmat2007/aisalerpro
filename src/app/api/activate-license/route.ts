@@ -45,10 +45,12 @@ export async function POST(request: NextRequest) {
     // 1. Check if cleanCode matches a legacy tool password (e.g., PRO888, NEW999)
     const { data: allTools } = await supabase
       .from('tools')
-      .select('id, name, password')
+      .select('id, name, password, is_active, is_coming_soon')
 
     const matchedPasswordTool = allTools?.find(
       (t: any) =>
+        t.is_active &&
+        !t.is_coming_soon &&
         t.password &&
         t.password !== 'none' &&
         t.password.trim().toLowerCase() === cleanCode.toLowerCase()
@@ -71,15 +73,23 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 2. Check if cleanCode is an existing License Key (handle already-activated keys gracefully)
-    const normalizedKey = cleanCode.toUpperCase()
+    // 2. Check if cleanCode is an existing License Key
+    const normalizedKey = cleanCode.trim().toUpperCase()
     const { data: existingKey } = await supabase
       .from('license_keys')
-      .select('*, tools(id, name)')
+      .select('id, key_code, tool_id, status, activated_by, activated_email, tools(id, name, is_active, is_coming_soon)')
       .ilike('key_code', normalizedKey)
       .maybeSingle()
 
     if (existingKey && existingKey.status === 'activated') {
+      const linkedTool = (existingKey as any).tools
+      if (linkedTool && (!linkedTool.is_active || linkedTool.is_coming_soon)) {
+        return NextResponse.json(
+          { success: false, error: 'เครื่องมือนี้ปิดปรับปรุงชั่วคราว' },
+          { status: 403 }
+        )
+      }
+
       const isSameUser =
         existingKey.activated_by === user.id ||
         (existingKey.activated_email &&
@@ -104,7 +114,7 @@ export async function POST(request: NextRequest) {
             .eq('id', existingKey.id)
         }
 
-        const toolName = (existingKey as any).tools?.name || 'เครื่องมือของคุณ'
+        const toolName = linkedTool?.name || 'เครื่องมือของคุณ'
         return NextResponse.json({
           success: true,
           alreadyOwned: true,
@@ -120,7 +130,7 @@ export async function POST(request: NextRequest) {
             success: false,
             error: `💡 รหัสนี้ถูกผูกไว้กับอีเมล ${masked} แล้ว กรุณาเข้าสู่ระบบด้วยอีเมลดังกล่าวเพื่อใช้งานทันที (ไม่ต้องซื้อใหม่ครับ)`,
           },
-          { status: 400 }
+          { status: 403 }
         )
       }
     }

@@ -48,7 +48,7 @@ export async function POST(request: Request) {
           .maybeSingle(),
         supabaseAdmin
           .from('tools')
-          .select('id, name, slug, price')
+          .select('id, name, slug, price, is_active, is_coming_soon')
           .eq('id', toolId)
           .single(),
         supabaseAdmin
@@ -61,6 +61,17 @@ export async function POST(request: Request) {
           .limit(1)
           .maybeSingle(),
       ]);
+
+    if (
+      !toolInfo ||
+      !toolInfo.is_active ||
+      (toolInfo.is_coming_soon && toolInfo.slug !== 'tiktok-ai-affiliate')
+    ) {
+      return NextResponse.json(
+        { error: 'รายการนี้ปิดจำหน่ายชั่วคราว ไม่สามารถสั่งซื้อได้ในขณะนี้ครับ' },
+        { status: 400 }
+      );
+    }
 
     if (existingAccess) {
       return NextResponse.json(
@@ -387,7 +398,7 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('orders')
-      .select('*, tools(name, slug)')
+      .select('id, user_id, user_email, tool_id, package_type, amount, slip_url, status, admin_note, license_key_id, created_at, approved_at, tools(name, slug)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 

@@ -86,7 +86,7 @@ export default function FlowToolsClient({
             : {};
 
         if (selectedCategory === 'trial') {
-          if (!tool.trial_enabled || !tool.trial_flow_url) return false;
+          if (!tool.trial_enabled || !tool.is_active || tool.is_coming_soon) return false;
         } else if (selectedCategory !== 'all') {
           const catMatch = (feat.category || '').toLowerCase() === selectedCategory.toLowerCase();
           const tagMatch =

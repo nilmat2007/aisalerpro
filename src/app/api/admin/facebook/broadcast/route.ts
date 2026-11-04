@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { broadcastFBSmart } from '@/lib/facebook'
 import { sendTelegram } from '@/lib/telegram'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
   try {
     const body = await request.json()
-    const { message, buttons, target = 'safe_24h' } = body
+    const { message, buttons } = body
 
     if (!message || !message.trim()) {
       return NextResponse.json({ error: 'กรุณาระบุข้อความ' }, { status: 400 })
@@ -23,7 +27,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Fetch any valid Opt-in tokens
-    let optinMap = new Map<string, string>()
+    const optinMap = new Map<string, string>()
     try {
       const { data: optins } = await supabase
         .from('fb_optins')
@@ -83,13 +87,16 @@ export async function POST(request: Request) {
 
 // GET: ดึงข้อมูลสรุป หรือดาวน์โหลด CSV
 export async function GET(request: Request) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
   try {
     const url = new URL(request.url)
     const isExport = url.searchParams.get('export') === 'csv'
 
     const { data: contacts } = await supabase
       .from('fb_contacts')
-      .select('*')
+      .select('psid, name, first_message_at, last_message_at')
       .order('last_message_at', { ascending: false })
 
     // If CSV export requested:
@@ -110,7 +117,7 @@ export async function GET(request: Request) {
 
     const { data: broadcasts } = await supabase
       .from('fb_broadcasts')
-      .select('*')
+      .select('id, message, type, total_contacts, sent_count, failed_count, sent_at')
       .order('sent_at', { ascending: false })
       .limit(10)
 
@@ -124,7 +131,7 @@ export async function GET(request: Request) {
     try {
       const { count } = await supabase
         .from('fb_optins')
-        .select('*', { count: 'exact', head: true })
+        .select('psid', { count: 'exact', head: true })
       optinCount = count || 0
     } catch {}
 

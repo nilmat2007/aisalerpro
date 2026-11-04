@@ -5,7 +5,7 @@ export async function GET() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('announcements')
-    .select('*')
+    .select('id, title, content, tool_id, badge_text, badge_color, status, created_at')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(5)

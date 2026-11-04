@@ -1,7 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
   // Create supabase with request cookies (same as proxy)
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

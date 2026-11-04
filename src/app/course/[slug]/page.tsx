@@ -1,6 +1,15 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import CourseStudioClient from './CourseStudioClient';
+import {
+  PUBLIC_TOOL_SELECT_COLUMNS,
+  sanitizeLessonForPublic,
+  sanitizeToolForPublic,
+  type Lesson,
+  type PublicLesson,
+  type PublicTool,
+  type Tool,
+} from '@/lib/sanitize-tool';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,18 +23,27 @@ export default async function CoursePage(props: {
   const [
     { data: { user } },
     { data: tool },
+    { data: activeTools },
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase
       .from('tools')
-      .select('*')
+      .select(PUBLIC_TOOL_SELECT_COLUMNS)
       .eq('slug', slug)
       .single(),
+    supabase
+      .from('tools')
+      .select('slug, is_active, is_coming_soon')
+      .eq('is_active', true),
   ]);
 
   if (!tool) {
     redirect('/courses');
   }
+
+  const activeToolSlugs = (activeTools || [])
+    .filter((t: any) => t.is_active && !t.is_coming_soon && t.slug !== 'tiktok-ai-affiliate')
+    .map((t: any) => t.slug);
 
   let hasAccess = false;
 
@@ -100,11 +118,39 @@ export default async function CoursePage(props: {
     }
   }
 
+  const sanitizedTool: PublicTool = sanitizeToolForPublic(tool as unknown as Tool, {
+    session: null,
+    hasAccess,
+    isTrial: false,
+  });
+
+  if (
+    sanitizedTool.features &&
+    typeof sanitizedTool.features === 'object' &&
+    !Array.isArray(sanitizedTool.features) &&
+    Array.isArray(sanitizedTool.features.lessons)
+  ) {
+    const rawLessons: Lesson[] = Array.isArray((tool as any)?.features?.lessons)
+      ? (tool as any).features.lessons
+      : sanitizedTool.features.lessons;
+    const sanitizedLessons: PublicLesson[] = rawLessons.map((lesson: Lesson) =>
+      sanitizeLessonForPublic(lesson, {
+        hasAccess,
+        isFreePreview: Boolean(lesson?.is_free_preview),
+      })
+    );
+    sanitizedTool.features = {
+      ...sanitizedTool.features,
+      lessons: sanitizedLessons,
+    };
+  }
+
   return (
     <CourseStudioClient
-      tool={tool}
+      tool={sanitizedTool}
       hasAccess={hasAccess}
       user={user}
+      activeToolSlugs={activeToolSlugs}
     />
   );
 }

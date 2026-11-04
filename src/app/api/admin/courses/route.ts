@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth/require-admin';
+import { ADMIN_TOOL_SELECT_COLUMNS } from '@/lib/sanitize-tool';
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   const { data: course, error } = await supabase
     .from('tools')
-    .select('*')
+    .select(ADMIN_TOOL_SELECT_COLUMNS)
     .eq('slug', 'tiktok-ai-affiliate')
     .single();
 
@@ -17,8 +18,8 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
   try {
     const body = await request.json();
@@ -53,7 +54,7 @@ export async function PUT(request: Request) {
       .from('tools')
       .update(updatePayload)
       .eq('slug', 'tiktok-ai-affiliate')
-      .select()
+      .select(ADMIN_TOOL_SELECT_COLUMNS)
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import CheckoutClient from './CheckoutClient'
+import {
+  PUBLIC_TOOL_SELECT_COLUMNS,
+  sanitizeToolForPublic,
+  type Tool,
+} from '@/lib/sanitize-tool'
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +16,11 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
   
   if (!user) redirect(`/login?next=/checkout/${slug}`)
   
-  const { data: tool } = await supabase.from('tools').select('*').eq('slug', slug).single()
+  const { data: tool } = await supabase
+    .from('tools')
+    .select(PUBLIC_TOOL_SELECT_COLUMNS)
+    .eq('slug', slug)
+    .single()
   if (!tool) redirect('/store')
 
   // Check if user already owns this tool
@@ -72,6 +81,10 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
     }
   }
 
+  if (!alreadyOwned && (!tool.is_active || (tool.is_coming_soon && tool.slug !== 'tiktok-ai-affiliate'))) {
+    redirect('/store')
+  }
+
   // Check if user has a pending or recently rejected order for this tool
   let initialOrder: any = null
   if (!alreadyOwned) {
@@ -88,10 +101,16 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
       initialOrder = latestOrder
     }
   }
+
+  const sanitizedTool = sanitizeToolForPublic(tool as unknown as Tool, {
+    session: null,
+    hasAccess: alreadyOwned,
+    isTrial: false,
+  })
   
   return (
     <CheckoutClient
-      tool={tool}
+      tool={sanitizedTool}
       userEmail={user.email || ''}
       userId={user.id}
       alreadyOwned={alreadyOwned}

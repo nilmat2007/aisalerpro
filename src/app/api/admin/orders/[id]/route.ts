@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth/require-admin';
 import { NextResponse } from 'next/server';
 import { notifyOrderApproved } from '@/lib/telegram';
 import { sendEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email';
@@ -17,16 +17,16 @@ export async function PATCH(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const session = await getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await requireAdmin();
+  if (!auth.ok) return auth.response;
 
+  try {
     const { id } = await props.params;
     const { action, note } = await request.json();
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('*')
+      .select('id, user_id, user_email, tool_id, package_type, amount, slip_url, status, admin_note, license_key_id, created_at, approved_at, approved_by')
       .eq('id', id)
       .single();
       
@@ -49,7 +49,7 @@ export async function PATCH(
           activated_by: order.user_id,
           activated_email: order.user_email
         })
-        .select()
+        .select('id, key_code')
         .single();
         
       if (keyError) throw keyError;

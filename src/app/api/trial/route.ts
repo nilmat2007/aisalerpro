@@ -17,15 +17,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'ไม่ระบุ tool_id' }, { status: 400 })
     }
 
-    // เช็คว่า tool เปิด trial มั้ย
+    // เช็คว่า tool เปิดใช้งานและเปิด trial มั้ย
     const { data: tool } = await supabase
       .from('tools')
-      .select('id, name, trial_enabled, trial_flow_url')
+      .select('id, name, is_active, is_coming_soon, trial_enabled, trial_flow_url')
       .eq('id', tool_id)
       .single()
 
-    if (!tool || !tool.trial_enabled) {
-      return NextResponse.json({ error: 'เครื่องมือนี้ไม่เปิดให้ทดลองใช้' }, { status: 400 })
+    if (!tool || !tool.is_active || tool.is_coming_soon || !tool.trial_enabled) {
+      return NextResponse.json({ error: 'เครื่องมือนี้ไม่เปิดให้ทดลองใช้ในขณะนี้' }, { status: 400 })
     }
 
     // เช็คว่าซื้อจริงแล้วหรือยัง
@@ -110,7 +110,7 @@ export async function GET(request: Request) {
       // ดึง trial ทั้งหมดของ user
       const { data: trials } = await supabase
         .from('user_trials')
-        .select('*, tools(name, slug, trial_flow_url)')
+        .select('id, user_id, tool_id, user_email, user_name, status, started_at, created_at, tools(name, slug, trial_flow_url)')
         .eq('user_id', user.id)
 
       return NextResponse.json({ trials: trials || [] })
@@ -119,7 +119,7 @@ export async function GET(request: Request) {
     // เช็คเฉพาะ tool
     const { data: trial } = await supabase
       .from('user_trials')
-      .select('*, tools(name, slug, trial_flow_url)')
+      .select('id, user_id, tool_id, user_email, user_name, status, started_at, created_at, tools(name, slug, trial_flow_url)')
       .eq('user_id', user.id)
       .eq('tool_id', toolId)
       .maybeSingle()

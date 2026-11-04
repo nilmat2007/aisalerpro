@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/follow-up-trials",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-rate-limits",
+      "schedule": "0 * * * *"
     }
   ]
 }

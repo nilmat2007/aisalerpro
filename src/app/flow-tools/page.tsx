@@ -1,5 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import FlowToolsClient from './FlowToolsClient';
+import {
+  PUBLIC_TOOL_SELECT_COLUMNS,
+  sanitizeToolForPublic,
+  type Tool,
+} from '@/lib/sanitize-tool';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +19,7 @@ export default async function FlowToolsPage() {
 
   const { data: tools } = await supabase
     .from('tools')
-    .select('*')
+    .select(PUBLIC_TOOL_SELECT_COLUMNS)
     .order('sort_order', { ascending: true });
 
   let userTools: any[] = [];
@@ -22,8 +27,8 @@ export default async function FlowToolsPage() {
 
   if (user) {
     const [userToolsRes, userTrialsRes, keysByEmailRes, ordersByEmailRes] = await Promise.all([
-      supabase.from('user_tools').select('*').eq('user_id', user.id),
-      supabase.from('user_trials').select('*').eq('user_id', user.id),
+      supabase.from('user_tools').select('id, user_id, tool_id, license_key_id, activated_at, is_active').eq('user_id', user.id),
+      supabase.from('user_trials').select('id, user_id, tool_id, status').eq('user_id', user.id),
       user.email
         ? supabase
             .from('license_keys')
@@ -86,15 +91,25 @@ export default async function FlowToolsPage() {
       }
       const { data: refreshedUserTools } = await supabase
         .from('user_tools')
-        .select('*')
+        .select('id, user_id, tool_id, license_key_id, activated_at, is_active')
         .eq('user_id', user.id);
       if (refreshedUserTools) userTools = refreshedUserTools;
     }
   }
 
+  const ownedSet = new Set(userTools.map((ut: any) => ut.tool_id));
+  const trialSet = new Set(userTrials.map((tr: any) => tr.tool_id));
+  const sanitizedTools = ((tools || []) as unknown as Tool[]).map((t) =>
+    sanitizeToolForPublic(t, {
+      session: null,
+      hasAccess: ownedSet.has(t.id),
+      isTrial: trialSet.has(t.id),
+    })
+  );
+
   return (
     <FlowToolsClient
-      tools={tools || []}
+      tools={sanitizedTools}
       user={user}
       userTools={userTools}
       userTrials={userTrials}

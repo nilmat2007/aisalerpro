@@ -42,11 +42,9 @@ const DEFAULT_CONFIG: AiSlipConfig = {
 };
 
 function getEncryptionKey(): Buffer {
-  const secret =
-    process.env.JWT_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    'puppap-ai-default-encryption-secret-key-2026';
-  return crypto.scryptSync(secret, 'puppap-slip-config-salt-v1', 32);
+  const raw = process.env.ADMIN_JWT_SECRET;
+  if (!raw || raw.length < 32) throw new Error('ADMIN_JWT_SECRET missing or too short');
+  return crypto.scryptSync(raw, 'puppap-slip-config-salt-v1', 32);
 }
 
 function encryptPayload(plainText: string): string {

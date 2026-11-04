@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { supabase } from '@/lib/supabase'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function GET() {
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const supabase = await createClient()
-  
   const { data, error } = await supabase
     .from('license_keys')
-    .select('*, tools(name, slug)')
+    .select('id, key_code, tool_id, package_type, status, activated_by, activated_email, activated_at, note, created_at, created_by, tools(name, slug)')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -36,15 +30,10 @@ function generateKey() {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
-
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
 
   const { toolId, packageType, note, quantity = 1 } = await request.json()
-  const supabase = await createClient()
 
   const keysToInsert = []
   for (let i = 0; i < quantity; i++) {
@@ -60,7 +49,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from('license_keys')
     .insert(keysToInsert)
-    .select()
+    .select('id, key_code, tool_id, package_type, status, activated_by, activated_email, activated_at, note, created_at, created_by')
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

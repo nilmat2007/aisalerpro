@@ -4,74 +4,24 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getPriceInfo } from '@/lib/price-utils';
+import { getLessonEmbedUrl, type LessonPromptStep, type PublicLesson } from '@/lib/sanitize-tool';
 
-interface PromptPreset {
-  label: string;
-  value: string;
-}
-
-interface LessonPromptStep {
-  step: string;
-  app?: string;
-  instruction?: string;
-  prompt: string;
-  tip?: string;
-  editable_label?: string;
-  editable_placeholder?: string;
-  default_variable?: string;
-  presets?: PromptPreset[];
-}
-
-interface Lesson {
-  id: number;
-  module_id: number;
-  module_title: string;
-  title: string;
-  description: string;
-  video_url: string;
-  duration: string;
-  status: 'ready' | 'coming_soon';
-  is_free_preview: boolean;
-  flow_tool_slug?: string;
-  key_points?: string[];
-  prompts?: LessonPromptStep[];
-}
+type Lesson = Omit<PublicLesson, 'prompts'> & {
+  prompts?: LessonPromptStep[] | null;
+};
 
 interface CourseStudioClientProps {
   tool: any;
   hasAccess: boolean;
   user: any | null;
-}
-
-// Convert Google Drive or YouTube links to secure embed URL
-function getEmbedUrl(url: string): string {
-  if (!url) return '';
-
-  // Support Google Drive file links (/file/d/ID/view, /file/d/ID/preview, ?id=ID)
-  const driveMatch =
-    url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
-    url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
-  if (driveMatch && driveMatch[1]) {
-    return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
-  }
-
-  // Support YouTube links
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/);
-  const videoId = match && match[1] ? match[1] : null;
-  if (videoId) {
-    return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&controls=1&disablekb=0`;
-  }
-  if (url.includes('youtube.com/embed/') || url.includes('youtube-nocookie.com/embed/')) {
-    const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}rel=0&modestbranding=1&iv_load_policy=3&playsinline=1`;
-  }
-  return url;
+  activeToolSlugs?: string[];
 }
 
 export default function CourseStudioClient({
   tool,
   hasAccess = false,
   user,
+  activeToolSlugs,
 }: CourseStudioClientProps) {
   const feat = (typeof tool?.features === 'object' && tool?.features !== null) ? tool.features : {};
   const lessons: Lesson[] = useMemo(() => Array.isArray(feat.lessons) ? feat.lessons : [], [feat.lessons]);
@@ -107,7 +57,10 @@ export default function CourseStudioClient({
     }
   };
 
-  const getStepStorageKey = (lessonId: number, idx: number) => `${lessonId}-${idx}`;
+  const getStepStorageKey = (lessonId: number, idx: number) => {
+    const lessonTitle = lessons.find((l) => l.id === lessonId)?.title || '';
+    return `${lessonId}_${lessonTitle}-${idx}`;
+  };
 
   const getEffectivePrompt = (lessonId: number, idx: number, item: LessonPromptStep): string => {
     const key = getStepStorageKey(lessonId, idx);
@@ -135,7 +88,7 @@ export default function CourseStudioClient({
     if (typeof window !== 'undefined' && tool?.slug) {
       try {
         localStorage.setItem(
-          `puppap_course_${tool.slug}_custom_prompts_v1`,
+          `puppap_course_${tool.slug}_custom_prompts_v2`,
           JSON.stringify({ vars: nextVars, prompts: nextPrompts })
         );
       } catch (e) {}
@@ -213,7 +166,10 @@ export default function CourseStudioClient({
           }
         }
 
-        const savedCustom = localStorage.getItem(`puppap_course_${tool.slug}_custom_prompts_v1`);
+        // Remove legacy v1 cache that was keyed only by numeric lessonId (which collided after inserting new lessons)
+        localStorage.removeItem(`puppap_course_${tool.slug}_custom_prompts_v1`);
+
+        const savedCustom = localStorage.getItem(`puppap_course_${tool.slug}_custom_prompts_v2`);
         if (savedCustom) {
           const parsedCustom = JSON.parse(savedCustom);
           if (parsedCustom && typeof parsedCustom === 'object') {
@@ -261,7 +217,7 @@ export default function CourseStudioClient({
   const progressPercent = lessons.length > 0 ? Math.round((completedIds.length / lessons.length) * 100) : 0;
   const priceInfo = getPriceInfo(tool?.price || '299', tool?.features);
 
-  const embedUrl = activeLesson ? getEmbedUrl(activeLesson.video_url) : '';
+  const embedUrl = activeLesson ? getLessonEmbedUrl(activeLesson) : '';
   const isVideoReady = Boolean(embedUrl) && activeLesson?.status === 'ready';
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -622,7 +578,7 @@ export default function CourseStudioClient({
                   <span>📌</span> สิ่งที่คุณจะได้เรียนรู้ในบทนี้
                 </h4>
                 <ul className="space-y-1.5 text-sm text-[var(--text-secondary)]">
-                  {activeLesson.key_points.map((pt, i) => (
+                  {activeLesson.key_points.map((pt: string, i: number) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-[var(--accent)] font-bold">•</span>
                       <span>{pt}</span>
@@ -633,8 +589,8 @@ export default function CourseStudioClient({
             )}
 
             {/* Step-by-Step Prompts Section */}
-            {activeLesson?.prompts && activeLesson.prompts.length > 0 && (
-              canViewActiveLesson ? (
+            {(activeLesson?.promptStepCount ?? activeLesson?.prompts?.length ?? 0) > 0 && (
+              canViewActiveLesson && Array.isArray(activeLesson?.prompts) && activeLesson.prompts.length > 0 ? (
                 <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border-accent)] space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border-light)]">
                     <div className="space-y-1">
@@ -870,7 +826,7 @@ export default function CourseStudioClient({
                   <div className="space-y-0.5">
                     <div className="text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                       <span>🔒</span>
-                      <span>บทเรียนนี้มีชุดคำสั่ง Prompt แจกฟรี {activeLesson.prompts.length} ขั้นตอน</span>
+                      <span>บทเรียนนี้มีชุดคำสั่ง Prompt แจกฟรี {activeLesson?.promptStepCount ?? activeLesson?.prompts?.length ?? 0} ขั้นตอน</span>
                     </div>
                     <p className="text-xs text-[var(--text-secondary)]">
                       สำหรับสมาชิกคอร์ส สามารถกดคัดลอกคำสั่ง Prompt ทีละสเต็ปไปวางใช้งานตามคลิปได้ทันที
@@ -886,8 +842,9 @@ export default function CourseStudioClient({
               )
             )}
 
-            {/* Related Flow Tool Box */}
-            {activeLesson?.flow_tool_slug && (
+            {/* Related Flow Tool Box (Only shown if the linked Flow tool is currently active & not coming soon) */}
+            {activeLesson?.flow_tool_slug &&
+              (!activeToolSlugs || activeToolSlugs.includes(activeLesson.flow_tool_slug)) && (
               <div className="p-4 rounded-xl border border-[var(--border-accent)] bg-[var(--accent-dim)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent)]">

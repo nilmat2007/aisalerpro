@@ -14,6 +14,7 @@ import {
   PROMPTPAY_RECEIVER_NAME,
 } from '@/lib/promptpay';
 import { getPriceInfo } from '@/lib/price-utils';
+import { getToolFlowLink } from '@/lib/sanitize-tool';
 
 // Multi-zone & high-contrast QR code scanner for Thai Bank Mini-QR codes on slips
 function decodeSlipQrCode(img: HTMLImageElement): string | null {
@@ -457,9 +458,9 @@ export default function CheckoutClient({
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
-              {tool.flow_url && (
+              {getToolFlowLink(tool) && (
                 <a
-                  href={tool.flow_url}
+                  href={getToolFlowLink(tool)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="puppap-btn-primary px-6 py-3.5 text-sm font-black shadow-md flex items-center justify-center gap-2"
@@ -469,7 +470,7 @@ export default function CheckoutClient({
               )}
               <Link
                 href={destinationUrl}
-                className={`${tool.flow_url ? 'puppap-btn-secondary' : 'puppap-btn-primary'} px-6 py-3.5 text-sm font-bold flex items-center justify-center gap-2`}
+                className={`${getToolFlowLink(tool) ? 'puppap-btn-secondary' : 'puppap-btn-primary'} px-6 py-3.5 text-sm font-bold flex items-center justify-center gap-2`}
               >
                 <span>📖 {isCourse ? 'เข้าสู่ห้องเรียน' : 'เปิดดูคู่มือ & ลิงก์ใช้งาน'}</span>
               </Link>

@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { requireAdmin } from '@/lib/auth/require-admin'
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
   const params = await props.params
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
-
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const { status, title, content, tool_id, badge_text, badge_color } = await request.json()
-
 
   const updateData: any = {}
   if (status !== undefined) updateData.status = status
@@ -26,25 +21,20 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     .from('announcements')
     .update(updateData)
     .eq('id', params.id)
-    .select()
+    .select('id, title, content, tool_id, badge_text, badge_color, status, created_at')
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ announcement: data[0] })
+  return NextResponse.json({ announcement: data?.[0] })
 }
 
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
   const params = await props.params
-  const cookieStore = await cookies()
-  const adminToken = cookieStore.get('admin_token')?.value
-
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-
 
   const { error } = await supabase
     .from('announcements')

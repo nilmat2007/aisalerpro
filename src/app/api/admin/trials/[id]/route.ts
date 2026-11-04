@@ -2,8 +2,26 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { sendEmail, buildTrialFollowUpEmail } from '@/lib/email'
 import { notifyTrialConverted } from '@/lib/telegram'
+import { requireAdmin } from '@/lib/auth/require-admin'
+
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
+  const { id } = await params
+  const { data: trial } = await supabase
+    .from('user_trials')
+    .select('id, user_id, tool_id, user_email, user_name, status, started_at, created_at, followup_sent_at')
+    .eq('id', id)
+    .maybeSingle()
+
+  return NextResponse.json({ trial: trial || null })
+}
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin()
+  if (!auth.ok) return auth.response
+
   try {
     const { id } = await params
     const body = await request.json()
@@ -34,6 +52,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         package_type: 'single',
         status: 'activated',
         activated_at: new Date().toISOString(),
+        activated_by: trial.user_id,
         activated_email: trial.user_email,
         note: `จาก CRM Trial - ${trial.user_name || trial.user_email}`
       })

@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:security": "vitest run src/app/api/verify-password/route.test.ts tests/integration/admin-auth.test.ts tests/integration/public-leak.test.ts",
+    "test:e2e:prod": "vitest run tests/e2e/real-server.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",
@@ -32,6 +35,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }
