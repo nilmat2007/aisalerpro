@@ -13,15 +13,21 @@ export async function GET(request: Request) {
 
   const cutoffIso = new Date(Date.now() - RATE_LIMIT_CLEANUP_MS).toISOString();
 
-  const { error } = await supabaseAdmin
-    .from('rate_limit_attempts')
-    .delete()
-    .lt('created_at', cutoffIso);
+  try {
+    const { error } = await supabaseAdmin
+      .from('rate_limit_attempts')
+      .delete()
+      .lt('created_at', cutoffIso);
 
-  if (error) {
-    console.error('[cleanup-rate-limits] Failed to delete expired attempts:', error);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    if (error) {
+      console.error('[cleanup-rate-limits] Failed to delete expired attempts:', error);
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, cutoffIso }, { status: 200 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[cleanup-rate-limits] Exception:', message);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, cutoffIso }, { status: 200 });
 }
