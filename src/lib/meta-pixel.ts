@@ -122,3 +122,30 @@ export function fbPurchase({
     { eventID: `order_${orderId}` }
   );
 }
+
+export function fbRefundRequest({
+  orderId,
+  value = 299,
+  contentId = 'tiktok-ai-affiliate',
+  currency = 'THB',
+}: {
+  orderId: string;
+  value?: number;
+  contentId?: string;
+  currency?: string;
+}): void {
+  if (typeof window === 'undefined' || typeof window.fbq !== 'function') return;
+  const utmContent = captureUtmContent() || 'unknown';
+  window.fbq(
+    'trackCustom',
+    'RefundRequest',
+    {
+      value,
+      currency,
+      content_name: `course_${utmContent}`,
+      content_ids: [contentId],
+      content_type: 'product',
+    },
+    { eventID: `refund_${orderId}` }
+  );
+}

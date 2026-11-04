@@ -204,8 +204,19 @@ export async function POST(request: Request) {
         orderData = inserted;
       }
 
-      // ส่งแจ้งเตือน Telegram แอดมิน + ส่งอีเมลให้ลูกค้า + ยิง Meta CAPI พร้อมกัน
+      // ยิง Meta CAPI แบบ non-blocking (fire-and-forget ไม่ทำให้ response ลูกค้าช้า)
       const approvedOrderId = String(orderData?.id || existingOrderRow?.id || Date.now());
+      sendMetaCapiEvent({
+        eventName: 'Purchase',
+        eventId: `order_${approvedOrderId}`,
+        orderId: approvedOrderId,
+        value: expectedAmount || 299,
+        req: request,
+        email: user.email || '',
+        contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
+      }).catch((err) => console.error('[CAPI] Auto-approve Purchase error:', err));
+
+      // ส่งแจ้งเตือน Telegram แอดมิน + ส่งอีเมลให้ลูกค้าพร้อมกัน
       const tasks: Promise<any>[] = [
         notifyAiAutoApprovedOrder(
           customerName,
@@ -215,15 +226,6 @@ export async function POST(request: Request) {
           finalSlipUrl,
           verification.reason
         ),
-        sendMetaCapiEvent({
-          eventName: 'Purchase',
-          eventId: `order_${approvedOrderId}`,
-          orderId: approvedOrderId,
-          value: expectedAmount || 299,
-          req: request,
-          email: user.email || '',
-          contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
-        }),
       ];
 
       if (user.email && user.email.includes('@')) {

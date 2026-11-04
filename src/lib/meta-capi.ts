@@ -24,7 +24,7 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 export interface SendMetaCapiParams {
-  eventName: 'Purchase' | 'InitiateCheckout';
+  eventName: 'Purchase' | 'InitiateCheckout' | 'RefundRequest';
   eventId: string;
   orderId: string;
   value: number;

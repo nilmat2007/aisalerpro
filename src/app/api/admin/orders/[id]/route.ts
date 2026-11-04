@@ -85,22 +85,22 @@ export async function PATCH(
 
       if (updateError) throw updateError;
 
-      // แจ้ง Telegram + ยิง Meta CAPI (non-blocking)
+      // แจ้ง Telegram + ยิง Meta CAPI แบบ non-blocking (fire-and-forget)
       const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single();
       const numericOrderValue =
         parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) || 299;
-      await Promise.all([
-        notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ'),
-        sendMetaCapiEvent({
-          eventName: 'Purchase',
-          eventId: `order_${order.id}`,
-          orderId: String(order.id),
-          value: numericOrderValue,
-          req: request,
-          email: order.user_email || '',
-          contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
-        }),
-      ]);
+
+      sendMetaCapiEvent({
+        eventName: 'Purchase',
+        eventId: `order_${order.id}`,
+        orderId: String(order.id),
+        value: numericOrderValue,
+        req: request,
+        email: order.user_email || '',
+        contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
+      }).catch((err) => console.error('[CAPI] Admin approve Purchase error:', err));
+
+      await notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ');
 
       // ส่งอีเมลแจ้งเตือนลูกค้าว่าได้รับการอนุมัติเรียบร้อยแล้ว (awaited)
       if (order.user_email && order.user_email.includes('@')) {
@@ -191,9 +191,23 @@ export async function PATCH(
           .eq('status', 'approved');
       }
 
-      // ส่งอีเมลแจ้งเตือนลูกค้ากรณีปฏิเสธ (awaited)
+      // ส่งอีเมลแจ้งเตือนลูกค้ากรณีปฏิเสธ (awaited) + ยิง RefundRequest CAPI (non-blocking)
+      const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single();
+      if (action === 'revoke' || order.status === 'approved') {
+        const numericRefundValue =
+          parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) || 299;
+        sendMetaCapiEvent({
+          eventName: 'RefundRequest',
+          eventId: `refund_${order.id}`,
+          orderId: String(order.id),
+          value: numericRefundValue,
+          req: request,
+          email: order.user_email || '',
+          contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
+        }).catch((err) => console.error('[CAPI] RefundRequest error:', err));
+      }
+
       if (order.user_email && order.user_email.includes('@')) {
-        const { data: toolInfo } = await supabase.from('tools').select('name, slug').eq('id', order.tool_id).single();
         const emailHtml = buildOrderRejectedEmail({
           customerName: order.user_email.split('@')[0],
           toolName: toolInfo?.name || 'เครื่องมือ AI',
