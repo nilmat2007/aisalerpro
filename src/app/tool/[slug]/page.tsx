@@ -42,6 +42,11 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   let isTrial = false
 
   if (user) {
+    const ADMIN_EMAILS = ['nilmat2007@gmail.com', 'nilmat200757@gmail.com']
+    if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+      hasAccess = true
+    }
+
     const bundleAccess = await resolveUserBundleAccess(supabaseAdmin, user.id, user.email || '')
     if (bundleAccess.ownedToolIds.includes(tool.id)) {
       hasAccess = true
@@ -141,6 +146,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
       isTrial={isTrial}
       trialFlowUrl={getToolTrialFlowLink(sanitizedTool)}
       initialFlowUrl={getToolFlowLink(sanitizedTool)}
+      initialTutorialVideoUrl={sanitizedTool.demo_video_url ? String(sanitizedTool.demo_video_url) : ''}
     />
   )
 }

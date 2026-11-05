@@ -2,13 +2,37 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/auth/require-admin'
 import {
+  ADMIN_TOOL_SELECT_COLUMNS,
   PUBLIC_TOOL_SELECT_COLUMNS,
   sanitizeToolForPublic,
   type PublicTool,
   type Tool,
 } from '@/lib/sanitize-tool'
 
-export async function GET(): Promise<NextResponse<PublicTool[] | { error: string }>> {
+export async function GET(request?: Request): Promise<NextResponse<any>> {
+  let isAdminRequest = false
+  if (request?.url) {
+    try {
+      const url = new URL(request.url)
+      isAdminRequest = url.searchParams.get('admin') === '1'
+    } catch {
+      isAdminRequest = false
+    }
+  }
+
+  if (isAdminRequest) {
+    const auth = await requireAdmin()
+    if (!auth.ok) return auth.response
+
+    const { data, error } = await supabase
+      .from('tools')
+      .select(ADMIN_TOOL_SELECT_COLUMNS)
+      .order('sort_order', { ascending: true })
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json((data || []) as Tool[])
+  }
+
   const { data, error } = await supabase
     .from('tools')
     .select(PUBLIC_TOOL_SELECT_COLUMNS)

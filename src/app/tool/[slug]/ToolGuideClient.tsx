@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getPriceInfo } from '@/lib/price-utils';
-import { getToolFlowLink } from '@/lib/sanitize-tool';
+import { getToolFlowLink, getToolTutorialEmbedUrl } from '@/lib/sanitize-tool';
 
 export default function ToolGuideClient({
   slug,
@@ -16,6 +16,7 @@ export default function ToolGuideClient({
   isTrial = false,
   trialFlowUrl = '',
   initialFlowUrl = '',
+  initialTutorialVideoUrl = '',
 }: {
   slug: string;
   hasAccess: boolean;
@@ -24,6 +25,7 @@ export default function ToolGuideClient({
   isTrial?: boolean;
   trialFlowUrl?: string;
   initialFlowUrl?: string;
+  initialTutorialVideoUrl?: string;
 }) {
   const router = useRouter();
 
@@ -32,11 +34,58 @@ export default function ToolGuideClient({
   const [loading, setLoading] = useState(true);
   const [isUnlocked, setIsUnlocked] = useState(hasAccess);
   const [unlockedFlowUrl, setUnlockedFlowUrl] = useState(initialFlowUrl);
+  const [unlockedTutorialVideoUrl, setUnlockedTutorialVideoUrl] = useState(initialTutorialVideoUrl);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const [password, setPassword] = useState('');
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [error, setError] = useState('');
   const [unlockNotice, setUnlockNotice] = useState('');
   const [isShaking, setIsShaking] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVideoLoading(false), 3200);
+    return () => clearTimeout(timer);
+  }, [unlockedTutorialVideoUrl]);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        setIsFullscreen(false);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen]);
+
+  const toggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+    if (!document.fullscreenElement && !isFullscreen) {
+      if (playerContainerRef.current.requestFullscreen) {
+        playerContainerRef.current.requestFullscreen().catch(() => {
+          setIsFullscreen(true);
+        });
+      } else {
+        setIsFullscreen(true);
+      }
+    } else {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -88,6 +137,11 @@ export default function ToolGuideClient({
         if (returnedFlowLink) {
           setUnlockedFlowUrl(returnedFlowLink);
         }
+        const returnedVideoUrl = data.tool?.demo_video_url || data.demo_video_url || '';
+        if (returnedVideoUrl) {
+          setUnlockedTutorialVideoUrl(String(returnedVideoUrl));
+          setIsVideoLoading(true);
+        }
         setError('');
         setUnlockNotice(
           data.boundToAccount
@@ -126,11 +180,10 @@ export default function ToolGuideClient({
   const feat = typeof tool.features === 'object' && tool.features !== null && !Array.isArray(tool.features) ? tool.features : {};
   const isCourseBonusTool =
     feat.included_in_course_slug === 'tiktok-ai-affiliate' ||
+    feat.bundle_with_course === 'tiktok-ai-affiliate' ||
     slug === 'puppap-fashion-studio' ||
     slug === 'puppap-ugc-product';
-  const guideDriveUrl =
-    feat.guide_drive_url ||
-    (isCourseBonusTool ? 'https://drive.google.com/drive/folders/1v8Kyr1GRW7mqA5sd6SiZvLJFayOOQjiA?usp=drive_link' : '');
+  const embedTutorialUrl = getToolTutorialEmbedUrl(unlockedTutorialVideoUrl);
 
   // ===== MAIN GUIDE CONTENT =====
   return (
@@ -205,15 +258,13 @@ export default function ToolGuideClient({
                   <span>🚀 เปิดใช้งานเครื่องมือ Google Flow ทันที</span>
                   <span>↗</span>
                 </a>
-                {guideDriveUrl && (
+                {embedTutorialUrl && (
                   <a
-                    href={guideDriveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#tutorial-video-section"
                     className="puppap-btn-secondary px-5 py-3 text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 border-2 border-amber-500/50 text-amber-800 dark:text-amber-300"
                   >
-                    <span>📂 เปิดดูคู่มือและคลิปสอนใช้งาน (Google Drive)</span>
-                    <span>↗</span>
+                    <span>🎬 ดูคลิปสอนใช้งานด้านล่าง</span>
+                    <span>↓</span>
                   </a>
                 )}
               </div>
@@ -255,16 +306,6 @@ export default function ToolGuideClient({
                   >
                     <span>🛒 สั่งซื้อและเปิดสิทธิ์ทันที ฿{priceInfo.formattedPrice}</span>
                   </Link>
-                  {guideDriveUrl && (
-                    <a
-                      href={guideDriveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="puppap-btn-secondary px-4 py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 border border-amber-500/40 text-amber-800 dark:text-amber-300"
-                    >
-                      <span>📂 คู่มือ & คลิปสอนใช้ (Google Drive)</span>
-                    </a>
-                  )}
                   <a
                     href="https://m.me/100083126689322"
                     target="_blank"
@@ -337,7 +378,7 @@ export default function ToolGuideClient({
 
       {/* Trial Banner */}
       {isTrial && isUnlocked && (
-        <div className="max-w-3xl mx-auto px-4">
+        <div className="max-w-3xl mx-auto px-4 mb-8">
           <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl p-4 flex items-center justify-between gap-4">
             <div>
               <p className="text-amber-800 dark:text-amber-300 font-bold">🎁 โหมดทดลองใช้ฟรี (จำกัด 3 คลิป)</p>
@@ -350,8 +391,125 @@ export default function ToolGuideClient({
         </div>
       )}
 
-      {/* Guide Sections */}
-      <main className="max-w-3xl mx-auto px-4 space-y-8">
+      {/* Guide Sections & Embedded Tutorial Video */}
+      <main id="tutorial-video-section" className="max-w-3xl mx-auto px-4 space-y-8">
+        {(embedTutorialUrl || isCourseBonusTool) && (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 md:p-8 neon-border relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2.5 !text-white" style={{ color: '#ffffff' }}>
+                <span className="text-2xl sm:text-3xl">🎬</span>
+                <span>คลิปวิดีโอสอนใช้งาน {tool.name} แบบจับมือทำ</span>
+              </h2>
+              {isUnlocked && embedTutorialUrl && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 self-start sm:self-auto">
+                  <span>▶</span>
+                  <span>พร้อมรับชม</span>
+                </span>
+              )}
+            </div>
+            <p className="text-slate-300 text-xs sm:text-sm mb-5">
+              แนะนำให้ดูคลิปสอนใช้งานด้านล่างควบคู่กับคู่มือทีละขั้นตอน เพื่อให้เข้าใจการตั้งค่าและสร้างคลิปรีวิวปักตะกร้าได้ทันทีครับ
+            </p>
+
+            <div
+              ref={playerContainerRef}
+              className={`overflow-hidden relative flex items-center justify-center select-none transition-all ${
+                isFullscreen
+                  ? 'fixed inset-0 z-[9999] rounded-none border-0 w-screen h-screen bg-black'
+                  : 'w-full aspect-video rounded-2xl border-2 border-slate-700 bg-black shadow-xl'
+              }`}
+            >
+              {isUnlocked && embedTutorialUrl ? (
+                <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  {isVideoLoading && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-stone-950/90 text-white p-4 text-center pointer-events-none">
+                      <div className="w-11 h-11 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin mb-3" />
+                      <p className="text-xs sm:text-sm font-bold text-white">
+                        🎬 กำลังโหลดคลิปสอนใช้งาน {tool.name}
+                      </p>
+                      <p className="text-[11px] text-stone-400 mt-1">กรุณารอสักครู่...</p>
+                    </div>
+                  )}
+
+                  <iframe
+                    key={embedTutorialUrl}
+                    src={embedTutorialUrl}
+                    title={`คลิปสอนใช้งาน ${tool.name}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    onLoad={() => setIsVideoLoading(false)}
+                    className="w-full h-full border-0"
+                  />
+
+                  {/* UI Deterrent Overlays (Note: UI deterrent against casual pop-out clicks, not DRM) */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-16 z-20 cursor-default bg-transparent"
+                    title="PUP PAP AI Embedded Video Player"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  />
+                  <div
+                    className="absolute top-0 right-0 w-24 h-20 z-20 cursor-default bg-transparent"
+                    title="PUP PAP AI Embedded Video Player"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  />
+                  <div
+                    className="absolute bottom-0 right-0 w-20 h-10 z-20 cursor-default bg-transparent"
+                    title="PUP PAP AI Embedded Video Player"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                  />
+
+                  {/* Watermark from Server Session Email (Deterrent) */}
+                  <div className="absolute top-3 left-3 z-30 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/65 backdrop-blur-xs border border-white/15 text-xs font-mono text-white/75 tracking-wide shadow-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>{userEmail || 'สมาชิก PUP PAP AI'}</span>
+                  </div>
+
+                  {/* Smart Fullscreen Button */}
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    className="absolute top-3 right-3 z-30 px-2.5 py-1 rounded-lg bg-black/65 hover:bg-black/85 backdrop-blur-xs text-white/85 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-white/20 transition-all shadow-md active:scale-95"
+                    title={isFullscreen ? 'ย่อหน้าจอ' : 'ขยายเต็มจอ (Smart Fullscreen)'}
+                  >
+                    <span>{isFullscreen ? '🗗 ย่อจอ' : '⛶ เต็มจอ'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-stone-950 text-white relative">
+                  <div className="max-w-md space-y-4">
+                    <div className="w-16 h-16 rounded-3xl bg-stone-800 text-amber-400 flex items-center justify-center text-3xl mx-auto shadow-md">
+                      🔒
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold !text-white" style={{ color: '#ffffff' }}>
+                      คลิปสอนใช้งานสำหรับสมาชิกที่ปลดล็อกเครื่องมือแล้ว
+                    </h3>
+                    <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                      ปลดล็อกเครื่องมือนี้เพียง ฿{priceInfo.formattedPrice} (แถมฟรีคอร์สเรียน 22 บท + เครื่องมือ AI ครบ 3 รายการ) เพื่อรับชมคลิปสอนแบบจับมือทำและเปิดใช้งานเครื่องมือได้ทันทีครับ
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                      <Link
+                        href={`/checkout/${slug}`}
+                        className="puppap-btn-primary inline-flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-bold shadow-lg"
+                      >
+                        <span>🛒 สั่งซื้อและเปิดสิทธิ์ทันที ฿{priceInfo.formattedPrice}</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {guideSections.map((section: any, idx: number) => {
           const isVideo = section.style_variant === 'video';
           const isHighlight = section.style_variant === 'highlight';
@@ -363,7 +521,7 @@ export default function ToolGuideClient({
             return (
               <div key={section.id || idx} className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 neon-border relative overflow-hidden flex flex-col items-center text-white">
                 <div className="absolute top-0 left-0 w-full h-1 bg-[var(--accent)]"></div>
-                <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+                <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3 !text-white" style={{ color: '#ffffff' }}>
                   <span className="text-3xl">{section.icon}</span> {section.title}
                 </h2>
                 <div className="w-full max-w-[320px] relative rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.2)] border-2 border-slate-700 hover:border-cyan-400 transition-colors duration-500">
@@ -398,7 +556,7 @@ export default function ToolGuideClient({
               {!isHighlight && !isTip && (
                 <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
               )}
-              <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+              <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3 !text-white" style={{ color: '#ffffff' }}>
                 <span className="text-3xl">{section.icon}</span> {section.title}
               </h2>
               {section.description && (

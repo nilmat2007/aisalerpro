@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
 function loadEnv() {
@@ -25,14 +26,12 @@ loadEnv();
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !serviceRoleKey) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  process.exit(1);
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+const supabase =
+  supabaseUrl && serviceRoleKey
+    ? createClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+    : null;
 
 const GUIDE_DRIVE_URL =
   'https://drive.google.com/drive/folders/1v8Kyr1GRW7mqA5sd6SiZvLJFayOOQjiA?usp=drive_link';
@@ -57,6 +56,7 @@ const NEW_TOOLS = [
     trial_enabled: true,
     flow_url: 'https://flow.google.com/shared/tool/7cd5fff0-d917-41c2-b530-acc8ae147dcc',
     trial_flow_url: 'https://flow.google.com/shared/tool/7cd5fff0-d917-41c2-b530-acc8ae147dcc',
+    demo_video_url: 'https://drive.google.com/file/d/15sLvHbTux0cO32NbKeE7E7mIcmsBxs9H/preview',
     features: {
       category: 'flow_tool',
       original_price: '990',
@@ -65,7 +65,7 @@ const NEW_TOOLS = [
       highlights: [
         'สร้างคลิปนางแบบ-นายแบบใส่เสื้อผ้าของคุณได้ทุกสไตล์',
         'รองรับเสื้อยืด ชุดเดรส แฟชั่นสตรีท ชุดทำงาน และสินค้าแฟชั่นทุกแบบ',
-        'แถมฟรีคู่มือและคลิปสอนใช้งานครบชุดใน Google Drive',
+        'พร้อมคลิปวิดีโอสอนใช้งานแบบจับมือทำและคู่มือทีละขั้นตอนในหน้าเว็บ',
         'ปลดล็อกฟรีอัตโนมัติเมื่อซื้อคอร์สเรียนทำคลิป AI ปักตะกร้า ฿299',
       ],
     },
@@ -89,6 +89,7 @@ const NEW_TOOLS = [
     trial_enabled: true,
     flow_url: 'https://flow.google.com/shared/tool/2cf7e3b4-9ea3-443a-b5d4-a32b6d7aed50',
     trial_flow_url: 'https://flow.google.com/shared/tool/2cf7e3b4-9ea3-443a-b5d4-a32b6d7aed50',
+    demo_video_url: 'https://drive.google.com/file/d/11aHTA5eEu0YIaWM8GQDP-IBUeGkZ0tUT/preview',
     features: {
       category: 'flow_tool',
       original_price: '990',
@@ -97,134 +98,372 @@ const NEW_TOOLS = [
       highlights: [
         'สร้างคลิปรีวิวสินค้าสไตล์ Minimal UGC ดูจริงใจ ยอดวิวพุ่ง',
         'เหมาะกับสินค้าบิวตี้ ของใช้ในบ้าน แกตเจ็ต และสินค้าปักตะกร้าทุกหมวด',
-        'แถมฟรีคู่มือและคลิปสอนใช้งานครบชุดใน Google Drive',
+        'พร้อมคลิปวิดีโอสอนใช้งานแบบจับมือทำและคู่มือทีละขั้นตอนในหน้าเว็บ',
         'ปลดล็อกฟรีอัตโนมัติเมื่อซื้อคอร์สเรียนทำคลิป AI ปักตะกร้า ฿299',
       ],
     },
   },
 ];
 
+export const FASHION_GUIDE_SECTIONS = [
+  {
+    title: 'ขั้นตอนที่ 1: อัปโหลดรูปชุด & สกัดข้อมูลอัตโนมัติ (1. ข้อมูลชุด & นางแบบ)',
+    icon: '👗',
+    description: 'เตรียมรูปเสื้อผ้าและให้ AI สแกนสกัดข้อมูลทรงชุดพร้อมเลือกท่าทางและนางแบบ',
+    sort_order: 1,
+    style_variant: 'default',
+    steps: [
+      {
+        step_number: 1,
+        label: 'STEP 1',
+        title: 'อัปโหลดรูปเสื้อผ้าหรือรูปแคปหน้าจอร้านค้า (1–3 รูป)',
+        content:
+          'กดอัปโหลดไฟล์ภาพจากเครื่อง หรือกด [เลือกจาก Flow Media Gallery] (หากอยากลองระบบทันที กดปุ่ม [⚡ ลองเล่นตัวอย่างเสื้อแฟชั่น คลิกเดียวครบ] มุมขวาบนได้)',
+        sub_items: [
+          'รองรับทั้ง รูปชุดเดี่ยวๆ, รูปแคปหน้าร้าน Shopee/TikTok, หรือ รูปตารางไซส์',
+        ],
+        sort_order: 1,
+      },
+      {
+        step_number: 2,
+        label: 'STEP 2',
+        title: 'ให้ AI สแกนรูปและกรอกข้อมูลให้อัตโนมัติ (AI OCR + วิเคราะห์ทรงชุด)',
+        content:
+          'หากเปิดติ๊ก [⚡ สกัดอัตโนมัติเมื่ออัปโหลด] (เปิดไว้เป็นค่าเริ่มต้น) ทันทีที่อัปโหลดรูป ระบบจะอ่านตัวหนังสือในภาพ + วิเคราะห์ทรงชุด แล้วกรอกให้ครบทั้ง 4 ช่องทันที หรือกดปุ่ม [✨ สแกนรูป & กรอกข้อมูลอัตโนมัติ] (และ [🔄 สแกนรูปใหม่อีกครั้ง] เมื่ออัปโหลดรูปเพิ่ม) ได้ตลอดเวลา',
+        sub_items: [
+          'ชื่อรุ่น / สไตล์ชุดเสื้อผ้า',
+          'ประเภทเนื้อผ้า & การสัมผัส',
+          'ช่วงไซส์ & สัดส่วน (อก/เอว/ความยาว)',
+          'จุดเด่น / คัตติ้งพิเศษ',
+        ],
+        sort_order: 2,
+      },
+      {
+        step_number: 3,
+        label: 'STEP 3',
+        title: 'เลือกท่าทางการโชว์ชุด (4 ท่า)',
+        content: 'เลือกรูปแบบการนำเสนอชุดเสื้อผ้าที่ต้องการให้ AI สร้างภาพและวิดีโอ',
+        sub_items: [
+          '[👗 ใส่จริง + ถือไม้แขวนคู่กัน] (ค่าเริ่มต้นยอดนิยม): นางแบบใส่ชุดจริง พร้อมถือชุดเดียวกันบนไม้แขวนสีทองในมืออีกข้างและชี้ดีเทลผ้า',
+          '[✨ ใส่โชว์ทรงเต็มตัว]: เห็นสัดส่วนและความยาวชุดตั้งแต่หัวจรดเท้า',
+          '[🔍 ครึ่งตัวเน้นดีเทล & คัตติ้ง]: ซูมเนื้อผ้า ปกเสื้อ กระดุม ฝีเข็ม',
+          '[🧥 โชว์ชุดบนไม้แขวน ไม่เห็นหน้า]: มือประคองชุดบนไม้แขวนสีทอง เน้นตัวชุดล้วน 100% (เมื่อเลือกท่านี้ ระบบจะล็อกนางแบบเป็นโหมดไร้ใบหน้าให้อัตโนมัติ)',
+        ],
+        sort_order: 3,
+      },
+      {
+        step_number: 4,
+        label: 'STEP 4',
+        title: 'เลือกนางแบบพรีเซนเตอร์ (8 สไตล์) & ฉากหลังสตูดิโอ (4 ฉาก)',
+        content:
+          'ระบบจะจับคู่นางแบบและฉากหลังที่เข้ากับชุดให้อัตโนมัติจากการสแกนรูป หรือคลิกเลือกเปลี่ยนเองได้ตามต้องการ',
+        sub_items: [
+          'หากเลือกการ์ดที่ 8 ([📸 ใช้รูปหน้าของคุณเอง]) ให้อัปโหลดรูปหน้าตรงและติ๊กยืนยันสิทธิ์การใช้งานใบหน้าก่อนกดไปขั้นถัดไป',
+        ],
+        sort_order: 4,
+      },
+    ],
+  },
+  {
+    title: 'ขั้นตอนที่ 2: ตรวจสอบสคริปต์ & เกราะป้องกันนโยบาย (2. สคริปต์ 10s)',
+    icon: '📝',
+    description: 'ปรับแต่งบทพากย์ไทย 10 วินาทีและตรวจสอบคำเสี่ยงด้วย Safe Storyline Shield',
+    sort_order: 2,
+    style_variant: 'default',
+    steps: [
+      {
+        step_number: 1,
+        label: 'STEP 1',
+        title: 'บทพูด 10 วินาทีถูกเตรียมไว้ให้ทันทีจากขั้นที่ 1',
+        content:
+          'ข้อมูลชุดที่สกัดได้จากหน้าแรกจะถูกนำมาร่างเป็น บทพากย์เต็ม 10 วินาที และแบ่งลง 5 จังหวะการเคลื่อนไหว (0–2s ถึง 8–10s) รอไว้ให้เลย',
+        sub_items: [
+          'หากต้องการเปลี่ยนอารมณ์การพูด เลือกโทนทั้ง 4 แบบ (เพื่อนสาวป้ายยา, แม่ค้าไลฟ์สดแจ้งไซส์, ลุคลูกคุณดูแพง, สายสตรีท) หรือกด [✨ ให้ AI สแกนทรงชุด & คิดบทป้ายยา] / [🎲 สุ่มโทนใหม่]',
+        ],
+        sort_order: 1,
+      },
+      {
+        step_number: 2,
+        label: 'STEP 2',
+        title: 'ตรวจสอบคำเสี่ยง & เกราะป้องกันนโยบาย (Safe Storyline Shield)',
+        content: 'ระบบช่วยตรวจจับคำโฆษณาเกินจริงและปรับสำนวนให้ปลอดภัยต่อนโยบายแพลตฟอร์ม',
+        sub_items: [
+          'Overclaim Guard: หากมีคำโฆษณาเกินจริง (เช่น "ไม่ยับ 100%", "ผอมทันที") จะมีแถบเตือนพร้อมปุ่มกดแก้คำเสี่ยงอัตโนมัติ',
+          'Safe Storyline Shield: ปรับสำนวนคำสั่งภาษาอังกฤษไม่ให้ติดนโยบายบุคคลสำคัญ (prominent people) โดยคงเส้นเรื่อง ท่าโพส และบทพูดเดิมไว้ 100% (กด [✨ เกลาคำสั่งให้ปลอดภัย 100% (คงเส้นเรื่องเดิม)] หรือกดดูพรีวิว Prompt ด้านล่างได้)',
+        ],
+        sort_order: 2,
+      },
+      {
+        step_number: 3,
+        label: 'STEP 3',
+        title: 'เช็กความยาวคำพูด',
+        content:
+          'ดูป้ายนับพยางค์มุมขวาบนของกล่องบทพากย์ แนะนำให้อยู่ที่ [30–38 พยางค์] เพื่อให้ AI พูดจบใน 10 วินาทีแบบไม่รัวลิ้น และกด [จัดวรรคคำอ่าน] เพื่อเว้นจังหวะหายใจได้',
+        sub_items: [],
+        sort_order: 3,
+      },
+    ],
+  },
+  {
+    title: 'ขั้นตอนที่ 3: เสกภาพโปสเตอร์ 9:16 & วิดีโอรีวิว 10 วินาที (3. สตูดิโอเสก 9:16)',
+    icon: '🪄',
+    description: 'สร้างภาพโปสเตอร์ชุดคมชัด 8K และเรนเดอร์วิดีโอ 10 วินาทีพร้อมเช็ก Safe Zone TikTok',
+    sort_order: 3,
+    style_variant: 'highlight',
+    steps: [
+      {
+        step_number: 1,
+        label: 'STEP 1',
+        title: 'เสกภาพโปสเตอร์ชุด 9:16 (ฝั่งซ้ายบน)',
+        content:
+          'เลือกโมเดลภาพ ([🍌 Nano Banana Pro] แนะนำสำหรับสีและเนื้อผ้าตรงปกที่สุด) แล้วกดปุ่ม [🪄 เสกภาพโปสเตอร์ชุด 9:16 ทันที] ภาพจะแสดงขึ้นมาในจอด้านขวาทันทีโดยไม่ต้องสลับแท็บ',
+        sub_items: [
+          'เลือกเปิด/ปิดสวิตช์ [🏷️ ป้ายสติกเกอร์ไซส์ / ดีเทลบนภาพ] (ค่าเริ่มต้นคือปิด = Clean 8K Lookbook ภาพคลีนไม่มีตัวหนังสือบังชุด)',
+          'หากอยากเปลี่ยนมุมหรือท่าโพสใหม่ กดปุ่ม [🔄 สร้างรูปโปสเตอร์ 9:16 ใหม่ (สุ่มมุม/ท่าใหม่)] ได้เรื่อยๆ จนกว่าจะถูกใจ',
+        ],
+        sort_order: 1,
+      },
+      {
+        step_number: 2,
+        label: 'STEP 2',
+        title: 'เสกวิดีโอนางแบบโชว์ชุด 10 วินาที (ฝั่งซ้ายล่าง)',
+        content:
+          'เมื่อได้ภาพโปสเตอร์ที่ถูกใจแล้ว เลือกความละเอียด [☀️ 720p (คมชัดสูง)] หรือ [⚡ 360p (เจนไว)] แล้วกดปุ่ม [🎬 เสกวิดีโอนางแบบโชว์ชุด 10s เลย]',
+        sub_items: [
+          'โมเดล Omni 1.1 Flash จะนำภาพโปสเตอร์ไปสร้างเป็นวิดีโอเคลื่อนไหวตาม 5 จังหวะและพูดบทพากย์ที่ตั้งไว้',
+        ],
+        sort_order: 2,
+      },
+      {
+        step_number: 3,
+        label: 'STEP 3',
+        title: 'ตรวจสอบในจอพรีวิว 9:16 & ดาวน์โหลด (ฝั่งขวา)',
+        content: 'สลับดูผลลัพธ์ได้ที่แท็บ [ภาพโปสเตอร์ 9:16] และ [วิดีโอ 10s]',
+        sub_items: [
+          'กดปุ่ม [👁️ Safe Zone TikTok] มุมขวาบนของพรีวิวเพื่อจำลองหน้าจอ TikTok Shop เช็กว่าปุ่มไลก์/แคปชัน/ตะกร้าสินค้าบังดีเทลชุดหรือไม่',
+          'กดปุ่ม [ดาวน์โหลดโปสเตอร์ .JPG] หรือ [ดาวน์โหลดวิดีโอ .MP4] ลงเครื่องไปโพสต์ปักตะกร้าได้เลย',
+        ],
+        sort_order: 3,
+      },
+      {
+        step_number: 4,
+        label: 'STEP 4',
+        title: 'ทำชุดถัดไป & ดูประวัติย้อนหลัง',
+        content:
+          'กดปุ่ม [👗 ไปต่อชุดใหม่ (กลับหน้าแรก)] ด้านล่างพรีวิว (หรือปุ่ม [+ ชุดใหม่] มุมขวาบน) เพื่อเริ่มเสื้อผ้าตัวต่อไป',
+        sub_items: [
+          'ชุดเดิมจะถูกบันทึกไว้ในปุ่ม [ประวัติชุด] มุมขวาบน (เก็บสูงสุด 5 ชุดล่าสุด กดเรียกดูหรือโหลดซ้ำได้ตลอด) และมีปุ่ม [↩️ เลิกทำ (Undo)] หากกดเริ่มชุดใหม่ผิดพลาด',
+        ],
+        sort_order: 4,
+      },
+    ],
+  },
+];
+
+export const UGC_PRODUCT_GUIDE_SECTIONS = [
+  {
+    title: 'ขั้นที่ 1: เลือกสินค้า & นางแบบ (1. เลือกสินค้า & นางแบบ)',
+    icon: '1️⃣',
+    description: 'อัปโหลดรูปสินค้าต้นฉบับ (Strict Product Lock 100%) และเลือกคาแรกเตอร์พรีเซนเตอร์',
+    sort_order: 1,
+    style_variant: 'default',
+    steps: [
+      {
+        step_number: 1,
+        label: 'STEP 1',
+        title: 'ใส่รูปสินค้าต้นฉบับ (1–3 รูป)',
+        content:
+          'กด [เลือกรูปจากมือถือ/คอม] (รองรับ .webp, .png, .jpg ระบบแปลงไฟล์ให้อัตโนมัติ) หรือ [เลือกจากคลัง Flow]',
+        sub_items: [
+          'ระบบจะล็อกหน้าตาสินค้าต้นฉบับ 100% (Strict Product Lock) ไม่ให้สีหรือทรงเพี้ยน',
+          '(ทางลัดสำหรับมือใหม่) หากอยากลองเล่นทันทีโดยไม่ต้องหารูปเอง กดปุ่มสีชมพู-ส้ม [⚡ ลองเล่นตัวอย่างถังปั่นม็อบ คลิกเดียวครบ] ระบบจะโหลดรูปและบทพูดตัวอย่างให้ครบทันที',
+        ],
+        sort_order: 1,
+      },
+      {
+        step_number: 2,
+        label: 'STEP 2',
+        title: 'กรอกชื่อสินค้า & จุดเด่นโปรโมชัน',
+        content:
+          'พิมพ์ชื่อสินค้าและโปรโมชันสั้นๆ เช่น "ชุดถังปั่นม็อบมินิมอล แถมผ้าม็อบ 2 ชิ้น" เพื่อให้ AI นำไปเขียนป้ายคำพูดและบทพากย์',
+        sub_items: [],
+        sort_order: 2,
+      },
+      {
+        step_number: 3,
+        label: 'STEP 3',
+        title: 'เลือกคาแรกเตอร์พรีเซนเตอร์ (8 สไตล์)',
+        content:
+          'จิ้มเลือกสไตล์นางแบบ/นายแบบที่เข้ากับสินค้า เช่น สาวแว่นมินิมอลเกาหลี (Milin Style), สาวบิวตี้ลูกคุณผิวโกลว์, วัยรุ่นสดใสสาย TikToker, โชว์สินค้า + มือสาธิต (ไม่เห็นหน้า)',
+        sub_items: [
+          'หรือเลือกการ์ดใบที่ 8 [📸 ใช้รูปหน้าของคุณเอง] เพื่ออัปโหลดรูปหน้าจริงของคุณ',
+        ],
+        sort_order: 3,
+      },
+      {
+        step_number: 4,
+        label: 'STEP 4',
+        title: 'ไปขั้นถัดไป',
+        content: 'กดปุ่ม [ไปขั้นถัดไป: เสกคำป้ายยา 10 วิ ✨ ->]',
+        sub_items: [],
+        sort_order: 4,
+      },
+    ],
+  },
+  {
+    title: 'ขั้นที่ 2: แต่งคำป้ายยา & บทพากย์ 10 วินาที (2. คำป้ายยา 10 วิ)',
+    icon: '2️⃣',
+    description: 'ให้ AI สแกนรูปสินค้าแต่งคำป้ายยา 5 จังหวะพร้อมบทพูดภาษาไทย 10 วินาที',
+    sort_order: 2,
+    style_variant: 'default',
+    steps: [
+      {
+        step_number: 1,
+        label: 'STEP 1',
+        title: 'ให้ AI ช่วยคิดบทอัตโนมัติ (หรือสุ่มสไตล์ใหม่)',
+        content:
+          'กดปุ่ม [✨ ให้ AI สแกนรูปสินค้า & คิดคำป้ายยา] เพื่อให้ AI วิเคราะห์รูปสินค้าแล้วแต่งคำป้ายยา 5 จังหวะพร้อมบทพูดภาษาไทยให้ทันที',
+        sub_items: [
+          'หรือกดปุ่ม [🎲 สุ่มสไตล์คำป้ายยาใหม่] เพื่อสลับโทนการขาย (สไตล์เพื่อนบอกต่อ, เน้นโปรของแถม, แก้ปัญหาชีวิต, มินิมอลป้ายยานุ่มๆ)',
+        ],
+        sort_order: 1,
+      },
+      {
+        step_number: 2,
+        label: 'STEP 2',
+        title: 'ปรับแก้ 5 จังหวะป้ายยา (0–2s ถึง 8–10s)',
+        content:
+          'แก้ไขข้อความสั้นๆ ในทั้ง 5 ช่องตามต้องการ ข้อความเหล่านี้จะถูกนำไปทำเป็นป้ายสติกเกอร์พาสเทลบนภาพและเป็นจังหวะท่าทางในวิดีโอ',
+        sub_items: [],
+        sort_order: 2,
+      },
+      {
+        step_number: 3,
+        label: 'STEP 3',
+        title: 'เช็กบทพูดพากย์ไทย 10 วินาที',
+        content:
+          'ดูป้ายตัวนับจำนวนพยางค์มุมขวาบนของกล่องบทพูด (เป้าหมายที่พูดจบพอดีใน 10 วินาทีคือประมาณ 30–38 พยางค์)',
+        sub_items: [
+          'กดปุ่มเล็กๆ [จัดวรรคคำอ่านกันเพี้ยน] ด้านล่างกล่องข้อความ เพื่อให้ระบบเคาะจังหวะเว้นวรรคคำภาษาไทยให้ AI ออกเสียงชัดขึ้น',
+        ],
+        sort_order: 3,
+      },
+      {
+        step_number: 4,
+        label: 'STEP 4',
+        title: 'ไปขั้นถัดไป',
+        content: 'กดปุ่ม [ไปขั้นถัดไป: เสกภาพ & วิดีโอ 🎬 ->]',
+        sub_items: [],
+        sort_order: 4,
+      },
+    ],
+  },
+  {
+    title: 'ขั้นที่ 3: เสกภาพโปสเตอร์ & วิดีโอรีวิว 9:16 (3. เสกภาพ & คลิป 9:16)',
+    icon: '3️⃣',
+    description: 'สร้างภาพโปสเตอร์ 9:16 เป็น First Frame และเสกวิดีโอรีวิว 10 วินาทีด้วย Omni 1.1 Flash',
+    sort_order: 3,
+    style_variant: 'highlight',
+    steps: [
+      {
+        step_number: 1,
+        label: 'STEP 3.1',
+        title: 'สร้างภาพโปสเตอร์ 9:16 (ใช้เป็นภาพเปิดคลิป First Frame)',
+        content:
+          'เลือกรุ่นโมเดลสร้างภาพ แล้วกดปุ่มสีชมพู [🪄 เสกภาพโปสเตอร์ 9:16 (Generate Image)] ระบบจะแสดงรูปโปสเตอร์ 9:16 ขึ้นมาในกรอบฝั่งขวาทันที',
+        sub_items: [
+          '[🍌 Nano Banana Pro] (แนะนำ): คมชัดสูงสุด รายละเอียดสินค้าและตัวหนังสือเป๊ะที่สุด | [🍌 Nano Banana 2.1]: ภาพสวยสมดุล แสงธรรมชาติละมุน | [🍌 Nano Banana 2 Lite]: เจนด่วนทันใจ ประหยัดเวลา',
+          'กดปุ่ม [👁️ Safe Zone TikTok] มุมขวาบนของกรอบภาพ เพื่อเช็กว่าป้ายข้อความโดนปุ่มหัวใจ/คอมเมนต์ หรือตะกร้าเหลืองของ TikTok/Reels บังหรือไม่',
+          'ถ้ายังไม่ถูกใจรูป: กดปุ่ม [🔄 สร้างรูปโปสเตอร์ 9:16 ใหม่ (สุ่มมุม/ท่าทางใหม่)] ด้านซ้าย หรือปุ่ม [🔄 สร้างรูปใหม่] ใต้ภาพเพื่อสุ่มใหม่ได้ทันที',
+        ],
+        sort_order: 1,
+      },
+      {
+        step_number: 2,
+        label: 'STEP 3.2',
+        title: 'เสกวิดีโอรีวิว 10 วินาที (Omni 1.1 Flash)',
+        content:
+          'เลือกความละเอียด [☀️ 720p (คมชัดสูง)] สำหรับนำไปโพสต์จริง หรือ [⚡ 360p (เจนไว)] สำหรับทดสอบจังหวะ แล้วกดปุ่ม [🎬 เสกวิดีโอ 10s (Omni 1.1 Flash • 720p)]',
+        sub_items: [
+          'ระบบจะสลับหน้าจอพรีวิวมาที่แท็บ [วิดีโอ 10s] อัตโนมัติและเล่นคลิปพร้อมเสียงพากย์ไทยทันทีที่เรนเดอร์เสร็จ',
+          'กดปุ่มสีเขียว [⬇️ ดาวน์โหลด] มุมขวาบนของกรอบพรีวิวเพื่อบันทึกไฟล์ .mp4 หรือ .png ลงเครื่อง',
+        ],
+        sort_order: 2,
+      },
+    ],
+  },
+  {
+    title: 'ขั้นที่ 4: เริ่มทำสินค้าชิ้นต่อไปแบบคลีนๆ',
+    icon: '🔄',
+    description: 'ล้างข้อมูลสินค้าเดิมเพื่อเริ่มทำคลิปปักตะกร้าสินค้าชิ้นต่อไปได้ทันที',
+    sort_order: 4,
+    style_variant: 'tip',
+    steps: [
+      {
+        step_number: 1,
+        label: 'STEP 1',
+        title: 'กดปุ่มเริ่มสินค้าใหม่',
+        content:
+          'เมื่อได้คลิปครบแล้วและต้องการทำสินค้าตัวใหม่ ให้กดปุ่ม [🛍️ เริ่มสินค้าใหม่] บนแถบด้านบนสุด หรือปุ่ม [🛍️ ไปต่อสินค้าชิ้นใหม่ (กลับหน้าแรกแบบคลีนๆ)] ด้านล่างของขั้นที่ 3',
+        sub_items: [
+          'ระบบจะล้างรูปและข้อความของสินค้าเดิมออกทั้งหมด แล้วพากลับไปเริ่มที่ ขั้นที่ 1 แบบสะอาดพร้อมรับสินค้าชิ้นต่อไปทันทีครับ',
+        ],
+        sort_order: 1,
+      },
+    ],
+  },
+];
+
 async function upsertGuideForTool(tool) {
   const { data: existingSections } = await supabase
     .from('guide_sections')
-    .select('id, title')
+    .select('id')
     .eq('tool_id', tool.id);
 
   if (existingSections && existingSections.length > 0) {
-    console.log(`[Guide] Tool ${tool.slug} already has ${existingSections.length} section(s)`);
-    return;
+    const oldIds = existingSections.map((s) => s.id);
+    await supabase.from('guide_steps').delete().in('section_id', oldIds);
+    await supabase.from('guide_sections').delete().in('id', oldIds);
   }
 
   const isFashion = tool.slug === 'puppap-fashion-studio';
-  const { data: section, error: secErr } = await supabase
-    .from('guide_sections')
-    .insert({
-      tool_id: tool.id,
-      title: isFashion
-        ? 'คู่มือเริ่มต้นใช้งาน PUP PAP Fashion Studio'
-        : 'คู่มือเริ่มต้นใช้งาน PUPPAP AI UGC Product',
-      icon: isFashion ? '👗' : '✨',
-      description:
-        'ทำตามขั้นตอนด้านล่างเพื่อสร้างคลิป AI ปักตะกร้าพร้อมคู่มือและคลิปสอนใน Google Drive',
-      sort_order: 1,
-      style_variant: 'default',
-    })
-    .select('id')
-    .single();
+  const sectionsSpec = isFashion ? FASHION_GUIDE_SECTIONS : UGC_PRODUCT_GUIDE_SECTIONS;
 
-  if (secErr || !section) {
-    console.warn(`[Guide] Failed to create section for ${tool.slug}:`, secErr?.message);
-    return;
+  for (const secSpec of sectionsSpec) {
+    const { data: section, error: secErr } = await supabase
+      .from('guide_sections')
+      .insert({
+        tool_id: tool.id,
+        title: secSpec.title,
+        icon: secSpec.icon,
+        description: secSpec.description,
+        sort_order: secSpec.sort_order,
+        style_variant: secSpec.style_variant,
+      })
+      .select('id')
+      .single();
+
+    if (secErr || !section) {
+      console.warn(`[Guide] Failed to create section for ${tool.slug}:`, secErr?.message);
+      continue;
+    }
+
+    const stepsPayload = secSpec.steps.map((st) => ({
+      section_id: section.id,
+      step_number: st.step_number,
+      label: st.label,
+      title: st.title,
+      content: st.content,
+      sub_items: st.sub_items,
+      sort_order: st.sort_order,
+    }));
+
+    const { error: stepsErr } = await supabase.from('guide_steps').insert(stepsPayload);
+    if (stepsErr) {
+      console.warn(`[Guide] Failed to insert steps for ${tool.slug}:`, stepsErr.message);
+    }
   }
-
-  const steps = isFashion
-    ? [
-        {
-          section_id: section.id,
-          step_number: '1',
-          label: 'STEP 1',
-          title: 'เปิดคู่มือและคลิปสอนใช้งานใน Google Drive',
-          content: `กดปุ่ม "📂 เปิดดูคู่มือและคลิปสอนใช้งาน (Google Drive)" ด้านบน หรือคลิกลิงก์ ${GUIDE_DRIVE_URL} เพื่อดูตัวอย่างการเตรียมภาพเสื้อผ้าและเทคนิคตั้งค่าก่อนเริ่มใช้งาน`,
-          sub_items: [
-            'เตรียมภาพถ่ายเสื้อผ้าหรือชุดที่ต้องการนำมารีวิว (พื้นหลังเรียบหรือภาพสินค้าจากร้านค้า)',
-            'ดูคลิปสอนเทคนิคการเลือกมุมกล้องและสไตล์นางแบบ-นายแบบในโฟลเดอร์ Google Drive',
-          ],
-          sort_order: 1,
-        },
-        {
-          section_id: section.id,
-          step_number: '2',
-          label: 'STEP 2',
-          title: 'กดปุ่ม "เข้าใช้งานเครื่องมือ" เพื่อเปิด Google Flow',
-          content:
-            'คลิกปุ่มเข้าใช้งานเครื่องมือด้านบนเพื่อเปิดหน้า PUP PAP Fashion Studio บน Google Flow (ต้องล็อกอินด้วยบัญชี Google)',
-          sub_items: [
-            'อัปโหลดภาพเสื้อผ้าของคุณเข้าสู่ช่อง Input ของเครื่องมือ',
-            'ระบุสไตล์นางแบบ/นายแบบ ฉากสตูดิโอ หรือคาแรกเตอร์ที่ต้องการให้สวมใส่ชุด',
-          ],
-          sort_order: 2,
-        },
-        {
-          section_id: section.id,
-          step_number: '3',
-          label: 'STEP 3',
-          title: 'สร้างวิดีโอแฟชั่น AI และนำไปโพสต์ปักตะกร้า',
-          content:
-            'กดรันให้ AI สร้างภาพและวิดีโอนางแบบสวมชุดจริง พร้อมบทพูดรีวิวเสื้อผ้าเพื่อนำไปโพสต์ปักตะกร้า TikTok / Shopee ได้ทันที',
-          sub_items: [
-            'ดาวน์โหลดคลิปวิดีโอความละเอียดสูงลงมือถือหรือคอมพิวเตอร์',
-            'แนบลิงก์ตะกร้าสินค้าเสื้อผ้าพร้อมแคปชันเพื่อปิดการขายอัตโนมัติ',
-          ],
-          sort_order: 3,
-        },
-      ]
-    : [
-        {
-          section_id: section.id,
-          step_number: '1',
-          label: 'STEP 1',
-          title: 'ศึกษาคู่มือและคลิปสอนใน Google Drive',
-          content: `กดปุ่ม "📂 เปิดดูคู่มือและคลิปสอนใช้งาน (Google Drive)" ด้านบน หรือเปิดลิงก์ ${GUIDE_DRIVE_URL} เพื่อดูแนวทางการทำคลิปรีวิวสไตล์ Minimal UGC`,
-          sub_items: [
-            'เตรียมรูปภาพสินค้าที่ต้องการรีวิว 1-2 ภาพ (เห็นฉลากหรือตัวสินค้าชัดเจน)',
-            'ระบุจุดเด่นของสินค้าหรือปัญหาของลูกค้าที่สินค้าช่วยแก้ได้',
-          ],
-          sort_order: 1,
-        },
-        {
-          section_id: section.id,
-          step_number: '2',
-          label: 'STEP 2',
-          title: 'เปิดเครื่องมือ PUPPAP AI UGC Product บน Google Flow',
-          content:
-            'กดปุ่มเข้าใช้งานเครื่องมือด้านบน อัปโหลดภาพสินค้า และเลือกโทนฉากมินิมอลสะอาดตาตามที่ต้องการ',
-          sub_items: [
-            'ระบบจะช่วยออกแบบมุมกล้องรีวิวสินค้าสไตล์ UGC ที่ดูเป็นธรรมชาติและน่าเชื่อถือ',
-            'สร้างสคริปต์และจังหวะการโชว์สินค้าที่ดึงดูดสายตาตั้งแต่วินาทีแรก',
-          ],
-          sort_order: 2,
-        },
-        {
-          section_id: section.id,
-          step_number: '3',
-          label: 'STEP 3',
-          title: 'ดาวน์โหลดคลิป Minimal UGC พร้อมปักตะกร้าทำเงิน',
-          content:
-            'บันทึกวิดีโอที่ได้ไปโพสต์ลงช่อง TikTok / Reels / Shopee Video พร้อมปักตะกร้าสินค้าได้ทันที',
-          sub_items: [
-            'สามารถสร้างหลายเวอร์ชันเพื่อทดสอบมุมกล้องที่ทำยอดขายดีที่สุด',
-            'ดูเทคนิคการตัดต่อและพากย์เสียงเพิ่มเติมได้ในคอร์สเรียน TikTok AI Affiliate',
-          ],
-          sort_order: 3,
-        },
-      ];
-
-  const { error: stepsErr } = await supabase.from('guide_steps').insert(steps);
-  if (stepsErr) {
-    console.warn(`[Guide] Failed to insert steps for ${tool.slug}:`, stepsErr.message);
-  } else {
-    console.log(`[Guide] Created guide section + 3 steps for ${tool.slug}`);
-  }
+  console.log(`[Guide] Upserted ${sectionsSpec.length} guide sections for ${tool.slug}`);
 }
 
 async function main() {
@@ -281,17 +520,23 @@ async function main() {
   courseFeatures.guide_drive_url = GUIDE_DRIVE_URL;
   courseFeatures.bundle_bonus_slugs = ['puppap-fashion-studio', 'puppap-ugc-product'];
 
-  if (Array.isArray(courseFeatures.course_lessons)) {
-    courseFeatures.course_lessons = courseFeatures.course_lessons.map((lesson, idx) => {
-      const lessonNum = idx + 1;
-      if (lessonNum === 14 || lesson.id === 'lesson-14') {
+  const linkLessonSlugs = (lessonList) =>
+    lessonList.map((lesson, idx) => {
+      const lessonNum = Number(lesson?.id) || idx + 1;
+      if (lessonNum === 14 || lesson?.id === 'lesson-14') {
         return { ...lesson, flow_tool_slug: 'puppap-ugc-product' };
       }
-      if (lessonNum === 22 || lesson.id === 'lesson-22') {
+      if (lessonNum === 22 || lesson?.id === 'lesson-22') {
         return { ...lesson, flow_tool_slug: 'puppap-fashion-studio' };
       }
       return lesson;
     });
+
+  if (Array.isArray(courseFeatures.lessons)) {
+    courseFeatures.lessons = linkLessonSlugs(courseFeatures.lessons);
+  }
+  if (Array.isArray(courseFeatures.course_lessons)) {
+    courseFeatures.course_lessons = linkLessonSlugs(courseFeatures.course_lessons);
   }
 
   const { error: updateCourseErr } = await supabase
@@ -400,7 +645,19 @@ async function main() {
   );
 }
 
-main().catch((err) => {
-  console.error('Backfill failed:', err);
-  process.exit(1);
-});
+const isCli =
+  typeof process !== 'undefined' &&
+  Array.isArray(process.argv) &&
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+
+if (isCli) {
+  if (!supabase) {
+    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    process.exit(1);
+  }
+  main().catch((err) => {
+    console.error('Backfill failed:', err);
+    process.exit(1);
+  });
+}

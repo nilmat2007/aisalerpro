@@ -64,7 +64,7 @@ export default function AdminToolsPage() {
 
   const fetchTools = async () => {
     try {
-      const res = await fetch('/api/tools')
+      const res = await fetch('/api/tools?admin=1')
       if (res.ok) {
         const data = await res.json()
         setTools(data)

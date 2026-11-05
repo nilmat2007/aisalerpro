@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
 import { requireAdmin } from '@/lib/auth/require-admin';
 import { ADMIN_TOOL_SELECT_COLUMNS } from '@/lib/sanitize-tool';
@@ -58,6 +59,13 @@ export async function PUT(request: Request) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    try {
+      revalidatePath('/courses');
+      revalidatePath('/course/tiktok-ai-affiliate');
+      revalidatePath('/');
+    } catch {
+      // No-op outside Next.js request context
+    }
     return NextResponse.json(data);
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

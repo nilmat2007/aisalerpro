@@ -109,7 +109,7 @@ export async function POST(request: Request) {
     const { data: tool, error: toolError } = await supabase
       .from('tools')
       .select(
-        'id, name, slug, icon, poster_url, logo_url, password, description, price, badge_text, badge_color, version, is_active, is_coming_soon, sort_order, flow_url, trial_enabled, trial_flow_url, features'
+        'id, name, slug, icon, poster_url, logo_url, password, description, price, badge_text, badge_color, version, is_active, is_coming_soon, sort_order, flow_url, demo_video_url, trial_enabled, trial_flow_url, features'
       )
       .eq('id', toolId)
       .single();

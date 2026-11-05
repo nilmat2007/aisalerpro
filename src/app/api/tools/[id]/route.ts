@@ -1,13 +1,31 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/auth'
 import { requireAdmin } from '@/lib/auth/require-admin'
 import {
+  ADMIN_TOOL_SELECT_COLUMNS,
   PUBLIC_TOOL_SELECT_COLUMNS,
+  mergePreservedSensitiveToolFields,
   sanitizeToolForPublic,
   type PublicTool,
   type Tool,
 } from '@/lib/sanitize-tool'
+
+function safeRevalidateToolPaths(slug?: string | null) {
+  try {
+    revalidatePath('/')
+    revalidatePath('/store')
+    revalidatePath('/flow-tools')
+    revalidatePath('/courses')
+    if (slug) {
+      revalidatePath(`/tool/${slug}`)
+      revalidatePath(`/course/${slug}`)
+    }
+  } catch {
+    // No-op outside Next.js request context (e.g. unit tests)
+  }
+}
 
 export async function GET(
   request: Request,
@@ -50,8 +68,32 @@ export async function PUT(
     const resolvedParams = await params
     const body = await request.json()
 
-    const { id, created_at, ...updateData } = body
-    updateData.updated_at = new Date().toISOString()
+    const { id, created_at, ...rawUpdateData } = body
+    rawUpdateData.updated_at = new Date().toISOString()
+
+    // Belt-and-suspenders guard (paired with GET /api/tools?admin=1):
+    // Fetch existing row before updating so any sanitized placeholder (e.g. video_url='locked',
+    // prompts=null, or omitted guide_drive_url / demo_video_url) never overwrites real DB data.
+    let existingTool: Record<string, any> | null = null
+    try {
+      const selectQuery: any = supabase.from('tools')?.select?.(ADMIN_TOOL_SELECT_COLUMNS)
+      if (selectQuery && typeof selectQuery.eq === 'function') {
+        const eqQuery = selectQuery.eq('id', resolvedParams.id)
+        const res =
+          typeof eqQuery?.maybeSingle === 'function'
+            ? await eqQuery.maybeSingle()
+            : typeof eqQuery?.single === 'function'
+              ? await eqQuery.single()
+              : null
+        if (res?.data) {
+          existingTool = res.data
+        }
+      }
+    } catch {
+      existingTool = null
+    }
+
+    const updateData = mergePreservedSensitiveToolFields(existingTool, rawUpdateData)
 
     const { data, error } = await supabase
       .from('tools')
@@ -61,6 +103,8 @@ export async function PUT(
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    safeRevalidateToolPaths((data as any)?.slug || existingTool?.slug)
 
     const sanitized = sanitizeToolForPublic(data as unknown as Tool, {
       session: auth.session,
@@ -87,5 +131,6 @@ export async function DELETE(
     .eq('id', resolvedParams.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  safeRevalidateToolPaths()
   return NextResponse.json({ success: true })
 }

@@ -76,9 +76,10 @@ export const PUBLIC_TOOL_SELECT_COLUMNS =
 export const ADMIN_TOOL_SELECT_COLUMNS =
   'id, name, slug, icon, poster_url, logo_url, password, description, price, badge_text, badge_color, version, is_active, is_coming_soon, sort_order, created_at, updated_at, features, demo_video_url, contact_url, youtube_url, trial_enabled, flow_url, trial_flow_url';
 
-export type PublicTool = Omit<Tool, 'password' | 'flow_url' | 'trial_flow_url'> & {
+export type PublicTool = Omit<Tool, 'password' | 'flow_url' | 'trial_flow_url' | 'demo_video_url'> & {
   flow_url?: string;
   trial_flow_url?: string;
+  demo_video_url?: string | null;
   password?: never;
 };
 
@@ -88,6 +89,11 @@ export type PublicLesson = Omit<Lesson, 'video_url' | 'prompts'> & {
   promptStepCount: number;
 };
 
+// IMPORTANT: Whenever you add a new sensitive field that gets stripped or masked here
+// (e.g., flow_url, trial_flow_url, demo_video_url, password, features.guide_drive_url,
+// features.lessons[].video_url = 'locked', features.lessons[].prompts = null),
+// you MUST also update `mergePreservedSensitiveToolFields()` below (used by `PUT /api/tools/[id]`)
+// so admin edits never overwrite real DB values with sanitized placeholders.
 export function sanitizeLessonForPublic(
   lesson: Lesson,
   opts: { hasAccess: boolean; isFreePreview: boolean }
@@ -112,6 +118,7 @@ export function sanitizeLessonForPublic(
   };
 }
 
+// IMPORTANT: Keep `mergePreservedSensitiveToolFields()` in sync with any field stripped/masked here.
 export function sanitizeToolForPublic(
   tool: Tool,
   opts: { session: Session | null; hasAccess: boolean; isTrial: boolean }
@@ -120,6 +127,7 @@ export function sanitizeToolForPublic(
     password: _password,
     flow_url,
     trial_flow_url,
+    demo_video_url,
     api_key: _apiKey,
     secret: _secret,
     webhook_url: _webhookUrl,
@@ -135,6 +143,11 @@ export function sanitizeToolForPublic(
       !Array.isArray(allowedFields.features)
     ) {
       const featObj = { ...allowedFields.features };
+      // Keep guide_drive_url in DB as admin backup only — never expose on public/member responses
+      delete featObj.guide_drive_url;
+      if (!opts.hasAccess) {
+        delete featObj.tutorial_video_url;
+      }
       if (Array.isArray(featObj.lessons)) {
         featObj.lessons = featObj.lessons.map((l: Lesson) =>
           sanitizeLessonForPublic(l, {
@@ -157,11 +170,93 @@ export function sanitizeToolForPublic(
     result.flow_url = flow_url;
   }
 
+  if (opts.hasAccess && demo_video_url) {
+    result.demo_video_url = demo_video_url;
+  }
+
   if (opts.isTrial && !opts.hasAccess && trial_flow_url) {
     result.trial_flow_url = trial_flow_url;
   }
 
   return result;
+}
+
+/**
+ * Belt-and-suspenders guard for `PUT /api/tools/[id]` so that if a client ever submits
+ * a partially sanitized payload (e.g. `video_url === 'locked'`, `prompts === null`,
+ * or missing `guide_drive_url` / `demo_video_url`), real DB values are preserved.
+ */
+export function mergePreservedSensitiveToolFields(
+  existingTool: Record<string, any> | null | undefined,
+  updateData: Record<string, any>
+): Record<string, any> {
+  if (!existingTool) return updateData;
+  const merged = { ...updateData };
+
+  if (merged.flow_url === null && existingTool.flow_url) {
+    merged.flow_url = existingTool.flow_url;
+  }
+  if (merged.trial_flow_url === null && existingTool.trial_flow_url) {
+    merged.trial_flow_url = existingTool.trial_flow_url;
+  }
+  if (merged.demo_video_url === undefined && existingTool.demo_video_url) {
+    merged.demo_video_url = existingTool.demo_video_url;
+  }
+  if ((merged.password === 'none' || !merged.password) && existingTool.password && existingTool.password !== 'none') {
+    merged.password = existingTool.password;
+  }
+
+  const existingFeat =
+    existingTool.features && typeof existingTool.features === 'object' && !Array.isArray(existingTool.features)
+      ? existingTool.features
+      : null;
+  const incomingFeat =
+    merged.features && typeof merged.features === 'object' && !Array.isArray(merged.features)
+      ? { ...merged.features }
+      : null;
+
+  if (existingFeat && incomingFeat) {
+    if (incomingFeat.guide_drive_url === undefined && existingFeat.guide_drive_url) {
+      incomingFeat.guide_drive_url = existingFeat.guide_drive_url;
+    }
+    if (incomingFeat.bundle_bonus_slugs === undefined && existingFeat.bundle_bonus_slugs) {
+      incomingFeat.bundle_bonus_slugs = existingFeat.bundle_bonus_slugs;
+    }
+    if (incomingFeat.bundle_with_course === undefined && existingFeat.bundle_with_course) {
+      incomingFeat.bundle_with_course = existingFeat.bundle_with_course;
+    }
+    if (incomingFeat.highlights === undefined && existingFeat.highlights) {
+      incomingFeat.highlights = existingFeat.highlights;
+    }
+    if (Array.isArray(incomingFeat.lessons) && Array.isArray(existingFeat.lessons)) {
+      const existingById = new Map<number, any>(
+        existingFeat.lessons.map((l: any) => [Number(l.id), l])
+      );
+      incomingFeat.lessons = incomingFeat.lessons.map((incLesson: any) => {
+        const orig = existingById.get(Number(incLesson?.id));
+        if (!orig) return incLesson;
+        return {
+          ...orig,
+          ...incLesson,
+          video_url:
+            !incLesson.video_url || incLesson.video_url === 'locked'
+              ? orig.video_url
+              : incLesson.video_url,
+          prompts:
+            incLesson.prompts === null || incLesson.prompts === undefined
+              ? orig.prompts
+              : incLesson.prompts,
+          flow_tool_slug:
+            incLesson.flow_tool_slug !== undefined
+              ? incLesson.flow_tool_slug
+              : orig.flow_tool_slug,
+        };
+      });
+    }
+    merged.features = incomingFeat;
+  }
+
+  return merged;
 }
 
 // ============================================================================
@@ -188,7 +283,12 @@ export function withLessonVideoLink<T extends Record<string, any>>(lesson: T, ur
 
 export function getLessonEmbedUrl(lesson: any): string {
   const url = getLessonVideoLink(lesson);
-  if (!url) return '';
+  return getToolTutorialEmbedUrl(url);
+}
+
+export function getToolTutorialEmbedUrl(rawUrl?: string | null): string {
+  const url = rawUrl ? String(rawUrl).trim() : '';
+  if (!url || url === 'locked') return '';
 
   const driveMatch =
     url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
