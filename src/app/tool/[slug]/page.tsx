@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { supabase as supabaseAdmin } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 import ToolGuideClient from './ToolGuideClient'
 import {
@@ -8,6 +9,10 @@ import {
   getToolTrialFlowLink,
   type Tool,
 } from '@/lib/sanitize-tool'
+import {
+  resolveUserBundleAccess,
+  attemptCourseBundleHeal,
+} from '@/lib/course-bundle'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,17 +42,16 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   let isTrial = false
 
   if (user) {
-    const { data: userTool } = await supabase
-      .from('user_tools')
-      .select('id, user_id, tool_id, is_active')
-      .eq('user_id', user.id)
-      .eq('tool_id', tool.id)
-      .maybeSingle()
-
-    if (userTool) {
+    const bundleAccess = await resolveUserBundleAccess(supabaseAdmin, user.id, user.email || '')
+    if (bundleAccess.ownedToolIds.includes(tool.id)) {
       hasAccess = true
-    } else if (user.email) {
-      // Auto-heal if user has an activated license key or approved order for this tool under their email
+    }
+    if (bundleAccess.needsBackgroundSync) {
+      await attemptCourseBundleHeal(supabaseAdmin, user.id, user.email || '')
+    }
+
+    if (!hasAccess && user.email) {
+      // Auto-heal if user has an activated license key or approved order for this specific tool under their email
       const [{ data: keysList }, { data: approvedOrder }] = await Promise.all([
         supabase
           .from('license_keys')
@@ -80,7 +84,7 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
 
       if (existingKey || validOrder) {
         hasAccess = true
-        await supabase.from('user_tools').upsert(
+        await supabaseAdmin.from('user_tools').upsert(
           {
             user_id: user.id,
             tool_id: tool.id,
@@ -94,17 +98,25 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
     }
 
     if (!hasAccess && tool.is_active && !tool.is_coming_soon) {
-      // เช็ค trial เฉพาะเครื่องมือที่เปิดใช้งานอยู่เท่านั้น
-      const { data: trial } = await supabase
+      // เช็ค trial เฉพาะเครื่องมือที่เปิดใช้งานอยู่เท่านั้น (7-day expiry check)
+      const { data: trial } = await supabaseAdmin
         .from('user_trials')
-        .select('id, status')
+        .select('*')
         .eq('user_id', user.id)
         .eq('tool_id', tool.id)
         .eq('status', 'active')
         .maybeSingle()
       if (trial) {
-        hasAccess = true
-        isTrial = true
+        const startMs = new Date(trial.started_at || trial.created_at || Date.now()).getTime()
+        const expiresMs = trial.expires_at
+          ? new Date(trial.expires_at).getTime()
+          : startMs + 7 * 24 * 60 * 60 * 1000
+        if (expiresMs > Date.now()) {
+          hasAccess = true
+          isTrial = true
+        } else {
+          await supabaseAdmin.from('user_trials').update({ status: 'expired' }).eq('id', trial.id)
+        }
       }
     }
   }

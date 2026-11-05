@@ -1,10 +1,15 @@
 import { createClient } from '@/lib/supabase/server';
+import { supabase as supabaseAdmin } from '@/lib/supabase';
 import FlowToolsClient from './FlowToolsClient';
 import {
   PUBLIC_TOOL_SELECT_COLUMNS,
   sanitizeToolForPublic,
   type Tool,
 } from '@/lib/sanitize-tool';
+import {
+  resolveUserBundleAccess,
+  attemptCourseBundleHeal,
+} from '@/lib/course-bundle';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +29,10 @@ export default async function FlowToolsPage() {
 
   let userTools: any[] = [];
   let userTrials: any[] = [];
+  const ownedSet = new Set<string>();
 
   if (user) {
-    const [userToolsRes, userTrialsRes, keysByEmailRes, ordersByEmailRes] = await Promise.all([
+    const [userToolsRes, userTrialsRes, keysByEmailRes, ordersByEmailRes, bundleAccess] = await Promise.all([
       supabase.from('user_tools').select('id, user_id, tool_id, license_key_id, activated_at, is_active').eq('user_id', user.id),
       supabase.from('user_trials').select('id, user_id, tool_id, status').eq('user_id', user.id),
       user.email
@@ -43,10 +49,24 @@ export default async function FlowToolsPage() {
             .eq('status', 'approved')
             .ilike('user_email', user.email)
         : Promise.resolve({ data: [] as any[] }),
+      resolveUserBundleAccess(supabaseAdmin, user.id, user.email || ''),
     ]);
 
     userTools = userToolsRes.data || [];
     userTrials = userTrialsRes.data || [];
+
+    for (const ut of userTools) {
+      if (ut.is_active !== false) ownedSet.add(ut.tool_id);
+    }
+    for (const tid of bundleAccess?.ownedToolIds || []) {
+      ownedSet.add(tid);
+    }
+
+    let healed = false;
+    if (bundleAccess?.needsBackgroundSync) {
+      const healRes = await attemptCourseBundleHeal(supabaseAdmin, user.id, user.email || '');
+      if (healRes.healed) healed = true;
+    }
 
     const existingToolIds = new Set(userTools.map((ut: any) => ut.tool_id));
     const recoveredToolIds = new Set<string>();
@@ -79,7 +99,7 @@ export default async function FlowToolsPage() {
 
     if (recoveredToolIds.size > 0) {
       for (const toolId of recoveredToolIds) {
-        await supabase.from('user_tools').upsert(
+        await supabaseAdmin.from('user_tools').upsert(
           {
             user_id: user.id,
             tool_id: toolId,
@@ -88,8 +108,13 @@ export default async function FlowToolsPage() {
           },
           { onConflict: 'user_id,tool_id' }
         );
+        ownedSet.add(toolId);
       }
-      const { data: refreshedUserTools } = await supabase
+      healed = true;
+    }
+
+    if (healed) {
+      const { data: refreshedUserTools } = await supabaseAdmin
         .from('user_tools')
         .select('id, user_id, tool_id, license_key_id, activated_at, is_active')
         .eq('user_id', user.id);
@@ -97,7 +122,9 @@ export default async function FlowToolsPage() {
     }
   }
 
-  const ownedSet = new Set(userTools.map((ut: any) => ut.tool_id));
+  for (const ut of userTools) {
+    if (ut.is_active !== false) ownedSet.add(ut.tool_id);
+  }
   const trialSet = new Set(userTrials.map((tr: any) => tr.tool_id));
   const sanitizedTools = ((tools || []) as unknown as Tool[]).map((t) =>
     sanitizeToolForPublic(t, {

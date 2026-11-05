@@ -293,3 +293,69 @@ export function notifyTrialConverted(name: string, email: string, toolName: stri
   )
 }
 
+export async function notifyBundleGrantFailure(params: {
+  userId?: string | null
+  userEmail?: string | null
+  orderId?: string | null
+  errorCode: string
+  errorMessage?: string
+  requestId?: string
+  context?: string
+}): Promise<boolean> {
+  const buttons = params.orderId
+    ? {
+        inline_keyboard: [
+          [{ text: '🔄 กดอนุมัติซ้ำ (Retry Grant)', callback_data: `approve_${params.orderId}` }],
+        ],
+      }
+    : undefined
+
+  const text =
+    `🚨 <b>[BUNDLE GRANT / SYNC ALERT]</b>\n` +
+    `⚠️ <b>รหัสข้อผิดพลาด:</b> <code>${params.errorCode}</code>\n` +
+    (params.context ? `📍 <b>จุดเกิดเหตุ:</b> ${params.context}\n` : '') +
+    (params.orderId ? `🧾 <b>Order ID:</b> <code>${params.orderId}</code>\n` : '') +
+    (params.userEmail ? `📧 <b>อีเมลลูกค้า:</b> ${params.userEmail}\n` : '') +
+    (params.userId ? `🆔 <b>User ID:</b> <code>${params.userId}</code>\n` : '') +
+    (params.requestId ? `🔗 <b>Request ID:</b> <code>${params.requestId}</code>\n` : '') +
+    (params.errorMessage ? `📝 <b>รายละเอียด:</b> ${params.errorMessage}\n` : '') +
+    `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`
+
+  const sentTelegram = await sendTelegram(text, buttons)
+
+  // Fallback to ADMIN_ALERT_EMAIL / SMTP_USER if Telegram fails or if critical
+  const fallbackAdminEmail = process.env.ADMIN_ALERT_EMAIL || process.env.SMTP_USER || ''
+  if ((!sentTelegram || params.errorCode.includes('CRITICAL') || params.errorCode.includes('EXHAUSTED')) && fallbackAdminEmail) {
+    try {
+      const { sendEmail } = await import('@/lib/email')
+      await sendEmail({
+        to: fallbackAdminEmail,
+        subject: `🚨 [ALERT: ${params.errorCode}] ระบบปลดล็อกชุดโปรโมชันคอร์ส ฿299 ต้องการการตรวจสอบ`,
+        html: `<div style="font-family:sans-serif;line-height:1.6">
+          <h2 style="color:#dc2626">🚨 แจ้งเตือนระบบ Course Bundle (${params.errorCode})</h2>
+          <p><b>Context:</b> ${params.context || '-'}</p>
+          <p><b>Order ID:</b> ${params.orderId || '-'}</p>
+          <p><b>User Email:</b> ${params.userEmail || '-'}</p>
+          <p><b>User ID:</b> ${params.userId || '-'}</p>
+          <p><b>Request ID:</b> ${params.requestId || '-'}</p>
+          <p><b>Detail:</b> ${params.errorMessage || '-'}</p>
+        </div>`,
+      })
+    } catch (emailErr) {
+      console.error('[notifyBundleGrantFailure] Fallback email failed:', emailErr)
+    }
+  }
+
+  const webhookUrl = process.env.CRITICAL_ALERT_WEBHOOK_URL
+  if (webhookUrl && (params.errorCode.includes('CRITICAL') || params.errorCode.includes('EXHAUSTED'))) {
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...params, timestamp: new Date().toISOString() }),
+    }).catch((err) => console.error('[notifyBundleGrantFailure] Webhook error:', err))
+  }
+
+  return sentTelegram
+}
+
+

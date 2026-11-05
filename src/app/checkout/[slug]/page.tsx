@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { supabase as supabaseAdmin } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
 import CheckoutClient from './CheckoutClient'
 import {
@@ -6,6 +7,11 @@ import {
   sanitizeToolForPublic,
   type Tool,
 } from '@/lib/sanitize-tool'
+import {
+  resolveUserBundleAccess,
+  attemptCourseBundleHeal,
+  getCourseBundleToolIds,
+} from '@/lib/course-bundle'
 
 export const dynamic = 'force-dynamic';
 
@@ -23,19 +29,18 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
     .single()
   if (!tool) redirect('/store')
 
-  // Check if user already owns this tool
+  // Check if user already owns this tool (including via Course Bundle)
   let alreadyOwned = false
-  const { data: existingUserTool } = await supabase
-    .from('user_tools')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('tool_id', tool.id)
-    .maybeSingle()
-
-  if (existingUserTool) {
+  const bundleAccess = await resolveUserBundleAccess(supabaseAdmin, user.id, user.email || '')
+  if (bundleAccess.ownedToolIds.includes(tool.id)) {
     alreadyOwned = true
-  } else if (user.email) {
-    // Also check if they have an activated key or approved order under their email
+  }
+  if (bundleAccess.needsBackgroundSync) {
+    await attemptCourseBundleHeal(supabaseAdmin, user.id, user.email || '')
+  }
+
+  if (!alreadyOwned && user.email) {
+    // Also check if they have an activated key or approved order for this specific tool under their email
     const [{ data: keysList }, { data: approvedOrder }] = await Promise.all([
       supabase
         .from('license_keys')
@@ -68,7 +73,7 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
 
     if (existingKey || validOrder) {
       alreadyOwned = true
-      await supabase.from('user_tools').upsert(
+      await supabaseAdmin.from('user_tools').upsert(
         {
           user_id: user.id,
           tool_id: tool.id,
@@ -85,14 +90,16 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
     redirect('/store')
   }
 
-  // Check if user has a pending or recently rejected order for this tool
+  // Check if user has a pending or recently rejected order for this tool (or bundle)
   let initialOrder: any = null
   if (!alreadyOwned) {
+    const bundleInfo = await getCourseBundleToolIds(supabaseAdmin)
+    const targetIds = bundleInfo.bundleIds.includes(tool.id) ? bundleInfo.bundleIds : [tool.id]
     const { data: latestOrder } = await supabase
       .from('orders')
       .select('id, status, slip_url, admin_note, created_at')
       .eq('user_id', user.id)
-      .eq('tool_id', tool.id)
+      .in('tool_id', targetIds)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()

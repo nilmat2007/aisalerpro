@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { supabase as supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -8,6 +9,11 @@ import {
   sanitizeToolForPublic,
   type Tool,
 } from '@/lib/sanitize-tool'
+import {
+  resolveUserBundleAccess,
+  attemptCourseBundleHeal,
+  COURSE_BUNDLE_BONUS_TOOL_SLUGS,
+} from '@/lib/course-bundle'
 
 export const dynamic = 'force-dynamic';
 
@@ -18,12 +24,12 @@ export default async function StorePage() {
 
   const ownedToolIds = new Set<string>()
   if (user) {
-    const { data: userTools } = await supabase
-      .from('user_tools')
-      .select('tool_id')
-      .eq('user_id', user.id)
-    for (const ut of userTools || []) {
-      ownedToolIds.add(ut.tool_id)
+    const bundleAccess = await resolveUserBundleAccess(supabaseAdmin, user.id, user.email || '')
+    for (const tid of bundleAccess.ownedToolIds) {
+      ownedToolIds.add(tid)
+    }
+    if (bundleAccess.needsBackgroundSync) {
+      await attemptCourseBundleHeal(supabaseAdmin, user.id, user.email || '')
     }
   }
 
@@ -201,6 +207,16 @@ export default async function StorePage() {
                       {!isOwned && updateInfo?.isRecent && (
                         <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-700 text-white backdrop-blur-md shadow-sm">
                           {updateInfo.text}
+                        </span>
+                      )}
+                      {!isOwned && COURSE_BUNDLE_BONUS_TOOL_SLUGS.includes(tool.slug as any) && (
+                        <span className="px-2.5 py-1 text-xs font-black rounded-lg bg-amber-500 text-stone-950 backdrop-blur-md shadow-sm">
+                          🎁 แถมฟรีในคอร์ส ฿299
+                        </span>
+                      )}
+                      {!isOwned && isCourse && (
+                        <span className="px-2.5 py-1 text-xs font-black rounded-lg bg-amber-500 text-stone-950 backdrop-blur-md shadow-sm">
+                          🎁 แถมฟรี 2 เครื่องมือ AI
                         </span>
                       )}
                     </div>

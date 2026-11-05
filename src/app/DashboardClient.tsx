@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -52,6 +52,18 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
   const [activeAnnouncements, setActiveAnnouncements] = useState(announcements);
   const [trialToolIds, setTrialToolIds] = useState<Set<string>>(new Set(userTrials?.map((t: any) => t.tool_id) || []));
   const [startingTrial, setStartingTrial] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetch('/api/bundle/sync', { method: 'POST' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.healed) {
+          router.refresh();
+        }
+      })
+      .catch(() => {});
+  }, [user?.id, router]);
 
   const startTrial = async (toolId: string) => {
     setStartingTrial(toolId);
@@ -343,8 +355,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                         <span>📱</span> ดูบนมือถือได้
                       </span>
                       <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <span>🔄</span> อัปเดตฟรีตลอดชีพ
+                      <span className="flex items-center gap-1 text-[var(--accent)] font-black">
+                        <span>🎁</span> แถมฟรี 2 เครื่องมือ AI (Fashion Studio + UGC Product)
                       </span>
                     </div>
                   </div>

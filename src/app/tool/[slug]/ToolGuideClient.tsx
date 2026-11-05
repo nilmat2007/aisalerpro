@@ -123,6 +123,14 @@ export default function ToolGuideClient({
 
   const activeFlowUrl = isTrial && trialFlowUrl ? trialFlowUrl : (unlockedFlowUrl || getToolFlowLink(tool));
   const priceInfo = getPriceInfo(tool.price, tool.features);
+  const feat = typeof tool.features === 'object' && tool.features !== null && !Array.isArray(tool.features) ? tool.features : {};
+  const isCourseBonusTool =
+    feat.included_in_course_slug === 'tiktok-ai-affiliate' ||
+    slug === 'puppap-fashion-studio' ||
+    slug === 'puppap-ugc-product';
+  const guideDriveUrl =
+    feat.guide_drive_url ||
+    (isCourseBonusTool ? 'https://drive.google.com/drive/folders/1v8Kyr1GRW7mqA5sd6SiZvLJFayOOQjiA?usp=drive_link' : '');
 
   // ===== MAIN GUIDE CONTENT =====
   return (
@@ -187,7 +195,7 @@ export default function ToolGuideClient({
               </p>
             )}
             {activeFlowUrl && (
-              <div className="pt-1">
+              <div className="pt-1 flex flex-col sm:flex-row items-center justify-center gap-2.5">
                 <a
                   href={activeFlowUrl}
                   target="_blank"
@@ -197,6 +205,17 @@ export default function ToolGuideClient({
                   <span>🚀 เปิดใช้งานเครื่องมือ Google Flow ทันที</span>
                   <span>↗</span>
                 </a>
+                {guideDriveUrl && (
+                  <a
+                    href={guideDriveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="puppap-btn-secondary px-5 py-3 text-xs sm:text-sm font-black inline-flex items-center justify-center gap-2 border-2 border-amber-500/50 text-amber-800 dark:text-amber-300"
+                  >
+                    <span>📂 เปิดดูคู่มือและคลิปสอนใช้งาน (Google Drive)</span>
+                    <span>↗</span>
+                  </a>
+                )}
               </div>
             )}
           </div>
@@ -236,6 +255,16 @@ export default function ToolGuideClient({
                   >
                     <span>🛒 สั่งซื้อและเปิดสิทธิ์ทันที ฿{priceInfo.formattedPrice}</span>
                   </Link>
+                  {guideDriveUrl && (
+                    <a
+                      href={guideDriveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="puppap-btn-secondary px-4 py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 border border-amber-500/40 text-amber-800 dark:text-amber-300"
+                    >
+                      <span>📂 คู่มือ & คลิปสอนใช้ (Google Drive)</span>
+                    </a>
+                  )}
                   <a
                     href="https://m.me/100083126689322"
                     target="_blank"
@@ -245,6 +274,18 @@ export default function ToolGuideClient({
                     <span>💬 สอบถามทาง Messenger</span>
                   </a>
                 </div>
+
+                {isCourseBonusTool && (
+                  <div className="mt-3 p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-left space-y-1.5">
+                    <div className="text-xs sm:text-sm font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                      <span>🎁</span>
+                      <span>โปรโมชันสุดคุ้ม! ซื้อ ฿299 ได้ครบทั้ง 3 รายการ (มูลค่ารวม ฿897)</span>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                      ไม่ว่าคุณจะกดซื้อเครื่องมือนี้ ฿299 หรือสมัครคอร์สเรียน <strong>ปั้นนายหน้า TikTok ด้วย AI (฿299)</strong> ระบบจะปลดล็อกให้ครบทั้ง <strong>คอร์สเรียน 22 บท + PUP PAP Fashion Studio + PUPPAP AI UGC Product</strong> พร้อมกันทันที!
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

@@ -4,198 +4,207 @@ import { NextResponse } from 'next/server';
 import { notifyOrderApproved } from '@/lib/telegram';
 import { sendEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email';
 import { sendMetaCapiEvent } from '@/lib/meta-capi';
-
-function generateLicenseCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = 'PHM-';
-  for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-  result += '-';
-  for (let i = 0; i < 4; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
-  return result;
-}
+import {
+  approveOrderAndGrantBundle,
+  revokeCourseBundleEntitlements,
+  BUNDLE_ERROR_CATALOG,
+  extractRequestId,
+  formatSharedKeyRevokeMessage,
+  type BundleErrorCode,
+} from '@/lib/course-bundle';
 
 export async function PATCH(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
+  const requestId = extractRequestId(request);
   const auth = await requireAdmin();
   if (!auth.ok) return auth.response;
 
   try {
     const { id } = await props.params;
-    const { action, note } = await request.json();
+    const body = await request.json();
+    const { action, note, revokeReason: rawRevokeReason } = body;
+
+    const adminUserId = (auth as any).session?.user?.id || null;
+    const isUuid =
+      typeof adminUserId === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adminUserId);
+    const validAdminUuid = isUuid ? adminUserId : null;
+    const adminActor = validAdminUuid ? `admin:${validAdminUuid}` : 'admin:web';
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('id, user_id, user_email, tool_id, package_type, amount, slip_url, status, admin_note, license_key_id, created_at, approved_at, approved_by')
       .eq('id', id)
-      .single();
-      
-    if (orderError || !order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      .maybeSingle();
 
-    if (action === 'approve') {
-      if (order.status !== 'pending') {
-        return NextResponse.json({ error: 'Order is not pending' }, { status: 400 });
+    if (orderError || !order) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'ORDER_NOT_FOUND',
+          message: BUNDLE_ERROR_CATALOG.ORDER_NOT_FOUND.messageTh,
+          requestId,
+        },
+        { status: 404, headers: { 'X-Request-Id': requestId } }
+      );
+    }
+
+    if (action === 'approve' || action === 'retry_grant') {
+      if (action === 'retry_grant') {
+        await supabase
+          .from('orders')
+          .update({
+            grant_retry_count: 0,
+            grant_retry_exhausted: false,
+            last_grant_error: null,
+          })
+          .eq('id', id);
       }
-      const keyCode = generateLicenseCode();
-      
-      // 1. Create license key
-      const { data: newKey, error: keyError } = await supabase
-        .from('license_keys')
-        .insert({
-          tool_id: order.tool_id,
-          key_code: keyCode,
-          status: 'activated',
-          activated_at: new Date().toISOString(),
-          activated_by: order.user_id,
-          activated_email: order.user_email
-        })
-        .select('id, key_code')
-        .single();
-        
-      if (keyError) throw keyError;
 
-      // 2. Auto-activate for user (Upsert to guarantee idempotency)
-      const { error: userToolError } = await supabase
-        .from('user_tools')
-        .upsert(
+      const grantRes = await approveOrderAndGrantBundle({
+        orderId: id,
+        approvedBy: validAdminUuid,
+        approvedByActor: adminActor,
+        requestId,
+      });
+
+      if (!grantRes.ok) {
+        const errCode = (grantRes.error || 'RPC_INTERNAL_ERROR') as BundleErrorCode;
+        const catalogEntry =
+          BUNDLE_ERROR_CATALOG[errCode] || BUNDLE_ERROR_CATALOG.RPC_INTERNAL_ERROR;
+        const headers: Record<string, string> = { 'X-Request-Id': requestId };
+        if (errCode === 'MAINTENANCE_MODE_ACTIVE') {
+          headers['Retry-After'] = '120';
+        }
+        return NextResponse.json(
           {
-            user_id: order.user_id,
-            tool_id: order.tool_id,
-            license_key_id: newKey.id,
-            is_active: true,
-            activated_at: new Date().toISOString(),
+            ok: false,
+            error: errCode,
+            message: catalogEntry.messageTh,
+            requestId,
           },
-          { onConflict: 'user_id,tool_id' }
+          { status: catalogEntry.httpStatus, headers }
         );
-        
-      if (userToolError) {
-        console.error('Auto-activate failed:', userToolError);
       }
 
-      // 3. Update order
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: 'approved',
-          approved_at: new Date().toISOString(),
-          license_key_id: newKey.id
-        })
-        .eq('id', id);
+      const keyCode = grantRes.key_code || '';
+      const { data: toolInfo } = await supabase
+        .from('tools')
+        .select('name, slug, price')
+        .eq('id', order.tool_id)
+        .single();
 
-      if (updateError) throw updateError;
+      if (!grantRes.already_approved) {
+        const numericOrderValue =
+          parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) ||
+          299;
 
-      // แจ้ง Telegram + ยิง Meta CAPI แบบ non-blocking (fire-and-forget)
-      const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single();
-      const numericOrderValue =
-        parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) || 299;
+        sendMetaCapiEvent({
+          eventName: 'Purchase',
+          eventId: `order_${order.id}`,
+          orderId: String(order.id),
+          value: numericOrderValue,
+          req: request,
+          email: order.user_email || '',
+          contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
+        }).catch((err) => console.error('[CAPI] Admin approve Purchase error:', err));
 
-      sendMetaCapiEvent({
-        eventName: 'Purchase',
-        eventId: `order_${order.id}`,
-        orderId: String(order.id),
-        value: numericOrderValue,
-        req: request,
-        email: order.user_email || '',
-        contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
-      }).catch((err) => console.error('[CAPI] Admin approve Purchase error:', err));
+        await notifyOrderApproved(
+          order.user_email,
+          grantRes.is_bundle
+            ? `${toolInfo?.name || 'ไม่ระบุ'} (+ แถมฟรี 2 AI Tools ในชุดโปรโมชัน)`
+            : toolInfo?.name || 'ไม่ระบุ'
+        );
 
-      await notifyOrderApproved(order.user_email, toolInfo?.name || 'ไม่ระบุ');
+        if (order.user_email && order.user_email.includes('@')) {
+          const emailHtml = buildOrderApprovedEmail({
+            customerName: order.user_email.split('@')[0],
+            toolName: grantRes.is_bundle
+              ? `${toolInfo?.name || 'เครื่องมือ AI'} (พร้อมปลดล็อกฟรี PUP PAP Fashion Studio + PUPPAP AI UGC Product)`
+              : toolInfo?.name || 'เครื่องมือ AI',
+            toolSlug: toolInfo?.slug || '',
+            keyCode,
+            amount: order.amount || toolInfo?.price || '',
+          });
+          await sendEmail({
+            to: order.user_email,
+            subject: `✅ คำสั่งซื้อ ${toolInfo?.name || 'เครื่องมือ AI'} ของคุณได้รับการอนุมัติแล้ว — PUP PAP AI`,
+            html: emailHtml,
+          }).catch((err) => console.error('Failed to send order approved email:', err));
+        }
+      }
 
-      // ส่งอีเมลแจ้งเตือนลูกค้าว่าได้รับการอนุมัติเรียบร้อยแล้ว (awaited)
-      if (order.user_email && order.user_email.includes('@')) {
-        const emailHtml = buildOrderApprovedEmail({
-          customerName: order.user_email.split('@')[0],
-          toolName: toolInfo?.name || 'เครื่องมือ AI',
-          toolSlug: toolInfo?.slug || '',
+      return NextResponse.json(
+        {
+          ok: true,
+          success: true,
           keyCode,
-          amount: order.amount || toolInfo?.price || '',
-        });
-        await sendEmail({
-          to: order.user_email,
-          subject: `✅ คำสั่งซื้อ ${toolInfo?.name || 'เครื่องมือ AI'} ของคุณได้รับการอนุมัติแล้ว — PUP PAP AI`,
-          html: emailHtml,
-        }).catch(err => console.error('Failed to send order approved email:', err));
-      }
+          isBundle: grantRes.is_bundle,
+          grantedSlugs: grantRes.granted_slugs,
+          alreadyApproved: grantRes.already_approved,
+          repaired: grantRes.repaired,
+          requestId,
+        },
+        { status: 200, headers: { 'X-Request-Id': requestId } }
+      );
+    }
 
-      return NextResponse.json({ success: true, keyCode });
+    if (
+      action === 'reject' ||
+      action === 'revoke' ||
+      action === 'refund' ||
+      action === 'chargeback'
+    ) {
+      const resolvedRevokeReason =
+        rawRevokeReason !== undefined
+          ? rawRevokeReason
+          : action === 'refund'
+            ? 'refund'
+            : action === 'chargeback'
+              ? 'chargeback'
+              : 'admin_revoke';
 
-    } else if (action === 'reject' || action === 'revoke') {
       const finalNote = note || 'แอดมินยกเลิกสิทธิ์การใช้งาน (Revoked)';
 
-      // 1. Delete user_tools access for this user + tool
-      if (order.user_id && order.tool_id) {
-        await supabase
-          .from('user_tools')
-          .delete()
-          .eq('user_id', order.user_id)
-          .eq('tool_id', order.tool_id);
-      }
-      if (order.license_key_id) {
-        await supabase
-          .from('user_tools')
-          .delete()
-          .eq('license_key_id', order.license_key_id);
+      const revokeRes = await revokeCourseBundleEntitlements({
+        orderId: id,
+        adminId: validAdminUuid,
+        reason: finalNote,
+        revokeReason: resolvedRevokeReason,
+        requestId,
+      });
+
+      if (!revokeRes.ok) {
+        const errCode = (revokeRes.error || 'RPC_INTERNAL_ERROR') as BundleErrorCode;
+        const catalogEntry =
+          BUNDLE_ERROR_CATALOG[errCode] || BUNDLE_ERROR_CATALOG.RPC_INTERNAL_ERROR;
+        const headers: Record<string, string> = { 'X-Request-Id': requestId };
+        if (errCode === 'MAINTENANCE_MODE_ACTIVE') {
+          headers['Retry-After'] = '120';
+        }
+        return NextResponse.json(
+          {
+            ok: false,
+            error: errCode,
+            message: catalogEntry.messageTh,
+            requestId,
+          },
+          { status: catalogEntry.httpStatus, headers }
+        );
       }
 
-      // 2. Revoke any linked license_keys
-      if (order.license_key_id) {
-        await supabase
-          .from('license_keys')
-          .update({ status: 'revoked' })
-          .eq('id', order.license_key_id);
-      }
-      if (order.user_id && order.tool_id) {
-        await supabase
-          .from('license_keys')
-          .update({ status: 'revoked' })
-          .eq('tool_id', order.tool_id)
-          .eq('activated_by', order.user_id)
-          .eq('status', 'activated');
-      }
-      if (order.user_email && order.tool_id) {
-        await supabase
-          .from('license_keys')
-          .update({ status: 'revoked' })
-          .eq('tool_id', order.tool_id)
-          .ilike('activated_email', order.user_email)
-          .eq('status', 'activated');
-      }
+      const { data: toolInfo } = await supabase
+        .from('tools')
+        .select('name, slug, price')
+        .eq('id', order.tool_id)
+        .single();
 
-      // 3. Update order status to rejected
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: 'rejected',
-          admin_note: finalNote
-        })
-        .eq('id', id);
-
-      if (updateError) throw updateError;
-
-      // Also mark any other approved orders for the same user+tool as rejected so Auto-Heal never resurrects access
-      if (order.user_id && order.tool_id) {
-        await supabase
-          .from('orders')
-          .update({ status: 'rejected', admin_note: finalNote })
-          .eq('user_id', order.user_id)
-          .eq('tool_id', order.tool_id)
-          .eq('status', 'approved');
-      }
-      if (order.user_email && order.tool_id) {
-        await supabase
-          .from('orders')
-          .update({ status: 'rejected', admin_note: finalNote })
-          .ilike('user_email', order.user_email)
-          .eq('tool_id', order.tool_id)
-          .eq('status', 'approved');
-      }
-
-      // ส่งอีเมลแจ้งเตือนลูกค้ากรณีปฏิเสธ (awaited) + ยิง RefundRequest CAPI (non-blocking)
-      const { data: toolInfo } = await supabase.from('tools').select('name, slug, price').eq('id', order.tool_id).single();
-      if (action === 'revoke' || order.status === 'approved') {
+      if (action === 'revoke' || action === 'refund' || order.status === 'approved') {
         const numericRefundValue =
-          parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) || 299;
+          parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) ||
+          299;
         sendMetaCapiEvent({
           eventName: 'RefundRequest',
           eventId: `refund_${order.id}`,
@@ -207,7 +216,17 @@ export async function PATCH(
         }).catch((err) => console.error('[CAPI] RefundRequest error:', err));
       }
 
-      if (order.user_email && order.user_email.includes('@')) {
+      const keptActiveViaOrderId = revokeRes.kept_active_via_order_id || null;
+      const adminMessage = keptActiveViaOrderId
+        ? formatSharedKeyRevokeMessage({
+            revokeReason: revokeRes.revoke_reason || resolvedRevokeReason,
+            orderId: id,
+            keptActiveViaOrderId,
+            audience: 'admin',
+          })
+        : null;
+
+      if (order.user_email && order.user_email.includes('@') && !keptActiveViaOrderId) {
         const emailHtml = buildOrderRejectedEmail({
           customerName: order.user_email.split('@')[0],
           toolName: toolInfo?.name || 'เครื่องมือ AI',
@@ -218,16 +237,38 @@ export async function PATCH(
           to: order.user_email,
           subject: `⚠️ แจ้งเตือนเกี่ยวกับคำสั่งซื้อ ${toolInfo?.name || 'เครื่องมือ AI'} — PUP PAP AI`,
           html: emailHtml,
-        }).catch(err => console.error('Failed to send order rejected email:', err));
+        }).catch((err) => console.error('Failed to send order rejected email:', err));
       }
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json(
+        {
+          ok: true,
+          success: true,
+          revokeReason: revokeRes.revoke_reason || resolvedRevokeReason,
+          keptActiveViaOrderId,
+          adminMessage,
+          revokedSlugs: revokeRes.revoked_slugs || [],
+          retainedSlugs: revokeRes.retained_slugs || [],
+          requestId,
+        },
+        { status: 200, headers: { 'X-Request-Id': requestId } }
+      );
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-
+    return NextResponse.json(
+      { ok: false, error: 'INVALID_ACTION', requestId },
+      { status: 400, headers: { 'X-Request-Id': requestId } }
+    );
   } catch (error: any) {
     console.error('Error updating order:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'RPC_INTERNAL_ERROR',
+        message: BUNDLE_ERROR_CATALOG.RPC_INTERNAL_ERROR.messageTh,
+        requestId,
+      },
+      { status: 500, headers: { 'X-Request-Id': requestId } }
+    );
   }
 }

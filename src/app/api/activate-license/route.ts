@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { supabase as supabaseAdmin } from '@/lib/supabase'
 import { notifyLicenseActivated } from '@/lib/telegram'
+import { getCourseBundleToolIds, invalidateBundleSyncCache } from '@/lib/course-bundle'
 
 function maskEmail(email: string): string {
   const parts = email.split('@')
@@ -75,11 +77,19 @@ export async function POST(request: NextRequest) {
 
     // 2. Check if cleanCode is an existing License Key
     const normalizedKey = cleanCode.trim().toUpperCase()
-    const { data: existingKey } = await supabase
+    const { data: existingKey } = await supabaseAdmin
       .from('license_keys')
-      .select('id, key_code, tool_id, status, activated_by, activated_email, tools(id, name, is_active, is_coming_soon)')
+      .select('id, key_code, tool_id, status, activated_by, activated_email, tools(id, name, slug, is_active, is_coming_soon)')
       .ilike('key_code', normalizedKey)
       .maybeSingle()
+
+    const bundleInfo = await getCourseBundleToolIds(supabaseAdmin)
+    const isBundleTool = existingKey?.tool_id ? bundleInfo.bundleIds.includes(existingKey.tool_id) : false
+    const targetToolIds = isBundleTool
+      ? bundleInfo.bundleIds
+      : existingKey?.tool_id
+      ? [existingKey.tool_id]
+      : []
 
     if (existingKey && existingKey.status === 'activated') {
       const linkedTool = (existingKey as any).tools
@@ -97,29 +107,33 @@ export async function POST(request: NextRequest) {
           existingKey.activated_email.toLowerCase() === user.email.toLowerCase())
 
       if (isSameUser && existingKey.tool_id) {
-        // Auto-heal user_tools in case it was missing or inactive
-        await supabase.from('user_tools').upsert(
-          {
+        // Auto-heal user_tools (and full bundle if applicable) in case it was missing or inactive
+        await supabaseAdmin.from('user_tools').upsert(
+          targetToolIds.map((tid) => ({
             user_id: user.id,
-            tool_id: existingKey.tool_id,
+            tool_id: tid,
             license_key_id: existingKey.id,
             is_active: true,
-          },
+          })),
           { onConflict: 'user_id,tool_id' }
         )
         if (!existingKey.activated_by) {
-          await supabase
+          await supabaseAdmin
             .from('license_keys')
             .update({ activated_by: user.id, activated_email: user.email })
             .eq('id', existingKey.id)
         }
+        invalidateBundleSyncCache(user.id)
 
         const toolName = linkedTool?.name || 'เครื่องมือของคุณ'
+        const bundleSuffix = isBundleTool ? ' (พร้อมปลดล็อกเครื่องมือ AI ในชุดคอร์สครบทั้ง 3 รายการ)' : ''
         return NextResponse.json({
           success: true,
           alreadyOwned: true,
+          isBundle: isBundleTool,
+          unlockedToolIds: targetToolIds,
           tool_name: toolName,
-          message: `✅ บัญชีของคุณมีสิทธิ์ "${toolName}" อยู่แล้ว! กดปุ่มเปิดใช้งานด้านบนได้เลยครับ`,
+          message: `✅ บัญชีของคุณมีสิทธิ์ "${toolName}"${bundleSuffix} อยู่แล้ว! กดปุ่มเปิดใช้งานด้านบนได้เลยครับ`,
         })
       }
 
@@ -148,14 +162,37 @@ export async function POST(request: NextRequest) {
     if (data && typeof data === 'object') {
       if ((data as any).success) {
         if (existingKey?.id) {
-          await supabase
+          await supabaseAdmin
             .from('license_keys')
             .update({ activated_email: user.email, activated_by: user.id })
             .eq('id', existingKey.id)
+
+          if (targetToolIds.length > 0) {
+            await supabaseAdmin.from('user_tools').upsert(
+              targetToolIds.map((tid) => ({
+                user_id: user.id,
+                tool_id: tid,
+                license_key_id: existingKey.id,
+                is_active: true,
+              })),
+              { onConflict: 'user_id,tool_id' }
+            )
+            await supabaseAdmin
+              .from('user_trials')
+              .update({ status: 'converted' })
+              .eq('user_id', user.id)
+              .in('tool_id', targetToolIds)
+              .eq('status', 'active')
+          }
         }
+        invalidateBundleSyncCache(user.id)
         notifyLicenseActivated(user.email || '', (data as any).tool_name || 'ไม่ระบุ', normalizedKey)
       }
-      return NextResponse.json(data)
+      return NextResponse.json({
+        ...(data as object),
+        isBundle: isBundleTool,
+        unlockedToolIds: targetToolIds,
+      })
     }
 
     return NextResponse.json({ success: true, data })

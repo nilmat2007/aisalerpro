@@ -180,10 +180,17 @@ export default function CheckoutClient({
     ? String(initialOrder.admin_note).replace(/\[[A-Z0-9_-]+[^\]]*\]/g, '').trim()
     : '';
   const [rejectionNote, setRejectionNote] = useState<string>(cleanInitialNote);
+  const [sharedKeyNotice, setSharedKeyNotice] = useState<string | null>(null);
+  const [pollExhausted, setPollExhausted] = useState(false);
+  const [manualChecking, setManualChecking] = useState(false);
   const router = useRouter();
 
   const posterImage = tool.poster_url || null;
   const isCourse = tool.slug === 'tiktok-ai-affiliate' || tool.category === 'course';
+  const isBundleItem =
+    isCourse ||
+    tool.slug === 'puppap-fashion-studio' ||
+    tool.slug === 'puppap-ugc-product';
   const destinationUrl = isCourse ? `/course/${tool.slug}` : `/tool/${tool.slug}`;
 
   // Clean price display without duplicate 'บาท'
@@ -204,43 +211,78 @@ export default function CheckoutClient({
     }
   }, [alreadyOwned, initialOrder?.status, numericPrice, tool?.slug]);
 
-  // Real-time 5-second auto-polling while waiting on Step 3
+  const checkOrderStatusNow = React.useCallback(async () => {
+    if (!tool?.id) return false;
+    try {
+      const res = await fetch(`/api/orders?toolId=${encodeURIComponent(tool.id)}`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+
+      if (data.sharedKeyNotice) {
+        setSharedKeyNotice(data.sharedKeyNotice);
+      }
+
+      if (data.hasAccess || data.latestOrder?.status === 'approved') {
+        if (data.latestOrder?.id) {
+          fbPurchase({
+            orderId: String(data.latestOrder.id),
+            value: numericPrice || 299,
+            contentId: tool?.slug || 'tiktok-ai-affiliate',
+          });
+        }
+        setOrderStatus('approved');
+        router.refresh();
+        return true;
+      } else if (data.latestOrder?.status === 'rejected') {
+        setOrderStatus('rejected');
+        setRejectionNote(
+          data.latestOrder.admin_note ||
+            'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ถูกต้อง หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ'
+        );
+        return true;
+      }
+    } catch (err) {
+      // Ignore transient network errors during polling
+    }
+    return false;
+  }, [tool?.id, tool?.slug, numericPrice, router]);
+
+  // Exponential backoff auto-polling while waiting on Step 3 ([2s, 3s, 5s, 8s, 13s, 20s], max 36 attempts)
   useEffect(() => {
     if (step !== 3 || orderStatus !== 'pending' || !tool?.id) return;
 
-    const checkOrderStatus = async () => {
-      try {
-        const res = await fetch(`/api/orders?toolId=${encodeURIComponent(tool.id)}`, {
-          cache: 'no-store',
-        });
-        if (!res.ok) return;
-        const data = await res.json();
+    const BACKOFF_SCHEDULE_MS = [2000, 3000, 5000, 8000, 13000, 20000];
+    const MAX_POLL_ATTEMPTS = 36;
+    let attempt = 0;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    setPollExhausted(false);
 
-        if (data.hasAccess || data.latestOrder?.status === 'approved') {
-          if (data.latestOrder?.id) {
-            fbPurchase({
-              orderId: String(data.latestOrder.id),
-              value: numericPrice || 299,
-              contentId: tool?.slug || 'tiktok-ai-affiliate',
-            });
-          }
-          setOrderStatus('approved');
-          router.refresh();
-        } else if (data.latestOrder?.status === 'rejected') {
-          setOrderStatus('rejected');
-          setRejectionNote(
-            data.latestOrder.admin_note ||
-              'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ถูกต้อง หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ'
-          );
-        }
-      } catch (err) {
-        // Ignore transient network errors during polling
+    const scheduleNext = () => {
+      if (cancelled) return;
+      if (attempt >= MAX_POLL_ATTEMPTS) {
+        setPollExhausted(true);
+        return;
       }
+      const delay = BACKOFF_SCHEDULE_MS[Math.min(attempt, BACKOFF_SCHEDULE_MS.length - 1)];
+      timerId = setTimeout(async () => {
+        if (cancelled) return;
+        attempt += 1;
+        const settled = await checkOrderStatusNow();
+        if (!settled && !cancelled) {
+          scheduleNext();
+        }
+      }, delay);
     };
 
-    const interval = setInterval(checkOrderStatus, 5000);
-    return () => clearInterval(interval);
-  }, [step, orderStatus, tool?.id, router]);
+    scheduleNext();
+    return () => {
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [step, orderStatus, tool?.id, checkOrderStatusNow]);
 
   const handleCopyAccount = () => {
     navigator.clipboard.writeText(PROMPTPAY_ID);
@@ -614,6 +656,29 @@ export default function CheckoutClient({
                     </p>
                   </div>
 
+                  {isBundleItem && (
+                    <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/40 space-y-2 text-left">
+                      <div className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                        <span>🎁</span>
+                        <span>ชำระ ฿{displayPrice} ครั้งเดียว รับสิทธิ์ครบทั้ง 3 รายการทันที:</span>
+                      </div>
+                      <ul className="space-y-1 text-xs text-[var(--text-primary)] font-semibold">
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>🎓 คอร์สเรียน ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า (22 บทเรียนเต็ม)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>👗 เครื่องมือ AI: PUP PAP Fashion Studio (สตูดิโอเสื้อผ้า & นายแบบ AI)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>📦 เครื่องมือ AI: PUPPAP AI UGC Product (สร้างคลิปรีวิวสินค้าปักตะกร้า)</span>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-end border-t border-[var(--border-light)] pt-4">
                     <span className="text-sm font-semibold text-[var(--text-secondary)]">ยอดชำระ</span>
                     <div className="text-right">
@@ -702,6 +767,11 @@ export default function CheckoutClient({
                       (ประหยัด ฿{priceInfo.savingsFormatted})
                     </span>
                   </div>
+                  {isBundleItem && (
+                    <div className="mt-1.5 text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                      🎁 แถมครบชุด 3 รายการ: คอร์สเรียน 22 บท + Fashion Studio AI + UGC Product AI
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -902,6 +972,40 @@ export default function CheckoutClient({
                     </p>
                   </div>
 
+                  {isBundleItem && (
+                    <div className="max-w-md mx-auto p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-left space-y-2">
+                      <div className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-300">
+                        🎁 รายการที่ปลดล็อกให้คุณเรียบร้อยแล้ว (ครบทั้ง 3 รายการ):
+                      </div>
+                      <ul className="space-y-1.5 text-xs text-[var(--text-primary)] font-semibold">
+                        <li className="flex items-center justify-between gap-2">
+                          <span>1. 🎓 คอร์สเรียน ปั้นนายหน้า TikTok (22 บท)</span>
+                          <Link href="/course/tiktok-ai-affiliate" className="text-[var(--accent)] hover:underline font-black shrink-0">
+                            เข้าเรียน →
+                          </Link>
+                        </li>
+                        <li className="flex items-center justify-between gap-2">
+                          <span>2. 👗 PUP PAP Fashion Studio</span>
+                          <Link href="/tool/puppap-fashion-studio" className="text-[var(--accent)] hover:underline font-black shrink-0">
+                            เปิดใช้ →
+                          </Link>
+                        </li>
+                        <li className="flex items-center justify-between gap-2">
+                          <span>3. 📦 PUPPAP AI UGC Product</span>
+                          <Link href="/tool/puppap-ugc-product" className="text-[var(--accent)] hover:underline font-black shrink-0">
+                            เปิดใช้ →
+                          </Link>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {sharedKeyNotice && (
+                    <div className="max-w-md mx-auto p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-800 dark:text-amber-300 text-left">
+                      {sharedKeyNotice}
+                    </div>
+                  )}
+
                   <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link
                       href={destinationUrl}
@@ -970,9 +1074,30 @@ export default function CheckoutClient({
                     </h2>
                     <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                      <span>กำลังตรวจสอบสลิปอัตโนมัติ... (หน้านี้จะเปลี่ยนเป็นปุ่มเข้าเรียนทันทีเมื่ออนุมัติ)</span>
+                      <span>
+                        {pollExhausted
+                          ? 'กำลังรอแอดมินตรวจสอบเพิ่มเติม (กดปุ่มเช็กสถานะด้านล่างได้ตลอดเวลา)'
+                          : 'กำลังตรวจสอบสลิปอัตโนมัติ... (หน้านี้จะเปลี่ยนเป็นปุ่มเข้าเรียนทันทีเมื่ออนุมัติ)'}
+                      </span>
                     </div>
                   </div>
+
+                  {pollExhausted && (
+                    <div>
+                      <button
+                        type="button"
+                        disabled={manualChecking}
+                        onClick={async () => {
+                          setManualChecking(true);
+                          await checkOrderStatusNow();
+                          setManualChecking(false);
+                        }}
+                        className="puppap-btn-secondary px-5 py-2 text-xs font-black inline-flex items-center gap-1.5"
+                      >
+                        <span>{manualChecking ? '⏳ กำลังเช็กสถานะ...' : '🔄 เช็กสถานะการอนุมัติอีกครั้ง'}</span>
+                      </button>
+                    </div>
+                  )}
 
                   {preview && (
                     <div className="flex flex-col items-center gap-1.5">

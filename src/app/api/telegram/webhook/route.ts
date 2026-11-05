@@ -4,6 +4,7 @@ import { sendTelegram, answerCallback, editMessage } from '@/lib/telegram'
 import { sendEmail, buildTrialFollowUpEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email'
 import { processTrialFollowUps } from '@/lib/trial-followup'
 import { broadcastFBSmart } from '@/lib/facebook'
+import { approveOrderAndGrantBundle, revokeCourseBundleEntitlements } from '@/lib/course-bundle'
 
 export async function POST(request: Request) {
   try {
@@ -367,58 +368,27 @@ async function handleApproveOrder(
     return NextResponse.json({ ok: true })
   }
 
-  // Generate license key
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let keyStr = 'PHM-'
-  for (let i = 0; i < 4; i++) keyStr += chars.charAt(Math.floor(Math.random() * chars.length))
-  keyStr += '-'
-  for (let i = 0; i < 4; i++) keyStr += chars.charAt(Math.floor(Math.random() * chars.length))
+  const grantRes = await approveOrderAndGrantBundle({
+    orderId,
+    approvedBy: null,
+    approvedByActor: `telegram:${chatId}`,
+  })
 
-  // Create license key
-  const { data: newKey, error: keyError } = await supabase
-    .from('license_keys')
-    .insert({
-      tool_id: order.tool_id,
-      key_code: keyStr,
-      status: 'activated',
-      activated_at: new Date().toISOString(),
-      activated_by: order.user_id,
-      activated_email: order.user_email
-    })
-    .select()
-    .single()
-
-  if (keyError) {
-    await answerCallback(callbackId, `❌ สร้าง Key ไม่สำเร็จ`)
+  if (!grantRes.ok) {
+    await answerCallback(callbackId, `❌ อนุมัติไม่สำเร็จ (${grantRes.error || 'RPC_ERROR'})`)
     return NextResponse.json({ ok: true })
   }
 
-  // Auto-activate for user (Upsert to prevent duplicate errors)
-  await supabase.from('user_tools').upsert(
-    {
-      user_id: order.user_id,
-      tool_id: order.tool_id,
-      license_key_id: newKey.id,
-      is_active: true,
-      activated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,tool_id' }
-  )
-
-  // Update order
-  await supabase.from('orders').update({
-    status: 'approved',
-    approved_at: new Date().toISOString(),
-    license_key_id: newKey.id
-  }).eq('id', orderId)
-
-  await answerCallback(callbackId, '✅ อนุมัติสำเร็จ! ลูกค้าเข้าเรียนได้ทันที')
+  const keyStr = grantRes.key_code || ''
+  await answerCallback(callbackId, '✅ อนุมัติสำเร็จ! ลูกค้าเข้าเรียนและใช้ 2 AI Tools แถมฟรีได้ทันที')
 
   // Send approval email to customer (awaited so serverless does not terminate early)
   if (order.user_email && order.user_email.includes('@')) {
     const emailHtml = buildOrderApprovedEmail({
       customerName: order.user_email.split('@')[0],
-      toolName: (order as any).tools?.name || 'เครื่องมือ AI',
+      toolName: grantRes.is_bundle
+        ? `${(order as any).tools?.name || 'คอร์สเรียน AI'} (+ แถมฟรี 2 AI Tools ในชุดโปรโมชัน)`
+        : (order as any).tools?.name || 'เครื่องมือ AI',
       toolSlug: (order as any).tools?.slug || '',
       keyCode: keyStr,
       amount: order.amount || (order as any).tools?.price || '',
@@ -432,12 +402,13 @@ async function handleApproveOrder(
 
   // Update message
   const toolName = (order as any).tools?.name || 'ไม่ระบุ'
+  const bundleNote = grantRes.is_bundle ? `\n🎁 <b>ปลดล็อกครบชุด 3 รายการ (คอร์ส + 2 AI Tools)</b>` : ''
   await editMessage(
     chatId,
     messageId,
     `✅ <b>อนุมัติแล้ว! (ปลดล็อกอัตโนมัติสำเร็จ)</b>\n\n` +
     `📧 ${order.user_email}\n` +
-    `🛠️ ${toolName}\n` +
+    `🛠️ ${toolName}${bundleNote}\n` +
     `🔐 Key: <code>${keyStr}</code>\n` +
     `⏰ ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}`,
     isPhotoMessage
@@ -466,10 +437,12 @@ async function handleRejectOrder(
 
   const defaultRejectNote = 'ภาพหลักฐานการโอนเงิน (สลิป) ไม่ถูกต้อง หรือยอดเงินไม่ตรงกับรายการสั่งซื้อ กรุณาแนบสลิปใหม่อีกครั้งครับ'
 
-  await supabase.from('orders').update({
-    status: 'rejected',
-    admin_note: defaultRejectNote,
-  }).eq('id', orderId)
+  await revokeCourseBundleEntitlements({
+    orderId,
+    adminId: null,
+    reason: `${defaultRejectNote} (by telegram:${chatId})`,
+    revokeReason: 'admin_revoke',
+  })
 
   await answerCallback(callbackId, '❌ ปฏิเสธแล้ว (แจ้งให้ลูกค้าแนบสลิปใหม่ทันที)')
 

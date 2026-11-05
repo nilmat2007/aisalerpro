@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { supabase as supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import DashboardClient from './DashboardClient'
 import { formatToolUpdateDate } from '@/lib/date-utils'
@@ -11,6 +12,10 @@ import {
   sanitizeToolForPublic,
   type Tool,
 } from '@/lib/sanitize-tool'
+import {
+  resolveUserBundleAccess,
+  attemptCourseBundleHeal,
+} from '@/lib/course-bundle'
 
 export const dynamic = 'force-dynamic';
 
@@ -192,7 +197,7 @@ export default async function HomePage() {
                   <span>•</span>
                   <span>✓ ดูซ้ำกี่รอบก็ได้ ไม่มีหมดอายุ</span>
                   <span>•</span>
-                  <span>✓ พร้อมโปรแกรม Flow Tools ช่วยทำคลิป</span>
+                  <span className="text-[var(--accent)] font-black">🎁 แถมฟรี 2 เครื่องมือ AI Flow Tools (มูลค่ารวม ฿598)</span>
                 </div>
               </div>
 
@@ -299,6 +304,7 @@ export default async function HomePage() {
     { data: rawOrders },
     { data: emailKeys },
     { data: approvedOrders },
+    bundleAccess,
   ] = await Promise.all([
     supabase.from('profiles').select('id, email, full_name, role, display_name, avatar_url').eq('id', user.id).maybeSingle(),
     supabase.from('user_tools').select(`id, user_id, tool_id, license_key_id, activated_at, is_active, tools(${PUBLIC_TOOL_SELECT_COLUMNS})`).eq('user_id', user.id),
@@ -326,14 +332,23 @@ export default async function HomePage() {
           .eq('status', 'approved')
           .ilike('user_email', user.email)
       : Promise.resolve({ data: [] as any[] }),
+    resolveUserBundleAccess(supabaseAdmin, user.id, user.email || ''),
   ])
 
   let userTools = initialUserTools
+  const ownedSet = new Set<string>([
+    ...(userTools || []).filter((ut: any) => ut.is_active !== false).map((ut: any) => ut.tool_id),
+    ...(bundleAccess?.ownedToolIds || []),
+  ])
 
-  // Auto-heal entitlements: if user has activated license_keys or approved orders by email/id that aren't in user_tools yet
-  const ownedSet = new Set((userTools || []).map((ut: any) => ut.tool_id))
+  // Auto-heal entitlements: Course Bundle + any non-bundle activated keys/orders
   if (user.email) {
     let healed = false
+    if (bundleAccess?.needsBackgroundSync) {
+      const healRes = await attemptCourseBundleHeal(supabaseAdmin, user.id, user.email)
+      if (healRes.healed) healed = true
+    }
+
     const allEmailKeys = emailKeys || []
     const activatedToolIds = new Set(
       allEmailKeys.filter((k: any) => k.status === 'activated').map((k: any) => k.tool_id)
@@ -349,7 +364,7 @@ export default async function HomePage() {
 
     for (const k of allEmailKeys) {
       if (k.status === 'activated' && k.tool_id && !ownedSet.has(k.tool_id)) {
-        await supabase.from('user_tools').upsert(
+        await supabaseAdmin.from('user_tools').upsert(
           {
             user_id: user.id,
             tool_id: k.tool_id,
@@ -368,7 +383,7 @@ export default async function HomePage() {
         (o.license_key_id && revokedKeyIds.has(o.license_key_id)) ||
         revokedToolIds.has(o.tool_id)
       if (!isRevokedOrder && o.tool_id && !ownedSet.has(o.tool_id)) {
-        await supabase.from('user_tools').upsert(
+        await supabaseAdmin.from('user_tools').upsert(
           {
             user_id: user.id,
             tool_id: o.tool_id,
@@ -383,7 +398,7 @@ export default async function HomePage() {
       }
     }
     if (healed) {
-      const refreshed = await supabase.from('user_tools').select(`id, user_id, tool_id, license_key_id, activated_at, is_active, tools(${PUBLIC_TOOL_SELECT_COLUMNS})`).eq('user_id', user.id)
+      const refreshed = await supabaseAdmin.from('user_tools').select(`id, user_id, tool_id, license_key_id, activated_at, is_active, tools(${PUBLIC_TOOL_SELECT_COLUMNS})`).eq('user_id', user.id)
       userTools = refreshed.data || userTools
     }
   }

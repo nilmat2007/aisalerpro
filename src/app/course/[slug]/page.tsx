@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { supabase as supabaseAdmin } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
 import CourseStudioClient from './CourseStudioClient';
 import {
@@ -10,6 +11,10 @@ import {
   type PublicTool,
   type Tool,
 } from '@/lib/sanitize-tool';
+import {
+  resolveUserBundleAccess,
+  attemptCourseBundleHeal,
+} from '@/lib/course-bundle';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +55,7 @@ export default async function CoursePage(props: {
   const ADMIN_EMAILS = ['nilmat2007@gmail.com', 'nilmat200757@gmail.com'];
 
   if (user) {
-    const [{ data: profile }, { data: userTool }] = await Promise.all([
+    const [{ data: profile }, { data: userTool }, bundleAccess] = await Promise.all([
       supabase
         .from('profiles')
         .select('role')
@@ -63,58 +68,19 @@ export default async function CoursePage(props: {
         .eq('tool_id', tool.id)
         .eq('is_active', true)
         .maybeSingle(),
+      resolveUserBundleAccess(supabaseAdmin, user.id, user.email || ''),
     ]);
 
     const isTrueAdmin =
       profile?.role === 'admin' &&
       ADMIN_EMAILS.includes((user.email || '').toLowerCase());
 
-    if (isTrueAdmin || userTool) {
+    if (isTrueAdmin || userTool || bundleAccess.ownedToolIds.includes(tool.id)) {
       hasAccess = true;
-    } else if (user.email) {
-        const [{ data: keysList }, { data: orderMatch }] = await Promise.all([
-          supabase
-            .from('license_keys')
-            .select('id, status')
-            .eq('tool_id', tool.id)
-            .in('status', ['activated', 'revoked'])
-            .ilike('activated_email', user.email),
-          supabase
-            .from('orders')
-            .select('id, license_key_id')
-            .eq('tool_id', tool.id)
-            .eq('status', 'approved')
-            .ilike('user_email', user.email)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-        ]);
+    }
 
-        const activatedKey = (keysList || []).find((k: any) => k.status === 'activated');
-        const revokedKeyIds = new Set(
-          (keysList || []).filter((k: any) => k.status === 'revoked').map((k: any) => k.id)
-        );
-        const hasRevokedKeyOnly = !activatedKey && revokedKeyIds.size > 0;
-        const validOrderMatch =
-          orderMatch &&
-          !hasRevokedKeyOnly &&
-          (!orderMatch.license_key_id || !revokedKeyIds.has(orderMatch.license_key_id))
-            ? orderMatch
-            : null;
-
-        if (activatedKey || validOrderMatch) {
-          await supabase.from('user_tools').upsert(
-            {
-              user_id: user.id,
-              tool_id: tool.id,
-              license_key_id: activatedKey?.id || validOrderMatch?.license_key_id || null,
-              activated_at: new Date().toISOString(),
-              is_active: true,
-            },
-            { onConflict: 'user_id,tool_id' }
-          );
-          hasAccess = true;
-        }
+    if (bundleAccess.needsBackgroundSync) {
+      await attemptCourseBundleHeal(supabaseAdmin, user.id, user.email || '');
     }
   }
 

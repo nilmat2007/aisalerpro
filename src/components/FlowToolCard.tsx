@@ -36,6 +36,11 @@ export default function FlowToolCard({
   const version = tool.version || 'v1.0.0';
   const badgeText = tool.badge_text || null;
   const trialAvailable = tool.trial_enabled && Boolean(tool.trial_flow_url);
+  const isCourseBonusTool =
+    feat.included_in_course_slug === 'tiktok-ai-affiliate' ||
+    tool.slug === 'puppap-fashion-studio' ||
+    tool.slug === 'puppap-ugc-product';
+  const guideDriveUrl = feat.guide_drive_url || null;
 
   // Helper for tier badge text
   const getTierLabel = (tier: string) => {
@@ -83,6 +88,11 @@ export default function FlowToolCard({
             <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-[var(--accent)] text-white shadow-md flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
               {badgeText}
+            </span>
+          )}
+          {!hasAccess && isCourseBonusTool && (
+            <span className="px-2.5 py-1 text-xs font-black rounded-full bg-amber-500 text-stone-950 shadow-md flex items-center gap-1">
+              <span>🎁 แถมฟรีในคอร์ส ฿299</span>
             </span>
           )}
           {hasAccess && (
@@ -239,7 +249,7 @@ export default function FlowToolCard({
                   </span>
                 </div>
                 <span className="text-[11px] text-[var(--text-secondary)] font-semibold">
-                  ซื้อขาดตลอดชีพ · อัปเดตฟรี
+                  {isCourseBonusTool ? '🎁 ซื้อ ฿299 แถมคอร์ส + AI ครบ 3 รายการ' : 'ซื้อขาดตลอดชีพ · อัปเดตฟรี'}
                 </span>
               </div>
 

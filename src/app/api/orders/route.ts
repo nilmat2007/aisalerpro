@@ -5,21 +5,23 @@ import {
   notifyNewOrder,
   notifyAiAutoApprovedOrder,
   notifyAiAutoRejectedOrder,
+  notifyBundleGrantFailure,
 } from '@/lib/telegram';
 import { verifySlipAndDecide } from '@/lib/slip-verifier';
 import { sendEmail, buildOrderApprovedEmail } from '@/lib/email';
 import { sendMetaCapiEvent } from '@/lib/meta-capi';
-
-function generateLicenseKeyCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let keyStr = 'PHM-';
-  for (let i = 0; i < 4; i++) keyStr += chars.charAt(Math.floor(Math.random() * chars.length));
-  keyStr += '-';
-  for (let i = 0; i < 4; i++) keyStr += chars.charAt(Math.floor(Math.random() * chars.length));
-  return keyStr;
-}
+import {
+  approveOrderAndGrantBundle,
+  BUNDLE_ERROR_CATALOG,
+  COURSE_BUNDLE_SLUGS,
+  extractRequestId,
+  formatSharedKeyRevokeMessage,
+  isCourseBundleSlug,
+} from '@/lib/course-bundle';
 
 export async function POST(request: Request) {
+  const requestId = extractRequestId(request);
+
   try {
     const supabase = await createClient();
     const {
@@ -27,14 +29,20 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนทำรายการ' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'กรุณาเข้าสู่ระบบก่อนทำรายการ', requestId },
+        { status: 401, headers: { 'X-Request-Id': requestId } }
+      );
     }
 
     const body = await request.json();
     const { toolId, amount, slipUrl, slipBase64, slipMimeType, qrPayload } = body;
 
     if (!toolId) {
-      return NextResponse.json({ error: 'ไม่พบข้อมูลรายการที่สั่งซื้อ' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'ไม่พบข้อมูลรายการที่สั่งซื้อ', requestId },
+        { status: 400, headers: { 'X-Request-Id': requestId } }
+      );
     }
 
     // 1. ดึงข้อมูลสินค้าและตรวจสอบสิทธิ์ที่มีอยู่แล้วพร้อมกัน
@@ -69,8 +77,11 @@ export async function POST(request: Request) {
       (toolInfo.is_coming_soon && toolInfo.slug !== 'tiktok-ai-affiliate')
     ) {
       return NextResponse.json(
-        { error: 'รายการนี้ปิดจำหน่ายชั่วคราว ไม่สามารถสั่งซื้อได้ในขณะนี้ครับ' },
-        { status: 400 }
+        {
+          error: 'รายการนี้ปิดจำหน่ายชั่วคราว ไม่สามารถสั่งซื้อได้ในขณะนี้ครับ',
+          requestId,
+        },
+        { status: 400, headers: { 'X-Request-Id': requestId } }
       );
     }
 
@@ -79,8 +90,9 @@ export async function POST(request: Request) {
         {
           error: 'คุณมีสิทธิ์ใช้งานรายการนี้อยู่แล้ว ไม่จำเป็นต้องชำระเงินหรือส่งสลิปซ้ำครับ',
           alreadyOwned: true,
+          requestId,
         },
-        { status: 400 }
+        { status: 400, headers: { 'X-Request-Id': requestId } }
       );
     }
 
@@ -116,8 +128,11 @@ export async function POST(request: Request) {
 
     if (!finalSlipUrl) {
       return NextResponse.json(
-        { error: 'อัปโหลดรูปสลิปไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วกดส่งสลิปใหม่อีกครั้งครับ' },
-        { status: 400 }
+        {
+          error: 'อัปโหลดรูปสลิปไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วกดส่งสลิปใหม่อีกครั้งครับ',
+          requestId,
+        },
+        { status: 400, headers: { 'X-Request-Id': requestId } }
       );
     }
 
@@ -145,44 +160,15 @@ export async function POST(request: Request) {
     const toolName = toolInfo?.name || 'เครื่องมือ AI';
     const nowIso = new Date().toISOString();
 
-    // ─── CASE A: AI ตรวจสอบสลิปผ่าน 100% -> อนุมัติและปลดล็อกสิทธิ์ทันที ───
+    // ─── CASE A: AI ตรวจสอบสลิปผ่าน 100% -> อนุมัติและปลดล็อกสิทธิ์ครบชุดแบบ Atomic ───
     if (verification.decision === 'approved') {
-      const keyCode = generateLicenseKeyCode();
-      const { data: createdKey } = await supabaseAdmin
-        .from('license_keys')
-        .insert({
-          tool_id: toolId,
-          key_code: keyCode,
-          status: 'activated',
-          activated_at: nowIso,
-          activated_by: user.id,
-          activated_email: user.email || '',
-          note: `AI Auto-Approved (${verification.extracted?.transRef || ''})`,
-        })
-        .select('id, key_code')
-        .maybeSingle();
-
-      await supabaseAdmin.from('user_tools').upsert(
-        {
-          user_id: user.id,
-          tool_id: toolId,
-          license_key_id: createdKey?.id || null,
-          is_active: true,
-          activated_at: nowIso,
-        },
-        { onConflict: 'user_id,tool_id' }
-      );
-
-      const approvedPayload = {
+      const basePendingPayload = {
         user_id: user.id,
         user_email: user.email || '',
         tool_id: toolId,
         amount: expectedAmount,
         slip_url: finalSlipUrl,
-        status: 'approved',
-        approved_at: nowIso,
-        approved_by: 'AI_AUTO_VERIFIER',
-        license_key_id: createdKey?.id || null,
+        status: 'pending',
         admin_note: `${verification.fingerprintTag} ${verification.reason}`,
       };
 
@@ -190,7 +176,7 @@ export async function POST(request: Request) {
       if (existingOrderRow?.id) {
         const { data: updated } = await supabaseAdmin
           .from('orders')
-          .update(approvedPayload)
+          .update(basePendingPayload)
           .eq('id', existingOrderRow.id)
           .select()
           .single();
@@ -198,30 +184,73 @@ export async function POST(request: Request) {
       } else {
         const { data: inserted } = await supabaseAdmin
           .from('orders')
-          .insert(approvedPayload)
+          .insert(basePendingPayload)
           .select()
           .single();
         orderData = inserted;
       }
 
-      // ยิง Meta CAPI แบบ non-blocking (fire-and-forget ไม่ทำให้ response ลูกค้าช้า)
-      const approvedOrderId = String(orderData?.id || existingOrderRow?.id || Date.now());
+      const targetOrderId = String(orderData?.id || existingOrderRow?.id || '');
+      const grantResult = await approveOrderAndGrantBundle({
+        orderId: targetOrderId,
+        approvedBy: null,
+        approvedByActor: 'system:auto_slip',
+        requestId,
+      });
+
+      // Fallback safety: if DB grant encountered transient timeout/error after slip passed,
+      // DO NOT return 500 — keep order pending with [GRANT_RETRY_NEEDED] and return 200 OK grant_delayed: true!
+      if (!grantResult.ok) {
+        const retryNote = `${verification.fingerprintTag} ${verification.reason} | [GRANT_RETRY_NEEDED:${grantResult.error || 'RPC_INTERNAL_ERROR'}]`;
+        await supabaseAdmin
+          .from('orders')
+          .update({
+            status: 'pending',
+            admin_note: retryNote,
+            last_grant_error: grantResult.error || 'RPC_INTERNAL_ERROR',
+          })
+          .eq('id', targetOrderId);
+
+        await notifyBundleGrantFailure({
+          orderId: targetOrderId,
+          userId: user.id,
+          userEmail: user.email,
+          errorCode: grantResult.error || 'RPC_INTERNAL_ERROR',
+          errorMessage: `Slip verified by AI (${verification.reason}), but bundle grant delayed.`,
+          requestId,
+          context: 'POST /api/orders (AI Slip Verified)',
+        });
+
+        return NextResponse.json(
+          {
+            ...orderData,
+            id: targetOrderId,
+            status: 'pending',
+            grant_delayed: true,
+            ai_verified: true,
+            message: BUNDLE_ERROR_CATALOG.RPC_INTERNAL_ERROR.messageTh,
+            requestId,
+          },
+          { status: 200, headers: { 'X-Request-Id': requestId } }
+        );
+      }
+
+      // ยิง Meta CAPI แบบ non-blocking
       sendMetaCapiEvent({
         eventName: 'Purchase',
-        eventId: `order_${approvedOrderId}`,
-        orderId: approvedOrderId,
+        eventId: `order_${targetOrderId}`,
+        orderId: targetOrderId,
         value: expectedAmount || 299,
         req: request,
         email: user.email || '',
         contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
       }).catch((err) => console.error('[CAPI] Auto-approve Purchase error:', err));
 
-      // ส่งแจ้งเตือน Telegram แอดมิน + ส่งอีเมลให้ลูกค้าพร้อมกัน
       const tasks: Promise<any>[] = [
         notifyAiAutoApprovedOrder(
           customerName,
           user.email || '',
-          toolName,
+          grantResult.is_bundle ? `${toolName} (+ แถมฟรี 2 AI Tools ในชุดโปรโมชัน)` : toolName,
           `${expectedAmount.toLocaleString()} บาท`,
           finalSlipUrl,
           verification.reason
@@ -231,9 +260,11 @@ export async function POST(request: Request) {
       if (user.email && user.email.includes('@')) {
         const emailHtml = buildOrderApprovedEmail({
           customerName,
-          toolName,
+          toolName: grantResult.is_bundle
+            ? `${toolName} (พร้อมปลดล็อกฟรี PUP PAP Fashion Studio + PUPPAP AI UGC Product)`
+            : toolName,
           toolSlug: toolInfo?.slug || '',
-          keyCode: createdKey?.key_code || keyCode,
+          keyCode: grantResult.key_code || '',
           amount: `${expectedAmount.toLocaleString()} บาท`,
         });
         tasks.push(
@@ -247,12 +278,21 @@ export async function POST(request: Request) {
 
       await Promise.all(tasks);
 
-      return NextResponse.json({
-        ...orderData,
-        status: 'approved',
-        ai_verified: true,
-        ai_reason: verification.reason,
-      });
+      return NextResponse.json(
+        {
+          ...orderData,
+          id: targetOrderId,
+          status: 'approved',
+          license_key_id: grantResult.license_key_id,
+          key_code: grantResult.key_code,
+          is_bundle: grantResult.is_bundle,
+          granted_slugs: grantResult.granted_slugs || [toolInfo?.slug],
+          ai_verified: true,
+          ai_reason: verification.reason,
+          requestId,
+        },
+        { status: 200, headers: { 'X-Request-Id': requestId } }
+      );
     }
 
     // ─── CASE B: AI ตรวจพบว่าสลิปไม่ถูกต้อง -> ปฏิเสธทันทีและให้ลูกค้าแนบสลิปใหม่ ───
@@ -296,15 +336,19 @@ export async function POST(request: Request) {
         verification.reason
       );
 
-      return NextResponse.json({
-        ...orderData,
-        status: 'rejected',
-        ai_rejected: true,
-        rejection_reason: verification.reason,
-      });
+      return NextResponse.json(
+        {
+          ...orderData,
+          status: 'rejected',
+          ai_rejected: true,
+          rejection_reason: verification.reason,
+          requestId,
+        },
+        { status: 200, headers: { 'X-Request-Id': requestId } }
+      );
     }
 
-    // ─── CASE C: รอแอดมินตรวจสอบใน Telegram (กรณีปิดโหมด AI หรือยังไม่ได้ใส่คีย์ Gemini) ───
+    // ─── CASE C: รอแอดมินตรวจสอบใน Telegram ───
     const pendingPayload = {
       user_id: user.id,
       user_email: user.email || '',
@@ -325,7 +369,10 @@ export async function POST(request: Request) {
         .select()
         .single();
       if (updateErr) {
-        return NextResponse.json({ error: updateErr.message }, { status: 500 });
+        return NextResponse.json(
+          { error: 'RPC_INTERNAL_ERROR', requestId },
+          { status: 500, headers: { 'X-Request-Id': requestId } }
+        );
       }
       orderData = updated;
     } else {
@@ -335,7 +382,10 @@ export async function POST(request: Request) {
         .select()
         .single();
       if (insertErr) {
-        return NextResponse.json({ error: insertErr.message }, { status: 500 });
+        return NextResponse.json(
+          { error: 'RPC_INTERNAL_ERROR', requestId },
+          { status: 500, headers: { 'X-Request-Id': requestId } }
+        );
       }
       orderData = inserted;
     }
@@ -349,17 +399,26 @@ export async function POST(request: Request) {
       finalSlipUrl
     );
 
-    return NextResponse.json({
-      ...orderData,
-      status: 'pending',
-    });
+    return NextResponse.json(
+      {
+        ...orderData,
+        status: 'pending',
+        requestId,
+      },
+      { status: 200, headers: { 'X-Request-Id': requestId } }
+    );
   } catch (error: any) {
     console.error('Error creating order:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'RPC_INTERNAL_ERROR', requestId },
+      { status: 500, headers: { 'X-Request-Id': requestId } }
+    );
   }
 }
 
 export async function GET(request: Request) {
+  const requestId = extractRequestId(request);
+
   try {
     const supabase = await createClient();
     const {
@@ -367,58 +426,119 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized', requestId },
+        { status: 401, headers: { 'X-Request-Id': requestId } }
+      );
     }
 
     const { searchParams } = new URL(request.url);
     const toolId = searchParams.get('toolId');
 
     if (toolId) {
-      const [{ data: userTool }, { data: latestOrder }] = await Promise.all([
+      const { data: targetTool } = await supabaseAdmin
+        .from('tools')
+        .select('id, slug')
+        .eq('id', toolId)
+        .maybeSingle();
+
+      const isBundleTarget = isCourseBundleSlug(targetTool?.slug);
+      let checkToolIds = [toolId];
+
+      if (isBundleTarget) {
+        const { data: bTools } = await supabaseAdmin
+          .from('tools')
+          .select('id')
+          .in('slug', [...COURSE_BUNDLE_SLUGS])
+          .eq('is_active', true);
+        if (bTools && bTools.length > 0) {
+          checkToolIds = bTools.map((t) => t.id);
+        }
+      }
+
+      const [{ data: userTools }, { data: latestOrder }] = await Promise.all([
         supabaseAdmin
           .from('user_tools')
-          .select('id')
+          .select('id, tool_id')
           .eq('user_id', user.id)
-          .eq('tool_id', toolId)
-          .eq('is_active', true)
-          .maybeSingle(),
+          .in('tool_id', checkToolIds)
+          .eq('is_active', true),
         supabaseAdmin
           .from('orders')
-          .select('id, status, slip_url, admin_note, created_at, approved_at')
+          .select('*')
           .eq('user_id', user.id)
-          .eq('tool_id', toolId)
+          .in('tool_id', checkToolIds)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
       ]);
 
-      const hasAccess = Boolean(userTool) || latestOrder?.status === 'approved';
-      // Strip internal [AI-...] fingerprint tags when showing admin_note to the customer
+      const hasAccess =
+        Boolean(userTools && userTools.length > 0) || latestOrder?.status === 'approved';
       const cleanAdminNote = latestOrder?.admin_note
         ? String(latestOrder.admin_note).replace(/\[[A-Z0-9_-]+[^\]]*\]/g, '').trim()
         : '';
 
-      return NextResponse.json({
-        hasAccess,
-        latestOrder: latestOrder
-          ? {
-              ...latestOrder,
-              admin_note: cleanAdminNote,
-            }
-          : null,
-      });
+      const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const orderUpdatedMs = latestOrder?.updated_at
+        ? new Date(latestOrder.updated_at).getTime()
+        : latestOrder?.created_at
+          ? new Date(latestOrder.created_at).getTime()
+          : 0;
+
+      const sharedKeyNotice =
+        latestOrder?.status === 'rejected' &&
+        latestOrder?.revoke_reason &&
+        latestOrder?.kept_active_via_order_id &&
+        orderUpdatedMs > sevenDaysAgoMs
+          ? formatSharedKeyRevokeMessage({
+              revokeReason: latestOrder.revoke_reason,
+              orderId: latestOrder.id,
+              keptActiveViaOrderId: latestOrder.kept_active_via_order_id,
+              audience: 'customer',
+            })
+          : null;
+
+      return NextResponse.json(
+        {
+          hasAccess,
+          sharedKeyNotice,
+          latestOrder: latestOrder
+            ? {
+                id: latestOrder.id,
+                status: latestOrder.status,
+                slip_url: latestOrder.slip_url,
+                admin_note: cleanAdminNote,
+                revoke_reason: latestOrder.revoke_reason || null,
+                kept_active_via_order_id: latestOrder.kept_active_via_order_id || null,
+                created_at: latestOrder.created_at,
+                approved_at: latestOrder.approved_at,
+                updated_at: latestOrder.updated_at || latestOrder.created_at,
+              }
+            : null,
+          requestId,
+        },
+        { status: 200, headers: { 'X-Request-Id': requestId } }
+      );
     }
 
     const { data, error } = await supabaseAdmin
       .from('orders')
-      .select('id, user_id, user_email, tool_id, package_type, amount, slip_url, status, admin_note, license_key_id, created_at, approved_at, tools(name, slug)')
+      .select('*, tools(name, slug)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      status: 200,
+      headers: { 'X-Request-Id': requestId },
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[GET /api/orders] error:', error);
+    return NextResponse.json(
+      { error: 'RPC_INTERNAL_ERROR', requestId },
+      { status: 500, headers: { 'X-Request-Id': requestId } }
+    );
   }
 }

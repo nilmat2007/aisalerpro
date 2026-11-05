@@ -12,6 +12,7 @@ export default function AdminOrdersPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   
   const [rejectNote, setRejectNote] = useState('');
+  const [rejectReason, setRejectReason] = useState('false_slip');
   const [rejectId, setRejectId] = useState<string | null>(null);
 
   const [selectedSlip, setSelectedSlip] = useState<string | null>(null);
@@ -65,6 +66,32 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleRetryGrant = async (id: string) => {
+    setProcessingId(id);
+    showLoading('กำลังซ่อมสิทธิ์และอนุมัติคำสั่งซื้อ...');
+    try {
+      const res = await fetch(`/api/admin/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'retry_grant' }),
+      });
+      closeLoading();
+      if (res.ok) {
+        await showSuccess('ซ่อมสิทธิ์และอนุมัติสำเร็จ!');
+        fetchOrders();
+      } else {
+        const data = await res.json();
+        showError('เกิดข้อผิดพลาด', data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      closeLoading();
+      showError('เกิดข้อผิดพลาด', 'ไม่สามารถซ่อมสิทธิ์ได้');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleReject = async (id: string) => {
     if (!rejectNote.trim()) {
       showError('กรุณาระบุเหตุผล', 'กรุณาระบุเหตุผลการปฏิเสธ');
@@ -76,13 +103,18 @@ export default function AdminOrdersPage() {
       const res = await fetch(`/api/admin/orders/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject', note: rejectNote })
+        body: JSON.stringify({
+          action: 'reject',
+          note: rejectNote,
+          revoke_reason: rejectReason,
+        })
       });
       closeLoading();
       if (res.ok) {
         await showSuccess('ปฏิเสธคำสั่งซื้อแล้ว');
         setRejectId(null);
         setRejectNote('');
+        setRejectReason('false_slip');
         fetchOrders();
       } else {
         const data = await res.json();
@@ -95,6 +127,40 @@ export default function AdminOrdersPage() {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const renderApprovedActorBadge = (order: any) => {
+    const actor: string = order.approved_by_actor || '';
+    const note: string = order.admin_note || '';
+    if (actor === 'system:auto_slip' || note.includes('[AUTO-APPROVED')) {
+      return (
+        <span className="inline-block mt-1 px-2 py-0.5 bg-cyan-500/15 text-cyan-300 text-[11px] rounded border border-cyan-500/30">
+          🤖 ระบบตรวจสอบสลิปอัตโนมัติ
+        </span>
+      );
+    }
+    if (actor.startsWith('telegram:')) {
+      return (
+        <span className="inline-block mt-1 px-2 py-0.5 bg-sky-500/15 text-sky-300 text-[11px] rounded border border-sky-500/30">
+          📱 อนุมัติผ่าน Telegram ({actor.replace('telegram:', '')})
+        </span>
+      );
+    }
+    if (actor === 'system:cleanup_retry' || note.includes('[AUTO-RETRY-HEALED')) {
+      return (
+        <span className="inline-block mt-1 px-2 py-0.5 bg-purple-500/15 text-purple-300 text-[11px] rounded border border-purple-500/30">
+          🔄 ระบบซ่อมสิทธิ์อัตโนมัติ
+        </span>
+      );
+    }
+    if (actor.startsWith('admin:') || order.status === 'approved') {
+      return (
+        <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-500/15 text-emerald-300 text-[11px] rounded border border-emerald-500/30">
+          👤 แอดมินอนุมัติ
+        </span>
+      );
+    }
+    return null;
   };
 
   const filteredOrders = orders.filter(o => filter === 'all' || o.status === filter);
@@ -167,13 +233,30 @@ export default function AdminOrdersPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {order.status === 'pending' && <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full border border-amber-500/30">⏳ รอตรวจสอบ</span>}
-                        {order.status === 'approved' && <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">✅ อนุมัติแล้ว</span>}
-                        {order.status === 'rejected' && <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30">❌ ปฏิเสธ</span>}
+                        <div className="flex flex-col items-start gap-1">
+                          {order.status === 'pending' && <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full border border-amber-500/30">⏳ รอตรวจสอบ</span>}
+                          {order.status === 'approved' && <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">✅ อนุมัติแล้ว</span>}
+                          {order.status === 'rejected' && <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full border border-red-500/30">❌ ปฏิเสธ</span>}
+                          {order.status === 'approved' && renderApprovedActorBadge(order)}
+                          {order.admin_note?.includes('[GRANT_RETRY_NEEDED') && (
+                            <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 text-[11px] rounded border border-amber-500/40 font-semibold">
+                              ⚠️ รอซ่อมสิทธิ์ (Grant Delayed)
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         {order.status === 'pending' && (
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
+                            {order.admin_note?.includes('[GRANT_RETRY_NEEDED') && (
+                              <button
+                                onClick={() => handleRetryGrant(order.id)}
+                                disabled={processingId === order.id}
+                                className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-xs disabled:opacity-50"
+                              >
+                                🔄 Retry Grant
+                              </button>
+                            )}
                             <button 
                               onClick={() => handleApprove(order.id)}
                               disabled={processingId === order.id}
@@ -182,7 +265,10 @@ export default function AdminOrdersPage() {
                               ✅ อนุมัติ
                             </button>
                             <button 
-                              onClick={() => setRejectId(order.id)}
+                              onClick={() => {
+                                setRejectId(order.id);
+                                setRejectReason('false_slip');
+                              }}
                               disabled={processingId === order.id}
                               className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-xs disabled:opacity-50"
                             >
@@ -200,6 +286,7 @@ export default function AdminOrdersPage() {
                             <button
                               onClick={() => {
                                 setRejectId(order.id);
+                                setRejectReason('admin_revoke');
                                 setRejectNote('แอดมินยกเลิกสิทธิ์การใช้งาน (Revoked)');
                               }}
                               disabled={processingId === order.id}
@@ -210,8 +297,13 @@ export default function AdminOrdersPage() {
                           </div>
                         )}
                         {order.status === 'rejected' && order.admin_note && (
-                          <div className="text-xs text-red-400">
-                            เหตุผล: {order.admin_note}
+                          <div className="text-xs text-red-400 space-y-1">
+                            <div>เหตุผล: {order.admin_note}</div>
+                            {order.admin_note.includes('kept_active_via_order_id=') && (
+                              <span className="inline-block px-2 py-0.5 bg-emerald-500/15 text-emerald-300 text-[11px] rounded border border-emerald-500/30">
+                                🛡️ สิทธิ์ยังใช้งานได้จากคำสั่งซื้ออื่น (Surviving Key)
+                              </span>
+                            )}
                           </div>
                         )}
                       </td>
@@ -235,7 +327,21 @@ export default function AdminOrdersPage() {
       {rejectId && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-white mb-4">ปฏิเสธคำสั่งซื้อ</h3>
+            <h3 className="text-xl font-bold text-white mb-4">ปฏิเสธ / ยกเลิกสิทธิ์คำสั่งซื้อ</h3>
+            <div className="mb-3">
+              <label className="block text-xs text-slate-400 mb-1">ประเภทเหตุผล (Revoke Reason)</label>
+              <select
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-red-500"
+              >
+                <option value="false_slip">สลิปปลอม / ยอดไม่ตรง (false_slip)</option>
+                <option value="refund">คืนเงินลูกค้า (refund)</option>
+                <option value="chargeback">ปฏิเสธรายการชำระเงิน (chargeback)</option>
+                <option value="duplicate_test">รายการซ้ำ / ทดสอบระบบ (duplicate_test)</option>
+                <option value="admin_revoke">แอดมินยกเลิกสิทธิ์ทั่วไป (admin_revoke)</option>
+              </select>
+            </div>
             <textarea
               value={rejectNote}
               onChange={(e) => setRejectNote(e.target.value)}
