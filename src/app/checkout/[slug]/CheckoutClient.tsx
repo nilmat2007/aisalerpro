@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import CoursePosterLightbox from '@/components/CoursePosterLightbox';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import {
@@ -586,7 +587,14 @@ export default function CheckoutClient({
               </h2>
 
               <div className="flex flex-col sm:flex-row gap-6">
-                {posterImage ? (
+                {isCourse ? (
+                  <div className="w-full sm:w-2/5">
+                    <CoursePosterLightbox
+                      src={posterImage || '/images/poster-course-tiktok-ai.jpg'}
+                      hideEnrollCta={true}
+                    />
+                  </div>
+                ) : posterImage ? (
                   <div className="w-full sm:w-1/3 aspect-[16/10] sm:aspect-[3/4] rounded-2xl overflow-hidden relative border border-[var(--border)] bg-black/10">
                     <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
                   </div>
@@ -608,18 +616,29 @@ export default function CheckoutClient({
 
                   <div className="flex justify-between items-end border-t border-[var(--border-light)] pt-4">
                     <span className="text-sm font-semibold text-[var(--text-secondary)]">ยอดชำระ</span>
-                    <span className="text-2xl sm:text-3xl font-black text-[var(--accent)]">
-                      ฿{displayPrice}
-                    </span>
+                    <div className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-xs text-[var(--text-muted)] line-through">
+                          ฿{priceInfo.formattedOriginal}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black">
+                          ประหยัด ฿{priceInfo.savingsFormatted}
+                        </span>
+                      </div>
+                      <span className="text-3xl sm:text-4xl font-black text-[var(--accent)]">
+                        ฿{displayPrice}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setStep(2)}
-                className="puppap-btn-primary w-full py-3.5 text-base font-bold shadow-md flex items-center justify-center gap-2"
+                className="puppap-btn-primary puppap-cta-animated w-full py-4 text-base sm:text-lg font-black shadow-lg flex items-center justify-center gap-2 rounded-xl"
               >
-                <span>ดำเนินการชำระเงิน →</span>
+                <span>ดำเนินการชำระเงิน</span>
+                <span className="puppap-arrow-nudge">→</span>
               </button>
             </div>
           )}
@@ -639,6 +658,51 @@ export default function CheckoutClient({
                   <span>ชำระเงิน</span>
                 </h2>
                 <span className="text-xs text-[var(--text-muted)]">ขั้นตอน 2 จาก 3</span>
+              </div>
+
+              {/* Compact Order Summary Strip with Click-to-Zoom Poster */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-[var(--bg-deep)] border-2 border-[var(--border-accent)]/60 flex items-center gap-3.5 sm:gap-4 shadow-xs">
+                {isCourse ? (
+                  <CoursePosterLightbox
+                    src={posterImage || '/images/poster-course-tiktok-ai.jpg'}
+                    compact={true}
+                    hideEnrollCta={true}
+                    className="w-16 h-20 sm:w-20 sm:h-24 shrink-0"
+                  />
+                ) : posterImage ? (
+                  <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden border border-[var(--border)] shrink-0 bg-black/10">
+                    <img src={posterImage} alt={tool.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center text-3xl shrink-0">
+                    {tool.icon || '🎓'}
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black puppap-badge-flash">
+                      🔥 ลด {priceInfo.discountPercent}%
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                      ✅ สิทธิ์ตลอดชีพ
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-black text-[var(--text-primary)] truncate mt-0.5">
+                    {tool.name}
+                  </h3>
+                  <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+                    <span className="text-2xl sm:text-3xl font-black text-[var(--accent)] leading-none">
+                      ฿{displayPrice}
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)] line-through font-semibold">
+                      ปกติ ฿{priceInfo.formattedOriginal}
+                    </span>
+                    <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                      (ประหยัด ฿{priceInfo.savingsFormatted})
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {orderStatus === 'rejected' && (
