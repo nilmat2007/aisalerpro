@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import CourseCoreHighlights from '@/components/CourseCoreHighlights';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import { getPriceInfo } from '@/lib/price-utils';
 import { captureUtmContent, fbViewContent } from '@/lib/meta-pixel';
@@ -207,6 +208,12 @@ export default function CoursesClient({
                 <div className="text-xs text-[var(--text-muted)] font-medium mt-0.5">ดูซ้ำได้ตลอดชีพ</div>
               </div>
             </div>
+
+            {/* Core 8 Outcome-Focused Learning Highlights + “มือใหม่ก็ทำได้บนมือถือเครื่องเดียว” */}
+            <CourseCoreHighlights
+              pageContext="courses"
+              showBonusLineInFooter={hasAccess}
+            />
 
             {/* Prominent Launch Price Box & Paired Call to Actions */}
             <div className="pt-2 space-y-3.5">

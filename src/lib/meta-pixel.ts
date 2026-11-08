@@ -12,7 +12,7 @@ export const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '';
 export const PDPA_CONSENT_KEY = 'puppap_pdpa_consent';
 export const PREVIEW_AB_STORAGE_KEY = 'puppap_preview_ab';
 
-export type PreviewEventName =
+export type FunnelEventName =
   | 'preview_play'
   | 'preview_unmute'
   | 'preview_25'
@@ -22,7 +22,11 @@ export type PreviewEventName =
   | 'sticky_30s_cta_click'
   | 'overlay_cta_click'
   | 'curriculum_click_from_preview'
-  | 'purchase_from_preview';
+  | 'purchase_from_preview'
+  | 'value_stack_view'
+  | 'value_stack_expand';
+
+export type PreviewEventName = FunnelEventName;
 
 /**
  * PDPA Marketing Consent Gate:
@@ -148,13 +152,13 @@ export function sendFirstPartyTrackBeacon(pathname: string, utmContent?: string)
 }
 
 /**
- * Track Lesson 21 Preview Video Funnel Events:
+ * Track CRO & Preview Funnel Events:
  * 1. Excludes bots (`navigator.webdriver`)
  * 2. Fires first-party anonymous event to Supabase (`/api/track-visit`) via `sendBeacon`
  * 3. Gates third-party Meta Pixel (`fbq`) & GA4 (`gtag`) strictly behind `hasMarketingConsent()`
  */
-export function trackPreviewEvent(
-  eventName: PreviewEventName,
+export function trackFunnelEvent(
+  eventName: FunnelEventName,
   metadata: Record<string, any> = {}
 ): void {
   if (typeof window === 'undefined' || navigator.webdriver) return;
@@ -183,6 +187,8 @@ export function trackPreviewEvent(
     window.gtag('event', eventName, metadata);
   }
 }
+
+export const trackPreviewEvent = trackFunnelEvent;
 
 export function fbPageView(): void {
   if (typeof window === 'undefined' || !hasMarketingConsent() || typeof window.fbq !== 'function') {

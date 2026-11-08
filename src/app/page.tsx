@@ -6,6 +6,7 @@ import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import FlowToolCard from '@/components/FlowToolCard'
 import CoursePosterLightbox from '@/components/CoursePosterLightbox'
+import CourseCoreHighlights from '@/components/CourseCoreHighlights'
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer'
 import { getPriceInfo } from '@/lib/price-utils'
 import {
@@ -193,13 +194,8 @@ export default async function HomePage() {
                   คู่มือสร้างรายได้แบบจับมือทำ 22 บทเรียนเต็ม วิดีโอแนวนอน 16:9 คมชัด เรียนได้ทุกเพศทุกวัย แม้ไม่เก่งคอมพิวเตอร์ ทำตามได้บนมือถือเครื่องเดียว
                 </p>
 
-                <div className="flex items-center justify-center lg:justify-start gap-3 text-xs sm:text-sm font-semibold text-[var(--text-secondary)] flex-wrap pt-1">
-                  <span>✓ ไม่มีพื้นฐานก็เรียนได้</span>
-                  <span>•</span>
-                  <span>✓ ดูซ้ำกี่รอบก็ได้ ไม่มีหมดอายุ</span>
-                  <span>•</span>
-                  <span className="text-[var(--accent)] font-black">🎁 แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598 (แยกซื้อชิ้นละ ฿299)</span>
-                </div>
+                {/* Core 8 Outcome-Focused Learning Highlights + “มือใหม่ก็ทำได้บนมือถือเครื่องเดียว” */}
+                <CourseCoreHighlights pageContext="home" />
               </div>
 
               {/* Giant Price Box + Dual-Path Cluster (Buy + Syllabus Adjacent) */}

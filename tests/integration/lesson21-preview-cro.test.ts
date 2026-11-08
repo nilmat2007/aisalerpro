@@ -6,7 +6,9 @@ import {
   setMarketingConsent,
   getPreviewAbVariant,
   trackPreviewEvent,
+  trackFunnelEvent,
 } from '@/lib/meta-pixel';
+import { COURSE_CORE_HIGHLIGHTS } from '@/components/CourseCoreHighlights';
 
 const ROOT = process.cwd();
 
@@ -42,6 +44,7 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
     const courseFiles = [
       'src/components/Lesson21PreviewPlayer.tsx',
       'src/components/CoursePosterLightbox.tsx',
+      'src/components/CourseCoreHighlights.tsx',
       'src/app/courses/CoursesClient.tsx',
       'src/app/page.tsx',
       'src/app/DashboardClient.tsx',
@@ -49,11 +52,12 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       'src/app/course/[slug]/CourseStudioClient.tsx',
     ];
 
-    it('contains zero occurrences of "897" or "56 วินาที" across all UI files', () => {
+    it('contains zero occurrences of "897", "56 วินาที", or misspelled "ตระกร้า" across all UI files', () => {
       for (const rel of courseFiles) {
         const content = fs.readFileSync(path.join(ROOT, rel), 'utf8');
         expect(content, `${rel} must not contain 897`).not.toContain('897');
         expect(content, `${rel} must not contain 56 วินาที`).not.toContain('56 วินาที');
+        expect(content, `${rel} must not contain misspelled ตระกร้า`).not.toContain('ตระกร้า');
       }
     });
 
@@ -134,23 +138,23 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       );
     });
 
-    it('fires Meta Pixel and GA4 after explicit PDPA acceptance', () => {
+    it('fires Meta Pixel and GA4 after explicit PDPA acceptance via trackFunnelEvent', () => {
       setMarketingConsent(true);
       expect(hasMarketingConsent()).toBe(true);
 
-      trackPreviewEvent('overlay_cta_click', {
+      trackFunnelEvent('value_stack_view', {
+        page: 'courses',
         variant: 'A',
-        utm_content: 'preview_l21_overlay_A',
       });
       expect((window as any).fbq).toHaveBeenCalledWith(
         'trackCustom',
-        'overlay_cta_click',
-        { variant: 'A', utm_content: 'preview_l21_overlay_A' }
+        'value_stack_view',
+        { page: 'courses', variant: 'A' }
       );
       expect((window as any).gtag).toHaveBeenCalledWith(
         'event',
-        'overlay_cta_click',
-        { variant: 'A', utm_content: 'preview_l21_overlay_A' }
+        'value_stack_view',
+        { page: 'courses', variant: 'A' }
       );
     });
 
@@ -183,6 +187,52 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       );
       expect(metaPixelSource).toContain('const shouldLoadMarketingPixel = Boolean(FB_PIXEL_ID && hasConsent)');
       expect(metaPixelSource).toContain('{shouldLoadMarketingPixel && (');
+    });
+  });
+
+  describe('5. Value Stack 8 Core Highlights & Cross-Page Consistency', () => {
+    const highlightsSource = fs.readFileSync(
+      path.join(ROOT, 'src/components/CourseCoreHighlights.tsx'),
+      'utf8'
+    );
+
+    it('exports 8 outcome-focused items without repetitive "สอนทำ" prefix', () => {
+      expect(COURSE_CORE_HIGHLIGHTS).toHaveLength(8);
+      for (const item of COURSE_CORE_HIGHLIGHTS) {
+        expect(item).not.toContain('สอนทำ');
+        expect(item).not.toContain('ตระกร้า');
+      }
+      expect(COURSE_CORE_HIGHLIGHTS).toContain('คลิปการ์ตูนแอนิเมชั่น 2D บนมือถือ');
+    });
+
+    it('includes the full header, mobile 4+4 collapse with aria-controls, and summary footer bar', () => {
+      expect(highlightsSource).toContain('📱 “มือใหม่ก็ทำได้บนมือถือเครื่องเดียว”');
+      expect(highlightsSource).toContain('— สิ่งที่คุณจะได้เรียนครบในคอร์สนี้:');
+      expect(highlightsSource).toContain(
+        '▾ ดูเพิ่มอีก 4 หัวข้อหลัก (รีวิวสินค้า • ละครสั้น • การ์ตูน 2D • โพสต์หารายได้)'
+      );
+      expect(highlightsSource).not.toContain('อนิเมะ 2D');
+      expect(highlightsSource).toContain('aria-expanded={isMobileExpanded}');
+      expect(highlightsSource).toContain('aria-controls={listId}');
+      expect(highlightsSource).toContain(
+        '🎬 ครบ 22 บทเรียนเต็ม • ♾️ ดูซ้ำได้ตลอดชีพ ไม่มีพื้นฐานก็เรียนตามได้ทันที'
+      );
+      expect(highlightsSource).toContain('puppap_vs_viewed');
+      expect(highlightsSource).toContain('puppap_vs_expanded');
+      expect(highlightsSource).toContain('trackFunnelEvent');
+    });
+
+    it('renders CourseCoreHighlights across all 3 main course surfaces (/, /dashboard, /courses)', () => {
+      for (const rel of [
+        'src/app/page.tsx',
+        'src/app/DashboardClient.tsx',
+        'src/app/courses/CoursesClient.tsx',
+      ]) {
+        const content = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+        expect(content, `${rel} must render <CourseCoreHighlights`).toContain(
+          '<CourseCoreHighlights'
+        );
+      }
     });
   });
 });

@@ -8,6 +8,7 @@ import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
 import FlowToolCard from '@/components/FlowToolCard';
 import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import CourseCoreHighlights from '@/components/CourseCoreHighlights';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import { getPriceInfo } from '@/lib/price-utils';
 
@@ -348,20 +349,11 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                         </p>
                       </div>
 
-                      {/* Quick Info Badges */}
-                      <div className="flex items-center justify-center lg:justify-start gap-3 text-xs sm:text-sm font-semibold text-[var(--text-secondary)] flex-wrap pt-1">
-                        <span className="flex items-center gap-1">
-                          <span>🎬</span> 22 บทเรียนเต็ม
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <span>📱</span> ดูบนมือถือได้
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 text-[var(--accent)] font-black">
-                          <span>🎁</span> แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598 (แยกซื้อชิ้นละ ฿299)
-                        </span>
-                      </div>
+                      {/* Core 8 Outcome-Focused Learning Highlights + “มือใหม่ก็ทำได้บนมือถือเครื่องเดียว” */}
+                      <CourseCoreHighlights
+                        pageContext="dashboard"
+                        showBonusLineInFooter={hasCourseAccess}
+                      />
                     </div>
 
                     {/* Action Buttons */}
