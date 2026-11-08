@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import { getPriceInfo } from '@/lib/price-utils';
 import { captureUtmContent, fbViewContent } from '@/lib/meta-pixel';
 
@@ -23,6 +24,14 @@ export default function CoursesClient({
   const priceInfo = getPriceInfo(course?.price || '299', feat);
 
   const [expandedModule, setExpandedModule] = useState<number | null>(1);
+  const [previewPlayTrigger, setPreviewPlayTrigger] = useState<number>(0);
+
+  const lesson21 = useMemo(
+    () => lessons.find((l: any) => l.id === 21),
+    [lessons]
+  );
+  const lesson21PromptCount =
+    lesson21?.promptStepCount ?? lesson21?.prompts?.length ?? 5;
 
   useEffect(() => {
     captureUtmContent();
@@ -33,6 +42,24 @@ export default function CoursesClient({
       currency: 'THB',
     });
   }, [course?.slug, priceInfo.numericPrice]);
+
+  const scrollToCurriculum = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    const el = document.getElementById('curriculum');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const scrollToPreviewAndPlay = useCallback(() => {
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('preview-lesson-21');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+    setPreviewPlayTrigger((prev) => prev + 1);
+  }, []);
 
   const modules = useMemo(() => {
     if (!lessons.length) return [];
@@ -122,17 +149,14 @@ export default function CoursesClient({
                 className="puppap-btn-primary px-4 py-1.5 text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-sm"
               >
                 <span>🛒 สมัครเรียน ฿{priceInfo.formattedPrice}</span>
-                <span className="text-[11px] opacity-80 line-through hidden sm:inline">
-                  ฿{priceInfo.formattedOriginal}
-                </span>
               </Link>
             )}
           </nav>
         </div>
       </header>
 
-      {/* Hero Section with Full Course Poster + Giant Price + Animated Psychological CTA */}
-      <section className="relative py-10 sm:py-16 px-4 sm:px-6 overflow-hidden border-b border-[var(--border-light)] bg-gradient-to-b from-[var(--bg-secondary)]/50 to-[var(--bg-primary)]">
+      {/* Hero Section with Full Course Poster + Giant Launch Price + Paired CTA & Curriculum Buttons */}
+      <section className="relative py-10 sm:py-14 px-4 sm:px-6 overflow-hidden border-b border-[var(--border-light)] bg-gradient-to-b from-[var(--bg-secondary)]/50 to-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* ซ้าย (หรือด้านบนบนมือถือ): โปสเตอร์คอร์สเรียนใหม่ แตะซูมดู 22 บทเรียนได้ */}
           <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
@@ -143,7 +167,7 @@ export default function CoursesClient({
             />
           </div>
 
-          {/* ขวา: รายละเอียดคอร์ส + กล่องราคาขนาดยักษ์ + ปุ่มกดซื้อเคลื่อนไหว */}
+          {/* ขวา: รายละเอียดคอร์ส + กล่องราคาเปิดตัว + ปุ่มกดซื้อคู่กับปุ่มดูสารบัญ */}
           <div className="lg:col-span-7 text-center lg:text-left space-y-5">
             <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
               <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
@@ -151,7 +175,7 @@ export default function CoursesClient({
               </span>
               {!hasAccess && (
                 <span className="px-3.5 py-1 rounded-full text-xs font-black bg-rose-600 text-white shadow-sm puppap-badge-flash">
-                  🔥 ลด {priceInfo.discountPercent}% วันนี้
+                  🔥 ราคาเปิดตัว ฿{priceInfo.formattedPrice} (แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598)
                 </span>
               )}
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
@@ -184,19 +208,16 @@ export default function CoursesClient({
               </div>
             </div>
 
-            {/* Prominent Flash Promo Price Box & Call to Actions */}
+            {/* Prominent Launch Price Box & Paired Call to Actions */}
             <div className="pt-2 space-y-3.5">
               {!hasAccess && (
                 <div className="puppap-card p-4 sm:p-5 border-2 border-[var(--border-accent)] bg-[var(--bg-card)] shadow-md text-center">
-                  <div className="flex items-center justify-center gap-2.5 flex-wrap">
-                    <span className="text-sm sm:text-base text-[var(--text-muted)] line-through decoration-rose-600 decoration-2 font-bold">
-                      ราคาปกติ ฿{priceInfo.formattedOriginal}
-                    </span>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
                     <span className="px-3 py-0.5 rounded-full bg-rose-600 text-white text-xs sm:text-sm font-black puppap-badge-flash">
-                      🔥 ประหยัดทันที ฿{priceInfo.savingsFormatted}
+                      🔥 ราคาเปิดตัวพิเศษ (3-in-1 Course Bundle)
                     </span>
                   </div>
-                  <div className="mt-1 flex items-baseline justify-center gap-1.5">
+                  <div className="mt-1.5 flex items-baseline justify-center gap-1.5">
                     <span className="text-5xl sm:text-6xl font-black text-[var(--accent)] tracking-tight leading-none puppap-price-hero">
                       ฿{priceInfo.formattedPrice}
                     </span>
@@ -208,35 +229,65 @@ export default function CoursesClient({
                     ✅ จ่ายครั้งเดียวจบ · เรียนได้ครบ {lessons.length || 22} บทตลอดชีพ · ไม่มีค่ารายเดือน
                   </div>
                   <div className="mt-2 pt-2 border-t border-[var(--border-light)] text-xs font-black text-amber-800 dark:text-amber-300">
-                    🎁 แถมฟรี 2 เครื่องมือ AI Flow Tools: PUP PAP Fashion Studio + PUPPAP AI UGC Product (มูลค่ารวม ฿598)
+                    🎁 แถมฟรี 2 เครื่องมือ AI Flow Tools: PUP PAP Fashion Studio + PUPPAP AI UGC Product (แยกซื้อชิ้นละ ฿299 มูลค่ารวม ฿598)
                   </div>
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Strict Button Hierarchy: Primary Filled on Top/Left + Secondary Outline Curriculum & Preview Buttons Adjacent */}
+              <div className="space-y-2.5">
                 {hasAccess ? (
-                  <Link
-                    href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
-                    className="puppap-btn-primary px-8 py-4 text-base sm:text-lg font-black shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-transform w-full"
-                  >
-                    <span>🚀 เข้าสู่ห้องเรียนของคุณ</span>
-                    <span className="puppap-arrow-nudge">→</span>
-                  </Link>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <Link
+                      href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
+                      className="puppap-btn-primary min-h-[56px] px-8 py-4 text-base sm:text-lg font-black shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-transform flex-1"
+                    >
+                      <span>🚀 เข้าสู่ห้องเรียนของคุณ</span>
+                      <span className="puppap-arrow-nudge">→</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={scrollToCurriculum}
+                      className="min-h-[42px] px-4 py-2 rounded-xl bg-transparent hover:bg-[var(--accent-dim)] text-[var(--text-primary)] border-[1.5px] border-[var(--border)] text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                    >
+                      <span>📑 ดูสารบัญ {lessons.length || 22} บท ↓</span>
+                    </button>
+                  </div>
                 ) : (
                   <>
-                    <Link
-                      href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
-                      className="puppap-btn-primary puppap-cta-animated min-h-[60px] sm:min-h-[66px] px-7 py-4 rounded-2xl text-lg sm:text-xl font-black shadow-xl flex items-center justify-center gap-2.5 flex-1"
-                    >
-                      <span>🛒 สมัครเรียนทันที ฿{priceInfo.formattedPrice}</span>
-                      <span className="puppap-arrow-nudge text-xl sm:text-2xl">→</span>
-                    </Link>
-                    <Link
-                      href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=1`}
-                      className="puppap-btn-secondary px-5 py-4 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shrink-0"
-                    >
-                      <span>🎁 ดูบทที่ 1 ฟรี</span>
-                    </Link>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                      <Link
+                        href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
+                        className="puppap-btn-primary puppap-cta-animated min-h-[58px] sm:min-h-[64px] px-7 py-4 rounded-2xl text-lg sm:text-xl font-black shadow-xl flex items-center justify-center gap-2.5 flex-1"
+                      >
+                        <span>🛒 สมัครเรียนราคาเปิดตัว ฿{priceInfo.formattedPrice}</span>
+                        <span className="puppap-arrow-nudge text-xl sm:text-2xl">→</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={scrollToCurriculum}
+                        className="min-h-[42px] sm:min-h-[46px] px-4 py-2.5 rounded-xl bg-transparent hover:bg-[var(--accent-dim)] text-[var(--text-primary)] border-[1.5px] border-[var(--border)] text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+                      >
+                        <span>📑 ดูสารบัญ {lessons.length || 22} บท ↓</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap pt-0.5">
+                      <button
+                        type="button"
+                        onClick={scrollToPreviewAndPlay}
+                        className="text-xs sm:text-sm font-extrabold text-[var(--accent)] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>🎬 ดูวิดีโอตัวอย่างบทที่ 21 (ฟรี 1 นาที) ↓</span>
+                      </button>
+                      <span className="text-[var(--text-muted)]">•</span>
+                      <Link
+                        href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=1`}
+                        className="text-xs sm:text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>🎁 ดูบทที่ 1 เต็มบทฟรี</span>
+                      </Link>
+                    </div>
                   </>
                 )}
               </div>
@@ -255,8 +306,21 @@ export default function CoursesClient({
         </div>
       </section>
 
+      {/* Featured 1-Minute Lesson 21 Video Preview Section (Positioned right between Hero & Curriculum) */}
+      <section className="max-w-4xl w-full mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
+        <Lesson21PreviewPlayer
+          hasAccess={hasAccess}
+          courseSlug={course?.slug || 'tiktok-ai-affiliate'}
+          priceFormatted={priceInfo.formattedPrice}
+          promptCount={lesson21PromptCount}
+          curriculumHref="#curriculum"
+          onScrollToCurriculum={scrollToCurriculum}
+          externalPlayTrigger={previewPlayTrigger}
+        />
+      </section>
+
       {/* Main Content: Curriculum Overview */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-10">
+      <main id="curriculum" className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-12 space-y-10 scroll-mt-20">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-2 flex items-center gap-2">
             <span className="text-[var(--accent)]">❖</span> สารบัญ {lessons.length || 22} บทเรียน (Curriculum)
@@ -318,66 +382,80 @@ export default function CoursesClient({
                                   🎁 ดูตัวอย่างฟรี
                                 </span>
                               )}
-                                {lesson.status === 'coming_soon' ? (
-                                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 font-semibold">
-                                    ⏳ กำลังอัปเดตวิดีโอ
-                                  </span>
-                                ) : (
-                                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 font-semibold">
-                                    🎬 พร้อมเรียน • {lesson.duration || 'วิดีโอ HD'}
-                                  </span>
-                                )}
-                                {(lesson.promptStepCount ?? lesson.prompts?.length ?? 0) > 0 && (
-                                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)] font-bold">
-                                    📋 แจกฟรี {lesson.promptStepCount ?? lesson.prompts?.length ?? 0} Prompt
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
-                                {lesson.description}
-                              </p>
-                              {Array.isArray(lesson.key_points) && lesson.key_points.length > 0 && (
-                                <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
-                                  {lesson.key_points.map((pt: string, idx: number) => (
-                                    <li key={idx} className="flex items-start gap-1.5">
-                                      <span className="text-[var(--accent)] font-bold">•</span>
-                                      <span>{pt}</span>
-                                    </li>
-                                  ))}
-                                </ul>
+                              {lesson.id === 21 && (
+                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-600/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 font-bold">
+                                  🎬 มีตัวอย่างฟรี 1 นาที
+                                </span>
+                              )}
+                              {lesson.status === 'coming_soon' ? (
+                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 font-semibold">
+                                  ⏳ กำลังอัปเดตวิดีโอ
+                                </span>
+                              ) : (
+                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 font-semibold">
+                                  🎬 พร้อมเรียน • {lesson.duration || 'วิดีโอ HD'}
+                                </span>
+                              )}
+                              {(lesson.promptStepCount ?? lesson.prompts?.length ?? 0) > 0 && (
+                                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)] border border-[var(--border-accent)] font-bold">
+                                  📋 แจกฟรี {lesson.promptStepCount ?? lesson.prompts?.length ?? 0} Prompt
+                                </span>
                               )}
                             </div>
+                            <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
+                              {lesson.description}
+                            </p>
+                            {Array.isArray(lesson.key_points) && lesson.key_points.length > 0 && (
+                              <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
+                                {lesson.key_points.map((pt: string, idx: number) => (
+                                  <li key={idx} className="flex items-start gap-1.5">
+                                    <span className="text-[var(--accent)] font-bold">•</span>
+                                    <span>{pt}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
+                        </div>
 
-                          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                            {lesson.flow_tool_slug && (
-                              <span className="text-xs px-2.5 py-0.5 rounded bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--accent)] font-semibold">
-                                ใช้ Flow Tool
-                              </span>
-                            )}
-                            {hasAccess ? (
-                              <Link
-                                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=${lesson.id}`}
-                                className="puppap-btn-primary px-3.5 py-1.5 text-xs font-bold"
-                              >
-                                ▶ เข้าเรียนบทนี้
-                              </Link>
-                            ) : lesson.is_free_preview ? (
-                              <Link
-                                href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=${lesson.id}`}
-                                className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white border border-emerald-800 text-xs font-bold transition-all shadow-xs"
-                              >
-                                🎁 ดูตัวอย่างบทนี้ฟรี
-                              </Link>
-                            ) : (
-                              <Link
-                                href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
-                                className="puppap-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1"
-                              >
-                                <span>🔒 ปลดล็อก ฿{priceInfo.formattedPrice}</span>
-                              </Link>
-                            )}
-                          </div>
+                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0 flex-wrap">
+                          {lesson.flow_tool_slug && (
+                            <span className="text-xs px-2.5 py-0.5 rounded bg-[var(--bg-deep)] border border-[var(--border-light)] text-[var(--accent)] font-semibold">
+                              ใช้ Flow Tool
+                            </span>
+                          )}
+                          {lesson.id === 21 && !hasAccess && (
+                            <button
+                              type="button"
+                              onClick={scrollToPreviewAndPlay}
+                              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                            >
+                              ▶ ดูตัวอย่าง 1 นาที
+                            </button>
+                          )}
+                          {hasAccess ? (
+                            <Link
+                              href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=${lesson.id}`}
+                              className="puppap-btn-primary px-3.5 py-1.5 text-xs font-bold"
+                            >
+                              ▶ เข้าเรียนบทนี้
+                            </Link>
+                          ) : lesson.is_free_preview ? (
+                            <Link
+                              href={`/course/${course?.slug || 'tiktok-ai-affiliate'}?lesson=${lesson.id}`}
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white border border-emerald-800 text-xs font-bold transition-all shadow-xs"
+                            >
+                              🎁 ดูตัวอย่างบทนี้ฟรี
+                            </Link>
+                          ) : (
+                            <Link
+                              href={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
+                              className="puppap-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1"
+                            >
+                              <span>🔒 ปลดล็อก ฿{priceInfo.formattedPrice}</span>
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -387,7 +465,7 @@ export default function CoursesClient({
           })}
         </div>
 
-        {/* Value Proposition Box (Flattened dividers instead of nested cards) */}
+        {/* Value Proposition Box */}
         <section className="puppap-card p-6 sm:p-8 space-y-6 border-[var(--border-light)]">
           <div className="text-center max-w-xl mx-auto space-y-2">
             <h3 className="text-lg sm:text-xl font-black text-[var(--text-primary)]">
@@ -428,21 +506,21 @@ export default function CoursesClient({
           <div className="pt-4 border-t border-[var(--border-light)] text-center space-y-3">
             {!hasAccess && (
               <div className="text-sm sm:text-base font-bold text-[var(--text-secondary)]">
-                ราคาปกติ <span className="line-through text-[var(--text-muted)] decoration-rose-600 decoration-2">฿{priceInfo.formattedOriginal}</span>{' '}
-                ➔ พิเศษวันนี้เพียง <span className="text-2xl sm:text-3xl font-black text-[var(--accent)]">฿{priceInfo.formattedPrice} บาท</span> (ลด {priceInfo.discountPercent}%)
+                ราคาเปิดตัวเพียง <span className="text-2xl sm:text-3xl font-black text-[var(--accent)]">฿{priceInfo.formattedPrice} บาท</span>{' '}
+                (แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598)
               </div>
             )}
             <Link
               href={hasAccess ? `/course/${course?.slug || 'tiktok-ai-affiliate'}` : `/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
               className={`puppap-btn-primary ${!hasAccess ? 'puppap-cta-animated min-h-[60px] rounded-2xl' : ''} px-8 py-4 text-base sm:text-lg font-black shadow-xl inline-flex items-center justify-center gap-2.5`}
             >
-              <span>{hasAccess ? '🚀 เข้าสู่ห้องเรียนของคุณ' : `🛒 สมัครเรียนทันที ฿${priceInfo.formattedPrice} (ซื้อครั้งเดียวจบ)`}</span>
+              <span>{hasAccess ? '🚀 เข้าสู่ห้องเรียนของคุณ' : `🛒 สมัครเรียนราคาเปิดตัว ฿${priceInfo.formattedPrice} (ซื้อครั้งเดียวจบ)`}</span>
               <span className="puppap-arrow-nudge text-xl">→</span>
             </Link>
           </div>
         </section>
 
-        {/* 📌 3 ขั้นตอนเริ่มต้นสำหรับคนไม่เก่งเทคโนโลยี (Flattened dividers instead of nested cards) */}
+        {/* 📌 3 ขั้นตอนเริ่มต้นสำหรับคนไม่เก่งเทคโนโลยี */}
         <section className="puppap-card p-6 sm:p-8 space-y-5 border-[var(--border-light)]">
           <div className="text-center max-w-xl mx-auto space-y-1">
             <h3 className="text-lg sm:text-xl font-black text-[var(--text-primary)]">
@@ -511,11 +589,8 @@ export default function CoursesClient({
           <div className="max-w-md mx-auto flex items-center justify-between gap-3">
             <div className="shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-[var(--text-muted)] line-through font-semibold">
-                  ฿{priceInfo.formattedOriginal}
-                </span>
                 <span className="px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black puppap-badge-flash">
-                  ลด {priceInfo.discountPercent}%
+                  ราคาเปิดตัว
                 </span>
               </div>
               <div className="text-2xl font-black text-[var(--accent)] leading-none mt-0.5">

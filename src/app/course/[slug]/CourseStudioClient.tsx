@@ -303,10 +303,7 @@ export default function CourseStudioClient({
                 href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
                 className="puppap-btn-primary px-3.5 py-1.5 text-xs font-black flex items-center gap-1.5 shadow-sm"
               >
-                <span>🛒 สมัครเรียน ฿{priceInfo.formattedPrice}</span>
-                <span className="hidden sm:inline text-[11px] opacity-80 line-through">
-                  ฿{priceInfo.formattedOriginal}
-                </span>
+                <span>🛒 สมัครเรียนราคาเปิดตัว ฿{priceInfo.formattedPrice}</span>
               </Link>
             )}
 
@@ -470,12 +467,11 @@ export default function CourseStudioClient({
                     ปลดล็อกทั้ง {lessons.length || 22} บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร เรียนซ้ำได้ตลอดชีพ
                   </p>
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-900 border border-amber-500/40">
-                    <span className="text-xs text-stone-400 line-through">ปกติ ฿{priceInfo.formattedOriginal}</span>
                     <span className="text-base sm:text-lg font-black text-amber-300">
-                      พิเศษ ฿{priceInfo.formattedPrice} บาท
+                      ราคาเปิดตัว ฿{priceInfo.formattedPrice} บาท
                     </span>
                     <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-black">
-                      ลด {priceInfo.discountPercent}%
+                      แถมฟรี 2 เครื่องมือ AI มูลค่า ฿598
                     </span>
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
@@ -916,7 +912,7 @@ export default function CourseStudioClient({
                   <span className="text-[var(--accent)]">Q:</span> ซื้อครั้งเดียวเรียนได้ทุกบทจริงไหม มีค่าใช้จ่ายรายเดือนไหม?
                 </h4>
                 <p className="text-[var(--text-secondary)] pl-5 leading-relaxed">
-                  จริงครับ ชำระเงิน 990 บาทครั้งเดียว เรียนได้ครบทั้ง {lessons.length || 22} บทเรียนตลอดชีพ ไม่มีค่าธรรมเนียมรายเดือน และหากมีบทเรียนอัปเดตใหม่ในอนาคต ท่านจะได้รับสิทธิ์เข้าดูฟรีทันทีครับ
+                  จริงครับ ชำระราคาเปิดตัว ฿{priceInfo.formattedPrice} บาทครั้งเดียว เรียนได้ครบทั้ง {lessons.length || 22} บทเรียนตลอดชีพ แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598 (แยกซื้อชิ้นละ ฿299) ไม่มีค่าธรรมเนียมรายเดือน และหากมีบทเรียนอัปเดตใหม่ในอนาคต ท่านจะได้รับสิทธิ์เข้าดูฟรีทันทีครับ
                 </p>
               </div>
 
@@ -1050,12 +1046,12 @@ export default function CourseStudioClient({
             <div className="mt-6 pt-4 border-t border-[var(--border-light)] text-center space-y-2">
               <div className="p-3 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-accent)]">
                 <div className="flex items-center justify-center gap-2">
-                  <span className="text-xs text-[var(--text-muted)] line-through">ปกติ ฿{priceInfo.formattedOriginal}</span>
-                  <span className="px-1.5 py-0.2 rounded bg-rose-600 text-white text-[10px] font-black">
-                    ลด {priceInfo.discountPercent}%
+                  <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-black">
+                    🎁 แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598
                   </span>
                 </div>
                 <div className="text-2xl font-black text-[var(--accent)] mt-0.5">
+                  <span className="text-xs font-bold text-[var(--text-muted)] mr-1">ราคาเปิดตัว</span>
                   ฿{priceInfo.formattedPrice} <span className="text-xs font-bold text-[var(--text-secondary)]">บาท</span>
                 </div>
                 <p className="text-[11px] text-[var(--text-muted)]">ปลดล็อกครบทั้ง {lessons.length || 22} บท ตลอดชีพ</p>
@@ -1064,7 +1060,7 @@ export default function CourseStudioClient({
                 href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
                 className="puppap-btn-primary w-full py-2.5 text-xs sm:text-sm font-black block shadow-md"
               >
-                🛒 สมัครเรียนพิเศษ ฿{priceInfo.formattedPrice} บาท
+                🛒 สมัครเรียนราคาเปิดตัว ฿{priceInfo.formattedPrice} บาท
               </Link>
             </div>
           )}

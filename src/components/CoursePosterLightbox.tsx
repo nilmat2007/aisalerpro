@@ -129,12 +129,11 @@ export default function CoursePosterLightbox({
               <div className="flex items-center gap-3 text-white">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-400 line-through">ปกติ ฿990</span>
                     <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black puppap-badge-flash">
-                      🔥 ลด 70% วันนี้
+                      🔥 ราคาเปิดตัว (แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598)
                     </span>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-black text-amber-400 leading-none mt-0.5">
+                  <div className="text-2xl sm:text-3xl font-black text-amber-400 leading-none mt-1">
                     ฿299 <span className="text-xs font-bold text-zinc-300">บาท · เรียนได้ตลอดชีพ</span>
                   </div>
                 </div>
@@ -145,7 +144,7 @@ export default function CoursePosterLightbox({
                 onClick={() => setIsOpen(false)}
                 className="puppap-btn-primary puppap-cta-animated w-full sm:w-auto px-7 py-3.5 text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-xl"
               >
-                <span>🛒 สมัครเรียนทันที ฿299</span>
+                <span>🛒 สมัครเรียนราคาเปิดตัว ฿299</span>
                 <span className="puppap-arrow-nudge">→</span>
               </Link>
             </div>

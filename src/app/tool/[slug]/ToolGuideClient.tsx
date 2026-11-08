@@ -320,7 +320,7 @@ export default function ToolGuideClient({
                   <div className="mt-3 p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-left space-y-1.5">
                     <div className="text-xs sm:text-sm font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                       <span>🎁</span>
-                      <span>โปรโมชันสุดคุ้ม! ซื้อ ฿299 ได้ครบทั้ง 3 รายการ (มูลค่ารวม ฿897)</span>
+                      <span>โปรโมชันสุดคุ้ม! ราคาเปิดตัว ฿299 ได้ครบคอร์ส 22 บท + แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598 (แยกซื้อชิ้นละ ฿299)</span>
                     </div>
                     <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                       ไม่ว่าคุณจะกดซื้อเครื่องมือนี้ ฿299 หรือสมัครคอร์สเรียน <strong>ปั้นนายหน้า TikTok ด้วย AI (฿299)</strong> ระบบจะปลดล็อกให้ครบทั้ง <strong>คอร์สเรียน 22 บท + PUP PAP Fashion Studio + PUPPAP AI UGC Product</strong> พร้อมกันทันที!

@@ -247,6 +247,53 @@ export default async function AdminDashboard() {
             )}
           </div>
         </div>
+
+        {/* Lesson 21 Video Preview Funnel & Single-Variable A/B Test Summary */}
+        {traffic.previewFunnel && (
+          <div className="mt-6 bg-slate-950/60 border border-amber-500/30 rounded-xl p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+              <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                <span>🎬 สถิติวิดีโอตัวอย่างบทที่ 21 (1 นาที • Preview Conversion Funnel)</span>
+              </h3>
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
+                {traffic.previewFunnel.abTest.isSampleReached
+                  ? '✅ กลุ่มตัวอย่างครบเกณฑ์ N ≥ 500 ต่อ Variant แล้ว'
+                  : `⏳ กำลังเก็บตัวอย่าง A/B (A: ${traffic.previewFunnel.abTest.variantA.plays}/500 · B: ${traffic.previewFunnel.abTest.variantB.plays}/500 — ห้ามสรุปผลก่อนครบ 500 UV/กลุ่ม)`}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 text-center">
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg">
+                <div className="text-[11px] text-slate-400">▶ เริ่มเล่นคลิป</div>
+                <div className="text-lg font-bold text-white">{traffic.previewFunnel.playUv}</div>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg">
+                <div className="text-[11px] text-cyan-400">🔊 กดเปิดเสียง</div>
+                <div className="text-lg font-bold text-cyan-300">{traffic.previewFunnel.unmuteUv}</div>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg">
+                <div className="text-[11px] text-slate-400">⏱️ ดูถึง 50%</div>
+                <div className="text-lg font-bold text-white">{traffic.previewFunnel.q50Uv}</div>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg">
+                <div className="text-[11px] text-emerald-400">🏁 ดูจบ 100%</div>
+                <div className="text-lg font-bold text-emerald-300">{traffic.previewFunnel.q100Uv}</div>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg">
+                <div className="text-[11px] text-amber-400">🔥 กดปุ่มตอน 30s</div>
+                <div className="text-lg font-bold text-amber-300">{traffic.previewFunnel.sticky30sClickUv}</div>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg">
+                <div className="text-[11px] text-rose-400">🔒 กดปุ่ม Overlay จบ</div>
+                <div className="text-lg font-bold text-rose-300">{traffic.previewFunnel.overlayClickUv}</div>
+              </div>
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg">
+                <div className="text-[11px] text-indigo-400">📑 กดดูสารบัญ</div>
+                <div className="text-lg font-bold text-indigo-300">{traffic.previewFunnel.curriculumClickUv}</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Charts & Tables */}

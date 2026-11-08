@@ -8,6 +8,7 @@ import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
 import FlowToolCard from '@/components/FlowToolCard';
 import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import { getPriceInfo } from '@/lib/price-utils';
 
 function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string) => void }) {
@@ -295,146 +296,156 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
           </div>
         )}
 
-        {/* 🎓 คอร์สเรียนออนไลน์ / ห้องเรียน (Low-Tech & All Ages Friendly + Poster & Animated CTA) */}
+        {/* 🎓 คอร์สเรียนออนไลน์ / ห้องเรียน (Low-Tech & All Ages Friendly + Poster & Animated CTA + Lesson 21 Preview) */}
         {courseTool && (() => {
           const coursePrice = getPriceInfo(courseTool.price || '299', courseTool.features);
           const checkoutUrl = `/checkout/${courseTool.slug || 'tiktok-ai-affiliate'}`;
+          const courseSlug = courseTool.slug || 'tiktok-ai-affiliate';
           return (
-            <section className="puppap-card p-5 sm:p-8 relative overflow-hidden border-2 border-[var(--border-accent)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-deep)] to-[var(--bg-card)] shadow-xl">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-                {/* ซ้าย: โปสเตอร์คอร์สเรียน (แตะซูมดู 22 บทเรียนได้) */}
-                <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
-                  <CoursePosterLightbox
-                    src={courseTool.poster_url || '/images/poster-course-tiktok-ai.jpg'}
-                    enrollHref={checkoutUrl}
-                    hideEnrollCta={hasCourseAccess}
-                  />
-                </div>
+            <div className="space-y-6">
+              <section className="puppap-card p-5 sm:p-8 relative overflow-hidden border-2 border-[var(--border-accent)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-deep)] to-[var(--bg-card)] shadow-xl">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+                  {/* ซ้าย: โปสเตอร์คอร์สเรียน (แตะซูมดู 22 บทเรียนได้) */}
+                  <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
+                    <CoursePosterLightbox
+                      src={courseTool.poster_url || '/images/poster-course-tiktok-ai.jpg'}
+                      enrollHref={checkoutUrl}
+                      hideEnrollCta={hasCourseAccess}
+                    />
+                  </div>
 
-                {/* ขวา: รายละเอียดคอร์ส + กล่องราคาขนาดยักษ์ + ปุ่มกดซื้อเคลื่อนไหว */}
-                <div className="lg:col-span-7 flex flex-col justify-between space-y-5 text-center lg:text-left">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
-                      <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
-                        🎓 คอร์สเรียนออนไลน์
-                      </span>
-                      {hasCourseAccess ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
-                          <span>✅</span> ปลดล็อกแล้ว · สิทธิ์เรียนตลอดชีพ
+                  {/* ขวา: รายละเอียดคอร์ส + กล่องราคาขนาดยักษ์ + ปุ่มกดซื้อเคลื่อนไหว */}
+                  <div className="lg:col-span-7 flex flex-col justify-between space-y-5 text-center lg:text-left">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                        <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
+                          🎓 คอร์สเรียนออนไลน์
                         </span>
+                        {hasCourseAccess ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                            <span>✅</span> ปลดล็อกแล้ว · สิทธิ์เรียนตลอดชีพ
+                          </span>
+                        ) : (
+                          <>
+                            <span className="px-3.5 py-1 rounded-full text-xs font-black bg-rose-600 text-white shadow-sm puppap-badge-flash">
+                              🔥 ราคาเปิดตัว ฿{coursePrice.formattedPrice}
+                            </span>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+                              <span>💡</span> ซื้อครั้งเดียวเรียนได้ตลอดชีพ (22 บท)
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <div>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-primary)] tracking-tight leading-tight">
+                          {courseTool.name || 'ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า'}
+                        </h2>
+                        <p className="text-sm sm:text-base text-[var(--text-secondary)] mt-2 leading-relaxed">
+                          {hasCourseAccess
+                            ? 'คุณมีสิทธิ์เข้าเรียนครบทั้ง 22 บทเรียนตลอดชีพ พร้อมโปรแกรมช่วยผลิตคลิป ดูซ้ำได้ทุกเวลาบนมือถือและคอมพิวเตอร์'
+                            : 'คู่มือสร้างรายได้แบบจับมือทำ 22 บทเรียนเต็ม ตั้งแต่ก้าวแรก ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์ ไม่ต้องออกกล้อง'}
+                        </p>
+                      </div>
+
+                      {/* Quick Info Badges */}
+                      <div className="flex items-center justify-center lg:justify-start gap-3 text-xs sm:text-sm font-semibold text-[var(--text-secondary)] flex-wrap pt-1">
+                        <span className="flex items-center gap-1">
+                          <span>🎬</span> 22 บทเรียนเต็ม
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <span>📱</span> ดูบนมือถือได้
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1 text-[var(--accent)] font-black">
+                          <span>🎁</span> แถมฟรี 2 เครื่องมือ AI มูลค่ารวม ฿598 (แยกซื้อชิ้นละ ฿299)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3 pt-1">
+                      {hasCourseAccess ? (
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <Link
+                            href={`/course/${courseSlug}`}
+                            className="puppap-btn-primary py-4 px-8 text-center text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-transform flex-1"
+                          >
+                            <span className="text-xl">▶</span>
+                            <span>กดตรงนี้เพื่อเข้าห้องเรียน</span>
+                          </Link>
+                          <Link
+                            href="/courses#curriculum"
+                            className="puppap-btn-secondary py-3.5 px-5 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)] flex items-center justify-center"
+                          >
+                            📑 ดูสารบัญ 22 บทเรียน
+                          </Link>
+                        </div>
                       ) : (
                         <>
-                          <span className="px-3.5 py-1 rounded-full text-xs font-black bg-rose-600 text-white shadow-sm puppap-badge-flash">
-                            🔥 ลด {coursePrice.discountPercent}% วันนี้
-                          </span>
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
-                            <span>💡</span> ซื้อครั้งเดียวเรียนได้ตลอดชีพ (22 บท)
-                          </span>
+                          <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-primary)] border-2 border-[var(--border-accent)] text-center shadow-md w-full">
+                            <div className="flex items-center justify-center gap-2.5 flex-wrap">
+                              <span className="text-xs sm:text-sm text-[var(--text-secondary)] font-extrabold">
+                                🎁 แถมฟรี 2 เครื่องมือ AI (แยกซื้อชิ้นละ ฿299)
+                              </span>
+                              <span className="px-3 py-0.5 rounded-full bg-rose-600 text-white text-xs sm:text-sm font-black puppap-badge-flash">
+                                🔥 โบนัสมูลค่ารวม ฿598 ฟรีทันที
+                              </span>
+                            </div>
+                            <div className="mt-1 flex items-baseline justify-center gap-1.5">
+                              <span className="text-xs sm:text-sm font-bold text-[var(--text-muted)] mr-1">
+                                ราคาเปิดตัว
+                              </span>
+                              <span className="text-5xl sm:text-6xl font-black text-[var(--accent)] tracking-tight leading-none puppap-price-hero">
+                                ฿{coursePrice.formattedPrice}
+                              </span>
+                              <span className="text-base sm:text-lg font-extrabold text-[var(--text-secondary)]">
+                                บาท
+                              </span>
+                            </div>
+                            <div className="text-xs sm:text-sm font-bold text-[var(--text-secondary)] mt-1">
+                              ✅ จ่ายครั้งเดียวจบ · ไม่มีค่ารายเดือน · เรียนได้ตลอดชีพ
+                            </div>
+                          </div>
+
+                          {/* Strict Mobile Hierarchy: Primary on top, Secondary Ghost/Outline below on <640px, side-by-side on sm+ */}
+                          <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
+                            <Link
+                              href={checkoutUrl}
+                              className="puppap-btn-primary puppap-cta-animated sm:flex-[1.5] min-h-[58px] sm:min-h-[64px] py-3.5 px-6 rounded-2xl text-center text-base sm:text-xl font-black flex items-center justify-center gap-2.5 shadow-xl"
+                            >
+                              <span>🛒 สมัครเรียนราคาเปิดตัว ฿{coursePrice.formattedPrice}</span>
+                              <span className="puppap-arrow-nudge text-xl sm:text-2xl">→</span>
+                            </Link>
+                            <Link
+                              href="/courses#curriculum"
+                              className="sm:flex-1 min-h-[42px] sm:min-h-[64px] py-2.5 px-4 rounded-2xl border-2 border-[var(--border-accent)] bg-transparent hover:bg-[var(--accent-dim)] text-[var(--text-primary)] font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <span>📑 ดูสารบัญ 22 บท</span>
+                              <span className="text-[var(--accent)]">→</span>
+                            </Link>
+                          </div>
+
+                          <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 text-center">
+                            ⚡ สแกน QR ปุ๊บ ระบบ AI ตรวจสลิปเปิดห้องเรียนให้ทันทีใน 5 วินาที
+                          </p>
                         </>
                       )}
                     </div>
-
-                    <div>
-                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-primary)] tracking-tight leading-tight">
-                        {courseTool.name || 'ปั้นนายหน้า TikTok ด้วย AI ปักตะกร้า'}
-                      </h2>
-                      <p className="text-sm sm:text-base text-[var(--text-secondary)] mt-2 leading-relaxed">
-                        {hasCourseAccess
-                          ? 'คุณมีสิทธิ์เข้าเรียนครบทั้ง 22 บทเรียนตลอดชีพ พร้อมโปรแกรมช่วยผลิตคลิป ดูซ้ำได้ทุกเวลาบนมือถือและคอมพิวเตอร์'
-                          : 'คู่มือสร้างรายได้แบบจับมือทำ 22 บทเรียนเต็ม ตั้งแต่ก้าวแรก ทำคลิปขายดุ สเกล 50-100 คลิป/สัปดาห์ ไม่ต้องออกกล้อง'}
-                      </p>
-                    </div>
-
-                    {/* Quick Info Badges */}
-                    <div className="flex items-center justify-center lg:justify-start gap-3 text-xs sm:text-sm font-semibold text-[var(--text-secondary)] flex-wrap pt-1">
-                      <span className="flex items-center gap-1">
-                        <span>🎬</span> 22 บทเรียนเต็ม
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <span>📱</span> ดูบนมือถือได้
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1 text-[var(--accent)] font-black">
-                        <span>🎁</span> แถมฟรี 2 เครื่องมือ AI (Fashion Studio + UGC Product)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="space-y-3 pt-1">
-                    {hasCourseAccess ? (
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <Link
-                          href={`/course/${courseTool.slug || 'tiktok-ai-affiliate'}`}
-                          className="puppap-btn-primary py-4 px-8 text-center text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-transform flex-1"
-                        >
-                          <span className="text-xl">▶</span>
-                          <span>กดตรงนี้เพื่อเข้าห้องเรียน</span>
-                        </Link>
-                        <Link
-                          href="/courses"
-                          className="puppap-btn-secondary py-4 px-5 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)] flex items-center justify-center"
-                        >
-                          📑 ดูสารบัญ 22 บทเรียน
-                        </Link>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-primary)] border-2 border-[var(--border-accent)] text-center shadow-md w-full">
-                          <div className="flex items-center justify-center gap-2.5 flex-wrap">
-                            <span className="text-sm sm:text-base text-[var(--text-muted)] line-through decoration-rose-600 decoration-2 font-bold">
-                              ราคาปกติ ฿{coursePrice.formattedOriginal}
-                            </span>
-                            <span className="px-3 py-0.5 rounded-full bg-rose-600 text-white text-xs sm:text-sm font-black puppap-badge-flash">
-                              🔥 ประหยัดทันที ฿{coursePrice.savingsFormatted}
-                            </span>
-                          </div>
-                          <div className="mt-1 flex items-baseline justify-center gap-1.5">
-                            <span className="text-5xl sm:text-6xl font-black text-[var(--accent)] tracking-tight leading-none puppap-price-hero">
-                              ฿{coursePrice.formattedPrice}
-                            </span>
-                            <span className="text-base sm:text-lg font-extrabold text-[var(--text-secondary)]">
-                              บาท
-                            </span>
-                          </div>
-                          <div className="text-xs sm:text-sm font-bold text-[var(--text-secondary)] mt-1">
-                            ✅ จ่ายครั้งเดียวจบ · ไม่มีค่ารายเดือน · เรียนได้ตลอดชีพ
-                          </div>
-                        </div>
-
-                        <Link
-                          href={checkoutUrl}
-                          className="puppap-btn-primary puppap-cta-animated w-full min-h-[60px] sm:min-h-[66px] py-4 px-6 rounded-2xl text-center text-lg sm:text-xl font-black flex items-center justify-center gap-2.5 shadow-xl"
-                        >
-                          <span>🛒 สมัครเรียนทันที ฿{coursePrice.formattedPrice}</span>
-                          <span className="puppap-arrow-nudge text-xl sm:text-2xl">→</span>
-                        </Link>
-
-                        <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 text-center">
-                          ⚡ สแกน QR ปุ๊บ ระบบ AI ตรวจสลิปเปิดห้องเรียนให้ทันทีใน 5 วินาที
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-2.5 pt-1">
-                          <Link
-                            href="/courses"
-                            className="puppap-btn-secondary py-2.5 px-4 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)]"
-                          >
-                            📑 ดูสารบัญ 22 บท
-                          </Link>
-                          <Link
-                            href={`/course/${courseTool.slug || 'tiktok-ai-affiliate'}`}
-                            className="puppap-btn-secondary py-2.5 px-4 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)]"
-                          >
-                            🎁 ดูบทแรกฟรี
-                          </Link>
-                        </div>
-                      </>
-                    )}
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
+
+              {/* Embedded Lesson 21 ~1-Minute Preview + State-Aware CTA (`hasAccess`) */}
+              <Lesson21PreviewPlayer
+                hasAccess={hasCourseAccess}
+                courseSlug={courseSlug}
+                priceFormatted={coursePrice.formattedPrice}
+                curriculumHref="/courses#curriculum"
+                compact
+              />
+            </div>
           );
         })()}
 
