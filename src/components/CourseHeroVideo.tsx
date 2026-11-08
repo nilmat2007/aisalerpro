@@ -42,7 +42,7 @@ export default function CourseHeroVideo({
   const trackRef = useRef<HTMLTrackElement>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [isReducedMotionOrData, setIsReducedMotionOrData] = useState(false);
@@ -164,7 +164,7 @@ export default function CourseHeroVideo({
     };
   }, [isMuted, syncCaptionTrackMode]);
 
-  // 4. IntersectionObserver: Autoplay muted at >= 0.5, pause when scrolled out (< 0.25)
+  // 4. IntersectionObserver: Try-Unmuted-First Autoplay at >= 0.5, fallback to Muted Autoplay if blocked, pause when scrolled out (< 0.25)
   useEffect(() => {
     if (isReducedMotionOrData || hasVideoError) return;
     const el = containerRef.current;
@@ -179,9 +179,10 @@ export default function CourseHeroVideo({
         if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
           if (!hasAutoPlayedRef.current && video.paused && !isEnded) {
             hasAutoPlayedRef.current = true;
-            video.muted = true;
-            setIsMuted(true);
-            syncCaptionTrackMode(true);
+            // Tier 1: Try Unmuted Autoplay First (`muted = false`)
+            video.muted = false;
+            setIsMuted(false);
+            syncCaptionTrackMode(false);
             announceActiveMedia('play');
             const p = video.play();
             if (p && typeof p.then === 'function') {
@@ -190,13 +191,31 @@ export default function CourseHeroVideo({
                 setIsAutoplayBlocked(false);
                 trackFunnelEvent('hero_video_play', {
                   page: pageContext,
-                  mode: 'autoplay_muted',
+                  mode: 'autoplay_unmuted',
                   variant: getHeroVideoAbVariant(),
                 });
               }).catch(() => {
-                announceActiveMedia('pause');
-                setIsAutoplayBlocked(true);
-                setIsPlaying(false);
+                // Tier 2: Browser blocked cold unmuted autoplay -> Fallback immediately to Muted Autoplay
+                video.muted = true;
+                setIsMuted(true);
+                syncCaptionTrackMode(true);
+                video
+                  .play()
+                  .then(() => {
+                    setIsPlaying(true);
+                    setIsAutoplayBlocked(false);
+                    trackFunnelEvent('hero_video_play', {
+                      page: pageContext,
+                      mode: 'autoplay_muted_fallback',
+                      variant: getHeroVideoAbVariant(),
+                    });
+                  })
+                  .catch(() => {
+                    // Tier 3: iOS Low Power Mode / strict block -> Show Poster + Play w/ Sound Button
+                    announceActiveMedia('pause');
+                    setIsAutoplayBlocked(true);
+                    setIsPlaying(false);
+                  });
               });
             }
           }
@@ -288,6 +307,15 @@ export default function CourseHeroVideo({
       setIsPlaying(false);
       announceActiveMedia('pause');
     }
+  };
+
+  const handleVideoSurfaceClick = () => {
+    if (isPlaying && isMuted && !isEnded) {
+      // If playing muted (fallback mode), tapping anywhere on the video surface immediately unmutes!
+      handleUnmuteAndPlay();
+      return;
+    }
+    handleTogglePlay();
   };
 
   const handleToggleMute = () => {
@@ -450,7 +478,7 @@ export default function CourseHeroVideo({
             setHasVideoError(true);
             setIsPlaying(false);
           }}
-          onClick={handleTogglePlay}
+          onClick={handleVideoSurfaceClick}
           className="w-full h-full object-cover cursor-pointer"
         >
           <track

@@ -278,6 +278,9 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       expect(heroVideoSource).toContain('max-h-[50vh]');
       expect(heroVideoSource).toContain('lg:max-w-[340px]');
       expect(heroVideoSource).toContain('loop={false}');
+      expect(heroVideoSource).toContain('autoplay_unmuted');
+      expect(heroVideoSource).toContain('autoplay_muted_fallback');
+      expect(heroVideoSource).toContain('handleVideoSurfaceClick');
       expect(heroVideoSource).not.toContain('preload="auto"');
       expect(heroVideoSource).toContain('puppap-media-active');
       expect(heroVideoSource).toContain('CoursePosterLightbox');
@@ -285,6 +288,7 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
 
       expect(previewSource).toContain('preload="none"');
       expect(previewSource).toContain('video.load()');
+      expect(previewSource).toContain('handleVideoSurfaceClick');
       expect(previewSource).toContain("__puppapActiveVideoId === 'hero-intro'");
     });
 

@@ -306,6 +306,14 @@ export default function Lesson21PreviewPlayer({
     }
   };
 
+  const handleVideoSurfaceClick = () => {
+    if (isPlaying && isMuted && !isEnded) {
+      handleUnmuteAndRestart();
+      return;
+    }
+    handleTogglePlay();
+  };
+
   const handleToggleMute = () => {
     const video = videoRef.current;
     if (!video) return;
@@ -488,7 +496,7 @@ export default function Lesson21PreviewPlayer({
             setIsPlaying(false);
           }}
           className="w-full h-full object-cover cursor-pointer"
-          onClick={handleTogglePlay}
+          onClick={handleVideoSurfaceClick}
         >
           <track
             ref={trackRef}
