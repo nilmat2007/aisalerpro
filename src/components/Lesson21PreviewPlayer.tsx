@@ -52,9 +52,42 @@ export default function Lesson21PreviewPlayer({
   const [abVariant, setAbVariant] = useState<'A' | 'B'>('A');
 
   const hasAutoPlayedRef = useRef(false);
+  const hasPreloadedRef = useRef(false);
   const lastTimeRef = useRef(0);
   const watchedSecondsRef = useRef(0);
   const firedQuartilesRef = useRef<Set<number>>(new Set());
+
+  const announceActiveMedia = useCallback((action: 'play' | 'unmute' | 'pause' | 'ended') => {
+    if (typeof window === 'undefined') return;
+    if (action === 'play' || action === 'unmute') {
+      (window as any).__puppapActiveVideoId = 'lesson-21-preview';
+      window.dispatchEvent(
+        new CustomEvent('puppap-media-active', {
+          detail: { playerId: 'lesson-21-preview', action },
+        })
+      );
+    } else if ((window as any).__puppapActiveVideoId === 'lesson-21-preview') {
+      (window as any).__puppapActiveVideoId = null;
+    }
+  }, []);
+
+  // Mutual Exclusion Listener: pause immediately if `hero-intro` starts playing or unmuting
+  useEffect(() => {
+    const handleOtherMediaActive = (e: Event) => {
+      const custom = e as CustomEvent<{ playerId?: string; action?: string }>;
+      if (custom.detail?.playerId && custom.detail.playerId !== 'lesson-21-preview') {
+        const video = videoRef.current;
+        if (video && !video.paused) {
+          video.pause();
+          setIsPlaying(false);
+        }
+      }
+    };
+    window.addEventListener('puppap-media-active', handleOtherMediaActive);
+    return () => {
+      window.removeEventListener('puppap-media-active', handleOtherMediaActive);
+    };
+  }, []);
 
   // 1. Initialize persistent A/B Variant & check prefers-reduced-motion
   useEffect(() => {
@@ -114,7 +147,7 @@ export default function Lesson21PreviewPlayer({
     };
   }, [isMuted, syncCaptionTrackMode]);
 
-  // 3. IntersectionObserver (threshold: 0.5) for Muted Autoplay when scrolled into view
+  // 3. IntersectionObserver (threshold: 0.1 for lazy preload + video.load(); threshold: 0.5 for Muted Autoplay)
   useEffect(() => {
     if (isReducedMotion || hasVideoError) return;
     const el = containerRef.current;
@@ -127,12 +160,25 @@ export default function Lesson21PreviewPlayer({
       (entries) => {
         const entry = entries[0];
         if (!entry) return;
+
+        // Step A: Lazy-load metadata when approaching viewport so it never competes with Hero Video at T=0
+        if (entry.isIntersecting && !hasPreloadedRef.current) {
+          hasPreloadedRef.current = true;
+          video.preload = 'metadata';
+          video.load();
+        }
+
+        // Step B: Priority Rule — if Hero Video (`hero-intro`) is currently active, wait until Hero pauses/ends
         if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+          if ((window as any).__puppapActiveVideoId === 'hero-intro') {
+            return;
+          }
           if (!hasAutoPlayedRef.current && video.paused && !isEnded) {
             hasAutoPlayedRef.current = true;
             video.muted = true;
             setIsMuted(true);
             syncCaptionTrackMode(true);
+            announceActiveMedia('play');
             const p = video.play();
             if (p && typeof p.then === 'function') {
               p.then(() => {
@@ -143,6 +189,7 @@ export default function Lesson21PreviewPlayer({
                   variant: getPreviewAbVariant(),
                 });
               }).catch(() => {
+                announceActiveMedia('pause');
                 // iOS Safari Low Power Mode or strict autoplay block -> show Poster + Center Play Button
                 setIsAutoplayBlocked(true);
                 setIsPlaying(false);
@@ -153,14 +200,15 @@ export default function Lesson21PreviewPlayer({
           // Pause muted background playback when scrolled out of view to save mobile battery
           video.pause();
           setIsPlaying(false);
+          announceActiveMedia('pause');
         }
       },
-      { threshold: [0, 0.5] }
+      { threshold: [0, 0.1, 0.5] }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [isReducedMotion, hasVideoError, isEnded, syncCaptionTrackMode]);
+  }, [isReducedMotion, hasVideoError, isEnded, syncCaptionTrackMode, announceActiveMedia]);
 
   // 4. External trigger (when user clicks "ดูตัวอย่างบทที่ 21" button in Hero or Curriculum row)
   useEffect(() => {
@@ -419,7 +467,7 @@ export default function Lesson21PreviewPlayer({
           height={720}
           playsInline
           muted={isMuted}
-          preload="metadata"
+          preload="none"
           controls={false}
           controlsList="nodownload noplaybackrate"
           disablePictureInPicture
@@ -429,7 +477,10 @@ export default function Lesson21PreviewPlayer({
             syncCaptionTrackMode(isMuted);
           }}
           onTimeUpdate={handleTimeUpdate}
-          onPlay={() => setIsPlaying(true)}
+          onPlay={() => {
+            setIsPlaying(true);
+            announceActiveMedia('play');
+          }}
           onPause={() => setIsPlaying(false)}
           onEnded={handleVideoEnded}
           onError={() => {

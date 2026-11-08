@@ -5,7 +5,7 @@ import DashboardClient from './DashboardClient'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
 import FlowToolCard from '@/components/FlowToolCard'
-import CoursePosterLightbox from '@/components/CoursePosterLightbox'
+import CourseHeroVideo from '@/components/CourseHeroVideo'
 import CourseCoreHighlights from '@/components/CourseCoreHighlights'
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer'
 import { getPriceInfo } from '@/lib/price-utils'
@@ -163,10 +163,11 @@ export default async function HomePage() {
         {/* Featured Course Card with Full Poster + Giant Price + Animated Psychological CTA + Lesson 21 Preview */}
         <div className="max-w-6xl w-full mx-auto px-4 mb-10 space-y-6">
           <div className="puppap-card p-5 sm:p-8 border-2 border-[var(--border-accent)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-deep)] to-[var(--bg-card)] shadow-xl grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-            {/* ซ้าย (หรือด้านบนบนมือถือ): โปสเตอร์คอร์สเรียนใหม่ แตะซูมดู 22 บทเรียนได้ */}
+            {/* ซ้าย (หรือด้านบนบนมือถือ): วิดีโอแนะนำคอร์สแนวตั้ง 9:16 (22 วิ) + ปุ่มซูมดูโปสเตอร์ 22 บทเรียน */}
             <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
-              <CoursePosterLightbox
-                src={courseItem?.poster_url || '/images/poster-course-tiktok-ai.jpg'}
+              <CourseHeroVideo
+                pageContext="home"
+                posterSrc={courseItem?.poster_url || '/images/poster-course-tiktok-ai.jpg'}
                 enrollHref="/checkout/tiktok-ai-affiliate"
               />
             </div>

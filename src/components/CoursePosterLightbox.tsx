@@ -9,6 +9,8 @@ interface CoursePosterLightboxProps {
   enrollHref?: string;
   hideEnrollCta?: boolean;
   compact?: boolean;
+  trigger?: 'card' | 'button' | 'compact';
+  onOpenLightbox?: () => void;
   className?: string;
 }
 
@@ -18,9 +20,12 @@ export default function CoursePosterLightbox({
   enrollHref = '/checkout/tiktok-ai-affiliate',
   hideEnrollCta = false,
   compact = false,
+  trigger,
+  onOpenLightbox,
   className = '',
 }: CoursePosterLightboxProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const mode = trigger || (compact ? 'compact' : 'card');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -31,12 +36,17 @@ export default function CoursePosterLightbox({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
+  const handleOpen = () => {
+    setIsOpen(true);
+    onOpenLightbox?.();
+  };
+
   return (
     <>
-      {compact ? (
+      {mode === 'compact' ? (
         <button
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={handleOpen}
           className={`group relative overflow-hidden rounded-xl border-2 border-[var(--accent)]/60 bg-black/5 shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] text-left cursor-pointer ${className}`}
           title="แตะเพื่อขยายดูโปสเตอร์คอร์สเรียนเต็มจอ"
         >
@@ -51,11 +61,20 @@ export default function CoursePosterLightbox({
             <span>ขยาย</span>
           </span>
         </button>
+      ) : mode === 'button' ? (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className={`w-full py-2 px-3 rounded-xl bg-[var(--bg-deep)] hover:bg-[var(--accent-dim)] border border-[var(--border)] hover:border-[var(--border-accent)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-extrabold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${className}`}
+        >
+          <span>🖼️</span>
+          <span>ดูภาพโปสเตอร์สรุป 22 บทเรียน (ซูมอ่านได้)</span>
+        </button>
       ) : (
         <div className={`relative group ${className}`}>
           <button
             type="button"
-            onClick={() => setIsOpen(true)}
+            onClick={handleOpen}
             className="w-full relative block overflow-hidden rounded-2xl border-2 border-[var(--border)] shadow-xl bg-[var(--bg-deep)] transition-all duration-300 hover:border-[var(--accent)] hover:shadow-2xl cursor-pointer text-left"
             aria-label="แตะเพื่อซูมดูโปสเตอร์คอร์สเรียนและสารบัญ 22 บทเรียนเต็มจอ"
           >

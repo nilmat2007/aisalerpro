@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
-import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import CourseHeroVideo from '@/components/CourseHeroVideo';
 import CourseCoreHighlights from '@/components/CourseCoreHighlights';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import { getPriceInfo } from '@/lib/price-utils';
@@ -159,10 +159,11 @@ export default function CoursesClient({
       {/* Hero Section with Full Course Poster + Giant Launch Price + Paired CTA & Curriculum Buttons */}
       <section className="relative py-10 sm:py-14 px-4 sm:px-6 overflow-hidden border-b border-[var(--border-light)] bg-gradient-to-b from-[var(--bg-secondary)]/50 to-[var(--bg-primary)]">
         <div className="max-w-5xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* ซ้าย (หรือด้านบนบนมือถือ): โปสเตอร์คอร์สเรียนใหม่ แตะซูมดู 22 บทเรียนได้ */}
+          {/* ซ้าย (หรือด้านบนบนมือถือ): วิดีโอแนะนำคอร์สแนวตั้ง 9:16 (22 วิ) + ปุ่มซูมดูโปสเตอร์ 22 บทเรียน */}
           <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
-            <CoursePosterLightbox
-              src={course?.poster_url || '/images/poster-course-tiktok-ai.jpg'}
+            <CourseHeroVideo
+              pageContext="courses"
+              posterSrc={course?.poster_url || '/images/poster-course-tiktok-ai.jpg'}
               enrollHref={`/checkout/${course?.slug || 'tiktok-ai-affiliate'}`}
               hideEnrollCta={hasAccess}
             />

@@ -11,6 +11,7 @@ declare global {
 export const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '';
 export const PDPA_CONSENT_KEY = 'puppap_pdpa_consent';
 export const PREVIEW_AB_STORAGE_KEY = 'puppap_preview_ab';
+export const HERO_AB_STORAGE_KEY = 'puppap_hero_ab';
 
 export type FunnelEventName =
   | 'preview_play'
@@ -24,7 +25,14 @@ export type FunnelEventName =
   | 'curriculum_click_from_preview'
   | 'purchase_from_preview'
   | 'value_stack_view'
-  | 'value_stack_expand';
+  | 'value_stack_expand'
+  | 'hero_video_play'
+  | 'hero_video_unmute'
+  | 'hero_video_25'
+  | 'hero_video_50'
+  | 'hero_video_75'
+  | 'hero_video_complete'
+  | 'hero_poster_zoom_click';
 
 export type PreviewEventName = FunnelEventName;
 
@@ -76,6 +84,23 @@ export function getPreviewAbVariant(): 'A' | 'B' {
     return v;
   } catch {
     return 'A';
+  }
+}
+
+/**
+ * Persistent 50/50 A/B Variant assignment for the 9:16 Hero Intro Video (`puppap_hero_ab`).
+ * Persists across `/`, `/courses`, and `/dashboard`, and excludes automated bots (`navigator.webdriver`).
+ */
+export function getHeroVideoAbVariant(): 'video_A' | 'video_B' {
+  if (typeof window === 'undefined' || navigator.webdriver) return 'video_A';
+  try {
+    const saved = localStorage.getItem(HERO_AB_STORAGE_KEY);
+    if (saved === 'video_A' || saved === 'video_B') return saved;
+    const v: 'video_A' | 'video_B' = Math.random() < 0.5 ? 'video_A' : 'video_B';
+    localStorage.setItem(HERO_AB_STORAGE_KEY, v);
+    return v;
+  } catch {
+    return 'video_A';
   }
 }
 

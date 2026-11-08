@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
 import FlowToolCard from '@/components/FlowToolCard';
-import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import CourseHeroVideo from '@/components/CourseHeroVideo';
 import CourseCoreHighlights from '@/components/CourseCoreHighlights';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import { getPriceInfo } from '@/lib/price-utils';
@@ -306,10 +306,11 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
             <div className="space-y-6">
               <section className="puppap-card p-5 sm:p-8 relative overflow-hidden border-2 border-[var(--border-accent)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-deep)] to-[var(--bg-card)] shadow-xl">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-                  {/* ซ้าย: โปสเตอร์คอร์สเรียน (แตะซูมดู 22 บทเรียนได้) */}
+                  {/* ซ้าย: วิดีโอแนะนำคอร์สแนวตั้ง 9:16 (22 วิ) + ปุ่มซูมดูโปสเตอร์ 22 บทเรียน */}
                   <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
-                    <CoursePosterLightbox
-                      src={courseTool.poster_url || '/images/poster-course-tiktok-ai.jpg'}
+                    <CourseHeroVideo
+                      pageContext="dashboard"
+                      posterSrc={courseTool.poster_url || '/images/poster-course-tiktok-ai.jpg'}
                       enrollHref={checkoutUrl}
                       hideEnrollCta={hasCourseAccess}
                     />

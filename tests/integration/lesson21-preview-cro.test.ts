@@ -5,6 +5,7 @@ import {
   hasMarketingConsent,
   setMarketingConsent,
   getPreviewAbVariant,
+  getHeroVideoAbVariant,
   trackPreviewEvent,
   trackFunnelEvent,
 } from '@/lib/meta-pixel';
@@ -44,6 +45,7 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
     const courseFiles = [
       'src/components/Lesson21PreviewPlayer.tsx',
       'src/components/CoursePosterLightbox.tsx',
+      'src/components/CourseHeroVideo.tsx',
       'src/components/CourseCoreHighlights.tsx',
       'src/app/courses/CoursesClient.tsx',
       'src/app/page.tsx',
@@ -158,16 +160,19 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       );
     });
 
-    it('persists A/B variant in localStorage across calls', () => {
+    it('persists Preview & Hero A/B variants in localStorage across calls', () => {
       const first = getPreviewAbVariant();
       expect(['A', 'B']).toContain(first);
       expect(storageMap.get('puppap_preview_ab')).toBe(first);
+      expect(getPreviewAbVariant()).toBe(first);
 
-      const second = getPreviewAbVariant();
-      expect(second).toBe(first);
+      const heroFirst = getHeroVideoAbVariant();
+      expect(['video_A', 'video_B']).toContain(heroFirst);
+      expect(storageMap.get('puppap_hero_ab')).toBe(heroFirst);
+      expect(getHeroVideoAbVariant()).toBe(heroFirst);
     });
 
-    it('skips tracking and defaults to variant A for automated bots (navigator.webdriver)', () => {
+    it('skips tracking and defaults to variant A / video_A for automated bots (navigator.webdriver)', () => {
       vi.stubGlobal('navigator', {
         webdriver: true,
         sendBeacon: vi.fn(() => true),
@@ -175,6 +180,7 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       setMarketingConsent(true);
 
       expect(getPreviewAbVariant()).toBe('A');
+      expect(getHeroVideoAbVariant()).toBe('video_A');
       trackPreviewEvent('preview_50');
       expect(navigator.sendBeacon).not.toHaveBeenCalled();
       expect((window as any).fbq).not.toHaveBeenCalled();
@@ -233,6 +239,71 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
           '<CourseCoreHighlights'
         );
       }
+    });
+  });
+
+  describe('6. Course Hero 9:16 Video, Preload Strategy & Mutual Exclusion', () => {
+    const heroVideoSource = fs.readFileSync(
+      path.join(ROOT, 'src/components/CourseHeroVideo.tsx'),
+      'utf8'
+    );
+    const previewSource = fs.readFileSync(
+      path.join(ROOT, 'src/components/Lesson21PreviewPlayer.tsx'),
+      'utf8'
+    );
+
+    it('has course-hero-intro.mp4 <= 2.4 MB, poster < 65 KB, and 8 continuous VTT cues', () => {
+      const mp4Stat = fs.statSync(path.join(ROOT, 'public/videos/course-hero-intro.mp4'));
+      expect(mp4Stat.size).toBeGreaterThan(500 * 1024);
+      expect(mp4Stat.size).toBeLessThanOrEqual(2.4 * 1024 * 1024);
+
+      const posterStat = fs.statSync(
+        path.join(ROOT, 'public/images/course-hero-intro-poster.webp')
+      );
+      expect(posterStat.size).toBeGreaterThan(10 * 1024);
+      expect(posterStat.size).toBeLessThan(65 * 1024);
+
+      const vtt = fs.readFileSync(
+        path.join(ROOT, 'public/videos/course-hero-intro.th.vtt'),
+        'utf8'
+      );
+      expect(vtt.startsWith('WEBVTT')).toBe(true);
+      expect(vtt).toContain('00:15.500');
+      expect(vtt).toContain('00:15.550 --> 00:18.800');
+      expect(vtt).toContain('และให้คุณทำเป็นได้จริงแน่นอนครับ');
+    });
+
+    it('enforces mobile height cap (max-w-[200px] max-h-[50vh]), loop={false}, and non-competing preload strategy', () => {
+      expect(heroVideoSource).toContain('max-w-[200px]');
+      expect(heroVideoSource).toContain('max-h-[50vh]');
+      expect(heroVideoSource).toContain('lg:max-w-[340px]');
+      expect(heroVideoSource).toContain('loop={false}');
+      expect(heroVideoSource).not.toContain('preload="auto"');
+      expect(heroVideoSource).toContain('puppap-media-active');
+      expect(heroVideoSource).toContain('CoursePosterLightbox');
+      expect(heroVideoSource).toContain('trigger="button"');
+
+      expect(previewSource).toContain('preload="none"');
+      expect(previewSource).toContain('video.load()');
+      expect(previewSource).toContain("__puppapActiveVideoId === 'hero-intro'");
+    });
+
+    it('renders CourseHeroVideo on /, /dashboard, and /courses while keeping CoursePosterLightbox compact on Checkout', () => {
+      for (const rel of [
+        'src/app/page.tsx',
+        'src/app/DashboardClient.tsx',
+        'src/app/courses/CoursesClient.tsx',
+      ]) {
+        const content = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+        expect(content, `${rel} must render <CourseHeroVideo`).toContain('<CourseHeroVideo');
+      }
+
+      const checkoutContent = fs.readFileSync(
+        path.join(ROOT, 'src/app/checkout/[slug]/CheckoutClient.tsx'),
+        'utf8'
+      );
+      expect(checkoutContent).toContain('<CoursePosterLightbox');
+      expect(checkoutContent).toContain('compact');
     });
   });
 });
