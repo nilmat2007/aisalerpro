@@ -10,6 +10,7 @@ import FlowToolCard from '@/components/FlowToolCard';
 import CourseHeroVideo from '@/components/CourseHeroVideo';
 import CourseCoreHighlights from '@/components/CourseCoreHighlights';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
+import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner';
 import { getPriceInfo } from '@/lib/price-utils';
 
 function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string) => void }) {
@@ -439,6 +440,13 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                             </Link>
                           </div>
 
+                          {!hasAllInOneAccess && (
+                            <AllInOneUpsellBanner
+                              variant="compact"
+                              toolCount={flowTools?.length || 6}
+                            />
+                          )}
+
                           <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 text-center">
                             ⚡ สแกน QR ปุ๊บ ระบบ AI ตรวจสลิปเปิดห้องเรียนให้ทันทีใน 5 วินาที
                           </p>
@@ -517,32 +525,12 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
           </div>
         </section>
 
-        {/* All-in-One 999 VIP Package Banner for Members */}
+        {/* All-in-One 999 VIP Package Banner for Members (puppap-all-in-one) */}
         {!hasAllInOneAccess && (
-          <section className="puppap-card p-5 sm:p-6 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-br from-amber-500/15 via-[var(--bg-card)] to-rose-500/10 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1.5 max-w-2xl">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-0.5 rounded-full text-xs font-black bg-amber-500 text-stone-950">
-                  👑 แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999
-                </span>
-                <span className="text-xs font-extrabold text-rose-600 dark:text-rose-400">
-                  🔥 ลด 67% จากมูลค่ารวม ฿2,990 เหลือเพียง ฿999!
-                </span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-black text-[var(--text-primary)]">
-                ปลดล็อกให้หมดทั้งคอร์สเรียน 22 บท + เครื่องมือ AI ทั้งหมดทุกตัวในระบบ!
-              </h3>
-              <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
-                จ่ายครั้งเดียวจบ ได้ครบทุกเครื่องมือปัจจุบัน + อัปเดตเครื่องมือใหม่ในอนาคตที่เข้าร่วมรายการฟรีตลอดชีพ ไม่ต้องซื้อแยกทีละตัว
-              </p>
-            </div>
-            <Link
-              href="/checkout/puppap-all-in-one"
-              className="puppap-btn-primary px-6 py-3 rounded-xl text-sm font-black shadow-lg shrink-0 w-full md:w-auto text-center"
-            >
-              👑 อัปเกรดเหมาครบทุกอย่าง ฿999 →
-            </Link>
-          </section>
+          <AllInOneUpsellBanner
+            variant="hero"
+            toolCount={flowTools?.length || 6}
+          />
         )}
 
         {/* Tools Grid */}

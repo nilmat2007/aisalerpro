@@ -316,4 +316,37 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       expect(checkoutContent).toContain('compact');
     });
   });
+
+  describe('7. AllInOneUpsellBanner Psychological CRO Suite (฿999 VIP Flagship)', () => {
+    const bannerSource = fs.readFileSync(
+      path.join(ROOT, 'src/components/AllInOneUpsellBanner.tsx'),
+      'utf8'
+    );
+
+    it('includes Decoy Break-Even Math, 3-Pillar Value Stack, Unit-Cost Reframing (~฿142), and Shimmer Gold CTA', () => {
+      expect(bannerSource).toContain('ซื้อแยกแค่ 3 เครื่องมือก็');
+      expect(bannerSource).toContain('฿897');
+      expect(bannerSource).toContain('ประหยัดทันที ฿1,991');
+      expect(bannerSource).toContain('~฿142');
+      expect(bannerSource).toContain('puppap-gold-cta-animated');
+      expect(bannerSource).toContain('puppap-vip-card-glow');
+      expect(bannerSource).toContain('/checkout/puppap-all-in-one');
+      expect(bannerSource).not.toContain('ยกเว้นรายการพิเศษที่ระบุแยกต่างหาก');
+    });
+
+    it('renders AllInOneUpsellBanner across all 5 conversion surfaces (/flow-tools, /store, /dashboard, /, /courses)', () => {
+      for (const rel of [
+        'src/app/flow-tools/FlowToolsClient.tsx',
+        'src/app/store/page.tsx',
+        'src/app/DashboardClient.tsx',
+        'src/app/page.tsx',
+        'src/app/courses/CoursesClient.tsx',
+      ]) {
+        const content = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+        expect(content, `${rel} must render <AllInOneUpsellBanner`).toContain(
+          '<AllInOneUpsellBanner'
+        );
+      }
+    });
+  });
 });

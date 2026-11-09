@@ -3,6 +3,7 @@ import { supabase as supabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 import { formatToolUpdateDate } from '@/lib/date-utils'
 import ThemeToggle from '@/components/ThemeToggle'
+import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner'
 import { getPriceInfo } from '@/lib/price-utils'
 import {
   PUBLIC_TOOL_SELECT_COLUMNS,
@@ -102,55 +103,12 @@ export default async function StorePage() {
           </div>
         </header>
 
-        {/* All-in-One Compact Banner */}
-        <section>
-          <div className="puppap-card p-6 sm:p-8 rounded-2xl relative overflow-hidden border-2 border-amber-500/60 bg-gradient-to-br from-amber-500/10 via-[var(--bg-card)] to-rose-500/10 shadow-lg">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-2.5 max-w-2xl">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
-                    👑 VIP ALL-IN-ONE · LIFETIME
-                  </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-500/40">
-                    🔥 ลด 67% · ประหยัด ฿1,991
-                  </span>
-                </div>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)]">
-                  แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999 (ได้ครบทุกอย่าง!)
-                </h2>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                  จ่ายครั้งเดียวปลดล็อกให้หมดทั้ง <strong className="text-[var(--text-primary)]">คอร์สเรียนนายหน้า TikTok 22 บทเรียน (มูลค่า ฿799)</strong> + <strong className="text-[var(--text-primary)]">เครื่องมือ AI ทั้งหมดทุกตัวในระบบ</strong> พร้อมรับสิทธิ์อัปเดตเครื่องมือใหม่ในอนาคตที่เข้าร่วมรายการฟรีตลอดชีพ!
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between gap-3 shrink-0">
-                <div className="text-left md:text-right">
-                  <div className="text-xs text-[var(--text-muted)] font-semibold">
-                    มูลค่ารวมแยกซื้อ <span className="line-through text-rose-500 font-bold">฿2,990</span>
-                  </div>
-                  <div className="text-3xl sm:text-4xl font-black text-[var(--accent)]">
-                    ฿999 <span className="text-sm font-bold text-[var(--text-secondary)]">บาท</span>
-                  </div>
-                  <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                    ✓ จ่ายครั้งเดียวจบ · ไม่มีรายเดือน
-                  </div>
-                </div>
-                {ownsAllInOne ? (
-                  <span className="px-6 py-3 rounded-xl text-xs font-black bg-emerald-700 text-white shadow-sm w-full sm:w-auto text-center">
-                    ✓ คุณปลดล็อกแพ็กเหมาๆ ครบแล้ว
-                  </span>
-                ) : (
-                  <Link
-                    href={`/checkout/${ALL_IN_ONE_SLUG}`}
-                    className="puppap-btn-primary px-6 py-3 rounded-xl text-sm font-black shadow-lg w-full sm:w-auto text-center"
-                  >
-                    👑 สมัครแพ็กเหมาๆ ปุ๊บ ปั๊บ ฿999 →
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* All-in-One Flagship Psychological Banner */}
+        <AllInOneUpsellBanner
+          variant="hero"
+          toolCount={tools?.filter((t: any) => t.slug !== 'tiktok-ai-affiliate').length || 6}
+          ownsAllInOne={ownsAllInOne}
+        />
 
         {/* Individual Tools Grid */}
         <section className="space-y-6">

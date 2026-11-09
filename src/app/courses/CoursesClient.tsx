@@ -6,6 +6,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import CourseHeroVideo from '@/components/CourseHeroVideo';
 import CourseCoreHighlights from '@/components/CourseCoreHighlights';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
+import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner';
 import { getPriceInfo } from '@/lib/price-utils';
 import { captureUtmContent, fbViewContent } from '@/lib/meta-pixel';
 
@@ -303,28 +304,8 @@ export default function CoursesClient({
                       </Link>
                     </div>
 
-                    {/* All-in-One 999 VIP Package Upsell */}
-                    <div className="p-4 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/15 via-[var(--bg-secondary)] to-rose-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-sm mt-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-stone-950">
-                            👑 แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999
-                          </span>
-                          <span className="text-xs font-extrabold text-rose-600 dark:text-rose-400">
-                            จากมูลค่ารวม ฿2,990 เหลือ ฿999!
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">
-                          อยากได้ครบทั้ง <span className="text-[var(--accent)]">คอร์สเรียนนี้ + ปลดล็อกเครื่องมือ AI ทั้งหมดทุกตัวในระบบ</span> (รวมอนาคต)?
-                        </p>
-                      </div>
-                      <Link
-                        href="/checkout/puppap-all-in-one"
-                        className="shrink-0 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm text-center shadow-md transition-transform hover:scale-105"
-                      >
-                        👑 เหมาครบทุกอย่าง ฿999 →
-                      </Link>
-                    </div>
+                    {/* All-in-One 999 VIP Package Upsell (puppap-all-in-one) */}
+                    <AllInOneUpsellBanner variant="compact" toolCount={6} className="mt-2" />
                   </>
                 )}
               </div>
