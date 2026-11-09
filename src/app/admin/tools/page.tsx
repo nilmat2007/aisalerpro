@@ -28,7 +28,8 @@ export default function AdminToolsPage() {
     tier_required: 'pro',
     video_model: 'Omni 1.1 Flash · Veo 3.1',
     image_model: 'Nano Banana Pro · Imagen 4',
-    tags_string: 'video, image, auto, tiktok'
+    tags_string: 'video, image, auto, tiktok',
+    exclude_from_all_in_one: false
   })
   const [uploading, setUploading] = useState<string | null>(null)
   const [sendNotify, setSendNotify] = useState(false)
@@ -97,6 +98,7 @@ export default function AdminToolsPage() {
       ...(typeof editingTool?.features === 'object' && !Array.isArray(editingTool?.features) ? editingTool.features : {}),
       category: formData.category || 'video',
       tier_required: formData.tier_required || 'pro',
+      exclude_from_all_in_one: Boolean(formData.exclude_from_all_in_one),
       models_used: [
         ...(formData.video_model ? [{ type: 'video', name: formData.video_model, customizable: true }] : []),
         ...(formData.image_model ? [{ type: 'image', name: formData.image_model, customizable: true }] : [])
@@ -104,7 +106,7 @@ export default function AdminToolsPage() {
       tags: formData.tags_string ? formData.tags_string.split(',').map((s: string) => s.trim()).filter(Boolean) : []
     }
 
-    const { category, tier_required, video_model, image_model, tags_string, ...cleanFormData } = formData as any
+    const { category, tier_required, video_model, image_model, tags_string, exclude_from_all_in_one, ...cleanFormData } = formData as any
 
     const res = await fetch(url, {
       method,
@@ -169,7 +171,8 @@ export default function AdminToolsPage() {
       tier_required: 'pro',
       video_model: 'Omni 1.1 Flash · Veo 3.1',
       image_model: 'Nano Banana Pro · Imagen 4',
-      tags_string: 'video, image, auto, tiktok'
+      tags_string: 'video, image, auto, tiktok',
+      exclude_from_all_in_one: false
     })
     setIsModalOpen(true)
   }
@@ -192,7 +195,8 @@ export default function AdminToolsPage() {
       tier_required: feat.tier_required || 'pro',
       video_model: videoModel,
       image_model: imageModel,
-      tags_string: tagsStr
+      tags_string: tagsStr,
+      exclude_from_all_in_one: Boolean(feat.exclude_from_all_in_one)
     })
     setIsModalOpen(true)
   }
@@ -248,6 +252,17 @@ export default function AdminToolsPage() {
                         }`}>
                           {tool.features.tier_required.toUpperCase()}
                         </span>
+                      )}
+                      {tool.slug !== 'puppap-all-in-one' && (
+                        tool.features?.exclude_from_all_in_one ? (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/40 text-rose-300 font-semibold">
+                            🚫 แยกขาย (ไม่รวมในแพ็ก 999)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-semibold">
+                            👑 รวมในแพ็กเหมา 999
+                          </span>
+                        )
                       )}
                     </div>
                   </td>
@@ -479,6 +494,17 @@ export default function AdminToolsPage() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={formData.is_coming_soon} onChange={(e) => setFormData({...formData, is_coming_soon: e.target.checked})} className="w-4 h-4 rounded bg-slate-800 border-slate-700 text-purple-500" />
                   <span className="text-white">เร็วๆ นี้</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(formData.exclude_from_all_in_one)}
+                    onChange={(e) => setFormData({ ...formData, exclude_from_all_in_one: e.target.checked })}
+                    className="w-4 h-4 rounded bg-slate-800 border-slate-700 accent-rose-500"
+                  />
+                  <span className="text-rose-300 font-medium text-sm">
+                    🚫 ยกเว้นจากแพ็กเกจเหมาๆ 999 (ต้องซื้อแยกเท่านั้น ไม่ปลดล็อกอัตโนมัติ)
+                  </span>
                 </label>
               </div>
 

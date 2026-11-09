@@ -225,7 +225,7 @@ export function fbPageView(): void {
 export function fbViewContent({
   contentName = 'tiktok-ai-affiliate',
   contentId = 'tiktok-ai-affiliate',
-  value = 299,
+  value = 159,
   currency = 'THB',
 }: {
   contentName?: string;
@@ -249,7 +249,7 @@ export function fbViewContent({
 export function fbInitiateCheckout({
   contentName = 'tiktok-ai-affiliate',
   contentId = 'tiktok-ai-affiliate',
-  value = 299,
+  value = 159,
   currency = 'THB',
 }: {
   contentName?: string;
@@ -275,7 +275,7 @@ export function fbInitiateCheckout({
 
 export function fbPurchase({
   orderId,
-  value = 299,
+  value = 159,
   contentId = 'tiktok-ai-affiliate',
   currency = 'THB',
 }: {
@@ -314,7 +314,7 @@ export function fbPurchase({
 
 export function fbRefundRequest({
   orderId,
-  value = 299,
+  value = 159,
   contentId = 'tiktok-ai-affiliate',
   currency = 'THB',
 }: {

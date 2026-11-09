@@ -22,6 +22,9 @@ export default async function ToolPage({ params }: { params: Promise<{ slug: str
   if (slug === 'tiktok-ai-affiliate') {
     redirect('/course/tiktok-ai-affiliate')
   }
+  if (slug === 'puppap-all-in-one') {
+    redirect('/checkout/puppap-all-in-one')
+  }
 
   const supabase = await createClient()
   const [{ data: { user } }, { data: tool }] = await Promise.all([

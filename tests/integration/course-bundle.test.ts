@@ -2,12 +2,15 @@ import { describe, test, expect, beforeEach, vi } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import {
+  ALL_IN_ONE_SLUG,
   COURSE_BUNDLE_SLUGS,
   COURSE_BUNDLE_BONUS_TOOL_SLUGS,
   COURSE_BUNDLE_GUIDE_DRIVE_URL,
   BUNDLE_ERROR_CATALOG,
   BUNDLE_SYNC_CACHE,
+  isAllInOneSlug,
   isCourseBundleSlug,
+  isToolEligibleForAllInOne,
   isValidRevokeReason,
   formatSharedKeyRevokeMessage,
   formatActorBadgeLabel,
@@ -958,5 +961,105 @@ describe('Course Bundle v18 — 29 Test Suites (33 Sub-Cases)', () => {
     expect(res.error).toBe('INVALID_REVOKE_REASON')
     expect(BUNDLE_ERROR_CATALOG.INVALID_REVOKE_REASON.httpStatus).toBe(400)
     expect(BUNDLE_ERROR_CATALOG.INVALID_REVOKE_REASON.messageTh).toContain('admin_revoke')
+  })
+
+  // =========================================================================
+  // Tests 30 & 31: All-in-One ฿999 Package & Future-Proof Exclusion Control
+  // =========================================================================
+  test('Test 30: Buying puppap-all-in-one (฿999) unlocks all eligible tools + courses and excludes tools flagged with exclude_from_all_in_one: true', async () => {
+    const sb = createInMemorySupabase()
+    const TOOL_ALL_IN_ONE_ID = '422e791a-a8f5-4821-9ae2-097adfcfa4d5'
+    const TOOL_FUTURE_INCLUDED_ID = 'aaaa0000-0000-4000-8000-000000000010'
+    const TOOL_FUTURE_EXCLUDED_ID = 'bbbb0000-0000-4000-8000-000000000011'
+
+    sb._state.tools.push(
+      { id: TOOL_ALL_IN_ONE_ID, slug: ALL_IN_ONE_SLUG, is_active: true, features: {} } as any,
+      { id: TOOL_FUTURE_INCLUDED_ID, slug: 'puppap-future-tool-2027', is_active: true, features: {} } as any,
+      {
+        id: TOOL_FUTURE_EXCLUDED_ID,
+        slug: 'puppap-vip-exclusive',
+        is_active: true,
+        features: { exclude_from_all_in_one: true },
+      } as any
+    )
+
+    expect(isAllInOneSlug(ALL_IN_ONE_SLUG)).toBe(true)
+    expect(
+      isToolEligibleForAllInOne({
+        id: TOOL_FUTURE_INCLUDED_ID,
+        slug: 'puppap-future-tool-2027',
+        is_active: true,
+        features: {},
+      })
+    ).toBe(true)
+    expect(
+      isToolEligibleForAllInOne({
+        id: TOOL_FUTURE_EXCLUDED_ID,
+        slug: 'puppap-vip-exclusive',
+        is_active: true,
+        features: { exclude_from_all_in_one: true },
+      })
+    ).toBe(false)
+
+    sb._state.orders.set('ord-all-in-one-1', {
+      id: 'ord-all-in-one-1',
+      user_id: 'user-all-1',
+      user_email: 'all1@example.com',
+      tool_id: TOOL_ALL_IN_ONE_ID,
+      status: 'pending',
+      admin_note: null,
+    })
+
+    const res = await approveOrderAndGrantBundle({
+      orderId: 'ord-all-in-one-1',
+      approvedByActor: 'system:auto_slip',
+      supabaseClient: sb,
+    })
+
+    expect(res.ok).toBe(true)
+    expect(res.is_bundle).toBe(true)
+    expect(res.granted_slugs).toContain('tiktok-ai-affiliate')
+    expect(res.granted_slugs).toContain('puppap-fashion-studio')
+    expect(res.granted_slugs).toContain('puppap-ugc-product')
+    expect(res.granted_slugs).toContain('puppap-future-tool-2027')
+    expect(res.granted_slugs).toContain('puppap-all-in-one')
+    expect(res.granted_slugs).not.toContain('puppap-vip-exclusive')
+  })
+
+  test('Test 31: resolveUserBundleAccess automatically grants future tools added after puppap-all-in-one purchase and triggers background heal', async () => {
+    const sb = createInMemorySupabase()
+    const TOOL_ALL_IN_ONE_ID = '422e791a-a8f5-4821-9ae2-097adfcfa4d5'
+    const TOOL_BRAND_NEW_ID = 'cccc0000-0000-4000-8000-000000000099'
+
+    sb._state.tools.push({
+      id: TOOL_ALL_IN_ONE_ID,
+      slug: ALL_IN_ONE_SLUG,
+      is_active: true,
+      features: {},
+    } as any)
+
+    // User owns puppap-all-in-one
+    sb._state.userTools.set(`user-all-2:${TOOL_ALL_IN_ONE_ID}`, {
+      id: 'ut-all-2',
+      user_id: 'user-all-2',
+      tool_id: TOOL_ALL_IN_ONE_ID,
+      license_key_id: null,
+      is_active: true,
+    })
+
+    // Admin adds a brand new tool later
+    sb._state.tools.push({
+      id: TOOL_BRAND_NEW_ID,
+      slug: 'puppap-brand-new-2028',
+      is_active: true,
+      features: {},
+    } as any)
+
+    const access = await resolveUserBundleAccess(sb, 'user-all-2', 'all2@example.com')
+    expect(access.hasFullBundle).toBe(true)
+    expect(access.healed).toBe(true)
+    expect(access.ownedToolIds).toContain(TOOL_BRAND_NEW_ID)
+    expect(access.ownedToolIds).toContain(TOOL_COURSE_ID)
+    expect(sb._state.userTools.has(`user-all-2:${TOOL_BRAND_NEW_ID}`)).toBe(true)
   })
 })

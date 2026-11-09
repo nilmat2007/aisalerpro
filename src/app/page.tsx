@@ -42,7 +42,10 @@ export default async function HomePage() {
     const courseItem = (allTools || []).find(
       (t: any) => t.slug === 'tiktok-ai-affiliate' || t.category === 'course'
     )
-    const coursePrice = getPriceInfo(courseItem?.price || '299', courseItem?.features)
+    const coursePrice = getPriceInfo(
+      courseItem?.price || '159',
+      courseItem?.features || { original_price: '799' }
+    )
     
     return (
       <div className="min-h-screen text-[var(--text-primary)] font-sans flex flex-col items-center transition-colors duration-200">
@@ -207,13 +210,16 @@ export default async function HomePage() {
                       🎁 แถมฟรี 2 เครื่องมือ AI (แยกซื้อชิ้นละ ฿299)
                     </span>
                     <span className="px-3 py-0.5 rounded-full bg-rose-600 text-white text-xs sm:text-sm font-black puppap-badge-flash">
-                      🔥 โบนัสมูลค่ารวม ฿598 ฟรีทันที
+                      🔥 ลดพิเศษจากปกติ ฿{coursePrice.formattedOriginal} (ประหยัด ฿{coursePrice.savingsFormatted})
                     </span>
                   </div>
 
-                  <div className="mt-1 flex items-baseline justify-center gap-1.5">
-                    <span className="text-xs sm:text-sm font-bold text-[var(--text-muted)] mr-1">
-                      ราคาเปิดตัว
+                  <div className="mt-1.5 flex items-baseline justify-center gap-2 flex-wrap">
+                    <span className="text-sm sm:text-base font-bold text-[var(--text-muted)] line-through">
+                      ปกติ ฿{coursePrice.formattedOriginal}
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-[var(--text-secondary)]">
+                      เหลือเพียง
                     </span>
                     <span className="text-5xl sm:text-6xl font-black text-[var(--accent)] tracking-tight leading-none puppap-price-hero">
                       ฿{coursePrice.formattedPrice}
@@ -234,7 +240,7 @@ export default async function HomePage() {
                     href="/checkout/tiktok-ai-affiliate" 
                     className="puppap-btn-primary puppap-cta-animated sm:flex-[1.5] min-h-[58px] sm:min-h-[64px] py-3.5 px-6 rounded-2xl text-center text-base sm:text-xl font-black flex items-center justify-center gap-2.5 shadow-xl"
                   >
-                    <span>🛒 สมัครเรียนราคาเปิดตัว ฿{coursePrice.formattedPrice}</span>
+                    <span>🛒 สมัครเรียนโปรพิเศษ ฿{coursePrice.formattedPrice}</span>
                     <span className="puppap-arrow-nudge text-xl sm:text-2xl">→</span>
                   </Link>
                   <Link 
@@ -243,6 +249,29 @@ export default async function HomePage() {
                   >
                     <span>📑 ดูสารบัญ 22 บท</span>
                     <span className="text-[var(--accent)]">→</span>
+                  </Link>
+                </div>
+
+                {/* All-in-One 999 VIP Bundle Upsell Card */}
+                <div className="p-4 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/15 via-[var(--bg-secondary)] to-rose-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-sm">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-stone-950">
+                        👑 แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999
+                      </span>
+                      <span className="text-xs font-extrabold text-rose-600 dark:text-rose-400">
+                        จากมูลค่ารวม ฿2,990 เหลือ ฿999!
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">
+                      ปลดล็อกให้หมดทั้ง <span className="text-[var(--accent)]">คอร์สเรียน 22 บท + เครื่องมือ AI ทั้งหมดทุกตัว</span> (รวมอัปเดตในอนาคต)
+                    </p>
+                  </div>
+                  <Link
+                    href="/checkout/puppap-all-in-one"
+                    className="shrink-0 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm text-center shadow-md transition-transform hover:scale-105"
+                  >
+                    👑 เหมาครบทุกอย่าง ฿999 →
                   </Link>
                 </div>
 
@@ -285,7 +314,13 @@ export default async function HomePage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allTools
-              ?.filter((t: any) => t.is_active && t.category !== 'course' && t.slug !== 'tiktok-ai-affiliate')
+              ?.filter(
+                (t: any) =>
+                  t.is_active &&
+                  t.category !== 'course' &&
+                  t.slug !== 'tiktok-ai-affiliate' &&
+                  t.slug !== 'puppap-all-in-one'
+              )
               ?.map((tool: any) => (
                 <FlowToolCard key={tool.id} tool={tool} hasAccess={false} isLoggedIn={false} />
               ))}

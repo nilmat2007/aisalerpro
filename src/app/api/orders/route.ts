@@ -11,11 +11,13 @@ import { verifySlipAndDecide } from '@/lib/slip-verifier';
 import { sendEmail, buildOrderApprovedEmail } from '@/lib/email';
 import { sendMetaCapiEvent } from '@/lib/meta-capi';
 import {
+  ALL_IN_ONE_SLUG,
   approveOrderAndGrantBundle,
   BUNDLE_ERROR_CATALOG,
   COURSE_BUNDLE_SLUGS,
   extractRequestId,
   formatSharedKeyRevokeMessage,
+  isAllInOneSlug,
   isCourseBundleSlug,
 } from '@/lib/course-bundle';
 
@@ -74,7 +76,9 @@ export async function POST(request: Request) {
     if (
       !toolInfo ||
       !toolInfo.is_active ||
-      (toolInfo.is_coming_soon && toolInfo.slug !== 'tiktok-ai-affiliate')
+      (toolInfo.is_coming_soon &&
+        toolInfo.slug !== 'tiktok-ai-affiliate' &&
+        toolInfo.slug !== ALL_IN_ONE_SLUG)
     ) {
       return NextResponse.json(
         {
@@ -240,17 +244,22 @@ export async function POST(request: Request) {
         eventName: 'Purchase',
         eventId: `order_${targetOrderId}`,
         orderId: targetOrderId,
-        value: expectedAmount || 299,
+        value: expectedAmount || 159,
         req: request,
         email: user.email || '',
         contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
       }).catch((err) => console.error('[CAPI] Auto-approve Purchase error:', err));
 
+      const isAllInOneOrder = isAllInOneSlug(toolInfo?.slug);
       const tasks: Promise<any>[] = [
         notifyAiAutoApprovedOrder(
           customerName,
           user.email || '',
-          grantResult.is_bundle ? `${toolName} (+ แถมฟรี 2 AI Tools ในชุดโปรโมชัน)` : toolName,
+          isAllInOneOrder
+            ? `${toolName} (👑 ปลดล็อกครบคอร์สเรียน + เครื่องมือ AI ทั้งหมด)`
+            : grantResult.is_bundle
+            ? `${toolName} (+ แถมฟรี 2 AI Tools ในชุดโปรโมชัน)`
+            : toolName,
           `${expectedAmount.toLocaleString()} บาท`,
           finalSlipUrl,
           verification.reason
@@ -260,7 +269,9 @@ export async function POST(request: Request) {
       if (user.email && user.email.includes('@')) {
         const emailHtml = buildOrderApprovedEmail({
           customerName,
-          toolName: grantResult.is_bundle
+          toolName: isAllInOneOrder
+            ? `${toolName} (ปลดล็อกครบทั้งคอร์สเรียน 22 บทเรียน + เครื่องมือ AI ทุกตัวในระบบ)`
+            : grantResult.is_bundle
             ? `${toolName} (พร้อมปลดล็อกฟรี PUP PAP Fashion Studio + PUPPAP AI UGC Product)`
             : toolName,
           toolSlug: toolInfo?.slug || '',

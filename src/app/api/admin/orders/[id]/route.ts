@@ -10,6 +10,7 @@ import {
   BUNDLE_ERROR_CATALOG,
   extractRequestId,
   formatSharedKeyRevokeMessage,
+  isAllInOneSlug,
   type BundleErrorCode,
 } from '@/lib/course-bundle';
 
@@ -98,8 +99,8 @@ export async function PATCH(
 
       if (!grantRes.already_approved) {
         const numericOrderValue =
-          parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) ||
-          299;
+          parseFloat(String(order.amount || toolInfo?.price || '159').replace(/[^0-9.]/g, '')) ||
+          159;
 
         sendMetaCapiEvent({
           eventName: 'Purchase',
@@ -111,9 +112,12 @@ export async function PATCH(
           contentId: toolInfo?.slug || 'tiktok-ai-affiliate',
         }).catch((err) => console.error('[CAPI] Admin approve Purchase error:', err));
 
+        const isAllInOneOrder = isAllInOneSlug(toolInfo?.slug);
         await notifyOrderApproved(
           order.user_email,
-          grantRes.is_bundle
+          isAllInOneOrder
+            ? `${toolInfo?.name || 'ไม่ระบุ'} (👑 ปลดล็อกครบคอร์สเรียน + เครื่องมือ AI ทั้งหมด)`
+            : grantRes.is_bundle
             ? `${toolInfo?.name || 'ไม่ระบุ'} (+ แถมฟรี 2 AI Tools ในชุดโปรโมชัน)`
             : toolInfo?.name || 'ไม่ระบุ'
         );
@@ -121,7 +125,9 @@ export async function PATCH(
         if (order.user_email && order.user_email.includes('@')) {
           const emailHtml = buildOrderApprovedEmail({
             customerName: order.user_email.split('@')[0],
-            toolName: grantRes.is_bundle
+            toolName: isAllInOneOrder
+              ? `${toolInfo?.name || 'แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999'} (ปลดล็อกครบทั้งคอร์สเรียน 22 บทเรียน + เครื่องมือ AI ทุกตัวในระบบ)`
+              : grantRes.is_bundle
               ? `${toolInfo?.name || 'เครื่องมือ AI'} (พร้อมปลดล็อกฟรี PUP PAP Fashion Studio + PUPPAP AI UGC Product)`
               : toolInfo?.name || 'เครื่องมือ AI',
             toolSlug: toolInfo?.slug || '',
@@ -203,8 +209,8 @@ export async function PATCH(
 
       if (action === 'revoke' || action === 'refund' || order.status === 'approved') {
         const numericRefundValue =
-          parseFloat(String(order.amount || toolInfo?.price || '299').replace(/[^0-9.]/g, '')) ||
-          299;
+          parseFloat(String(order.amount || toolInfo?.price || '159').replace(/[^0-9.]/g, '')) ||
+          159;
         sendMetaCapiEvent({
           eventName: 'RefundRequest',
           eventId: `refund_${order.id}`,

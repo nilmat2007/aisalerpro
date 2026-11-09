@@ -29,7 +29,7 @@ function formatTime(sec: number): string {
 export default function Lesson21PreviewPlayer({
   hasAccess = false,
   courseSlug = 'tiktok-ai-affiliate',
-  priceFormatted = '299',
+  priceFormatted = '159',
   promptCount = 5,
   curriculumHref = '/courses#curriculum',
   onScrollToCurriculum,

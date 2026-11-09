@@ -4,7 +4,7 @@ import { sendTelegram, answerCallback, editMessage } from '@/lib/telegram'
 import { sendEmail, buildTrialFollowUpEmail, buildOrderApprovedEmail, buildOrderRejectedEmail } from '@/lib/email'
 import { processTrialFollowUps } from '@/lib/trial-followup'
 import { broadcastFBSmart } from '@/lib/facebook'
-import { approveOrderAndGrantBundle, revokeCourseBundleEntitlements } from '@/lib/course-bundle'
+import { approveOrderAndGrantBundle, isAllInOneSlug, revokeCourseBundleEntitlements } from '@/lib/course-bundle'
 
 export async function POST(request: Request) {
   try {
@@ -380,13 +380,21 @@ async function handleApproveOrder(
   }
 
   const keyStr = grantRes.key_code || ''
-  await answerCallback(callbackId, '✅ อนุมัติสำเร็จ! ลูกค้าเข้าเรียนและใช้ 2 AI Tools แถมฟรีได้ทันที')
+  const isAllInOneOrder = isAllInOneSlug((order as any).tools?.slug)
+  await answerCallback(
+    callbackId,
+    isAllInOneOrder
+      ? '✅ อนุมัติสำเร็จ! ปลดล็อกครบทั้งคอร์สเรียน + เครื่องมือ AI ทั้งหมดแล้ว'
+      : '✅ อนุมัติสำเร็จ! ลูกค้าเข้าเรียนและใช้ 2 AI Tools แถมฟรีได้ทันที'
+  )
 
   // Send approval email to customer (awaited so serverless does not terminate early)
   if (order.user_email && order.user_email.includes('@')) {
     const emailHtml = buildOrderApprovedEmail({
       customerName: order.user_email.split('@')[0],
-      toolName: grantRes.is_bundle
+      toolName: isAllInOneOrder
+        ? `${(order as any).tools?.name || 'แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999'} (ปลดล็อกครบคอร์สเรียน + เครื่องมือ AI ทั้งหมด)`
+        : grantRes.is_bundle
         ? `${(order as any).tools?.name || 'คอร์สเรียน AI'} (+ แถมฟรี 2 AI Tools ในชุดโปรโมชัน)`
         : (order as any).tools?.name || 'เครื่องมือ AI',
       toolSlug: (order as any).tools?.slug || '',
@@ -402,7 +410,11 @@ async function handleApproveOrder(
 
   // Update message
   const toolName = (order as any).tools?.name || 'ไม่ระบุ'
-  const bundleNote = grantRes.is_bundle ? `\n🎁 <b>ปลดล็อกครบชุด 3 รายการ (คอร์ส + 2 AI Tools)</b>` : ''
+  const bundleNote = isAllInOneOrder
+    ? `\n👑 <b>ปลดล็อกครบทุกอย่าง (คอร์สเรียน 22 บท + เครื่องมือ AI ทั้งหมด)</b>`
+    : grantRes.is_bundle
+    ? `\n🎁 <b>ปลดล็อกครบชุด 3 รายการ (คอร์ส + 2 AI Tools)</b>`
+    : ''
   await editMessage(
     chatId,
     messageId,

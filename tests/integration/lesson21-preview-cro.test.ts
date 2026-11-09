@@ -63,17 +63,23 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       }
     });
 
-    it('displays compliant "ราคาเปิดตัว" and "฿598" bonus value stack across course pages', () => {
+    it('displays compliant ฿159 promo pricing, ฿598 bonus value stack, and ฿999 All-in-One upsell across course pages', () => {
       for (const rel of [
-        'src/components/Lesson21PreviewPlayer.tsx',
         'src/app/courses/CoursesClient.tsx',
         'src/app/page.tsx',
         'src/app/DashboardClient.tsx',
       ]) {
         const content = fs.readFileSync(path.join(ROOT, rel), 'utf8');
-        expect(content, `${rel} should include ราคาเปิดตัว`).toContain('ราคาเปิดตัว');
+        expect(content, `${rel} should include 159`).toContain('159');
         expect(content, `${rel} should include 598`).toContain('598');
+        expect(content, `${rel} should include puppap-all-in-one`).toContain('puppap-all-in-one');
       }
+      const previewPlayer = fs.readFileSync(
+        path.join(ROOT, 'src/components/Lesson21PreviewPlayer.tsx'),
+        'utf8'
+      );
+      expect(previewPlayer).toContain("priceFormatted = '159'");
+      expect(previewPlayer).toContain('598');
     });
   });
 

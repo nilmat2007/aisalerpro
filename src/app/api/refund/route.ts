@@ -8,7 +8,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { orderId, email, value = 299, contentId = 'tiktok-ai-affiliate' } = body || {};
+    const { orderId, email, value = 159, contentId = 'tiktok-ai-affiliate' } = body || {};
 
     if (!orderId) {
       return NextResponse.json({ error: 'orderId is required' }, { status: 400 });
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       eventName: 'RefundRequest',
       eventId: `refund_${orderId}`,
       orderId: String(orderId),
-      value: Number(value) || 299,
+      value: Number(value) || 159,
       req,
       email: email || '',
       contentId,

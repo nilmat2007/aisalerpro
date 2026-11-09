@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { supabase } from '@/lib/supabase'
 import { getSession } from '@/lib/auth'
 import { requireAdmin } from '@/lib/auth/require-admin'
+import { syncAllInOneEntitlements } from '@/lib/course-bundle'
 import {
   ADMIN_TOOL_SELECT_COLUMNS,
   PUBLIC_TOOL_SELECT_COLUMNS,
@@ -103,6 +104,9 @@ export async function PUT(
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Proactively sync All-in-One 999 members if tool was activated or included
+    await syncAllInOneEntitlements(supabase)
 
     safeRevalidateToolPaths((data as any)?.slug || existingTool?.slug)
 

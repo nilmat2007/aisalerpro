@@ -47,7 +47,13 @@ export default async function CoursePage(props: {
   }
 
   const activeToolSlugs = (activeTools || [])
-    .filter((t: any) => t.is_active && !t.is_coming_soon && t.slug !== 'tiktok-ai-affiliate')
+    .filter(
+      (t: any) =>
+        t.is_active &&
+        !t.is_coming_soon &&
+        t.slug !== 'tiktok-ai-affiliate' &&
+        t.slug !== 'puppap-all-in-one'
+    )
     .map((t: any) => t.slug);
 
   let hasAccess = false;

@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { supabase as supabaseAdmin } from '@/lib/supabase'
+import { resolveUserBundleAccess } from '@/lib/course-bundle'
 import {
   PUBLIC_TOOL_SELECT_COLUMNS,
   sanitizeToolForPublic,
@@ -14,6 +16,9 @@ export async function GET(_request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Ensure any bundle / All-in-One future tool entitlements are healed first
+    await resolveUserBundleAccess(supabaseAdmin, user.id, user.email || '')
 
     // Query user_tools joined with tools table using explicit allow-list
     const { data, error } = await supabase

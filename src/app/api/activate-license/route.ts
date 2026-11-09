@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { supabase as supabaseAdmin } from '@/lib/supabase'
 import { notifyLicenseActivated } from '@/lib/telegram'
-import { getCourseBundleToolIds, invalidateBundleSyncCache } from '@/lib/course-bundle'
+import {
+  getAllInOneEligibleTools,
+  getCourseBundleToolIds,
+  invalidateBundleSyncCache,
+  isAllInOneSlug,
+} from '@/lib/course-bundle'
 
 function maskEmail(email: string): string {
   const parts = email.split('@')
@@ -84,12 +89,24 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     const bundleInfo = await getCourseBundleToolIds(supabaseAdmin)
-    const isBundleTool = existingKey?.tool_id ? bundleInfo.bundleIds.includes(existingKey.tool_id) : false
-    const targetToolIds = isBundleTool
-      ? bundleInfo.bundleIds
-      : existingKey?.tool_id
-      ? [existingKey.tool_id]
-      : []
+    const linkedSlug = (existingKey as any)?.tools?.slug || null
+    const isAllInOneKey = isAllInOneSlug(linkedSlug)
+    const isBundleTool =
+      isAllInOneKey ||
+      (existingKey?.tool_id ? bundleInfo.bundleIds.includes(existingKey.tool_id) : false)
+
+    let targetToolIds: string[] = []
+    if (isAllInOneKey) {
+      const eligible = await getAllInOneEligibleTools(supabaseAdmin)
+      targetToolIds = eligible.map((t) => t.id)
+      if (existingKey?.tool_id && !targetToolIds.includes(existingKey.tool_id)) {
+        targetToolIds.push(existingKey.tool_id)
+      }
+    } else if (isBundleTool) {
+      targetToolIds = bundleInfo.bundleIds
+    } else if (existingKey?.tool_id) {
+      targetToolIds = [existingKey.tool_id]
+    }
 
     if (existingKey && existingKey.status === 'activated') {
       const linkedTool = (existingKey as any).tools

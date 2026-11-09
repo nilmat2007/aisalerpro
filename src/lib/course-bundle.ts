@@ -14,6 +14,14 @@ export const COURSE_BUNDLE_BONUS_TOOL_SLUGS = [
   'puppap-ugc-product',
 ] as const
 
+export const ALL_IN_ONE_SLUG = 'puppap-all-in-one' as const
+
+/**
+ * List of tool/course slugs explicitly excluded from the ฿999 All-in-One package.
+ * Admin can also toggle `features.exclude_from_all_in_one = true` per tool in `/admin/tools`.
+ */
+export const EXCLUDED_FROM_ALL_IN_ONE_SLUGS: readonly string[] = []
+
 export type CourseBundleSlug = (typeof COURSE_BUNDLE_SLUGS)[number]
 
 export const COURSE_BUNDLE_GUIDE_DRIVE_URL =
@@ -111,6 +119,134 @@ export const BUNDLE_ERROR_CATALOG: Record<
 export function isCourseBundleSlug(slug?: string | null): slug is CourseBundleSlug {
   if (!slug) return false
   return (COURSE_BUNDLE_SLUGS as readonly string[]).includes(slug)
+}
+
+export function isAllInOneSlug(slug?: string | null): boolean {
+  if (!slug) return false
+  return slug === ALL_IN_ONE_SLUG
+}
+
+/**
+ * Determines whether a tool/course row should be unlocked by the ฿999 All-in-One package
+ * (including any future tools added to `public.tools`), unless explicitly excluded via
+ * `features.exclude_from_all_in_one === true` or `EXCLUDED_FROM_ALL_IN_ONE_SLUGS`.
+ */
+export function isToolEligibleForAllInOne(tool: {
+  id?: string | null
+  slug?: string | null
+  is_active?: boolean | null
+  is_coming_soon?: boolean | null
+  features?: any
+} | null | undefined): boolean {
+  if (!tool || !tool.slug) return false
+  if (tool.is_active === false) return false
+  if (
+    tool.is_coming_soon === true &&
+    tool.slug !== 'tiktok-ai-affiliate' &&
+    tool.slug !== ALL_IN_ONE_SLUG
+  ) {
+    return false
+  }
+  if ((EXCLUDED_FROM_ALL_IN_ONE_SLUGS as readonly string[]).includes(tool.slug)) {
+    return false
+  }
+  const feat =
+    tool.features && typeof tool.features === 'object' && !Array.isArray(tool.features)
+      ? tool.features
+      : null
+  if (feat?.exclude_from_all_in_one === true) {
+    return false
+  }
+  return true
+}
+
+export async function getAllInOneEligibleTools(
+  sb: SupabaseClient = defaultSupabaseAdmin
+): Promise<{ id: string; slug: string; is_active?: boolean; is_coming_soon?: boolean; features?: any }[]> {
+  try {
+    const toolsTable: any = sb.from?.('tools')
+    if (typeof toolsTable?.select !== 'function') return []
+    const selectChain = toolsTable.select('id, slug, is_active, is_coming_soon, features')
+    const eqChain = selectChain?.eq?.('is_active', true)
+    let rows: any[] = []
+    if (eqChain && typeof eqChain.then === 'function') {
+      const { data } = await eqChain
+      rows = Array.isArray(data) ? data : []
+    } else if (Array.isArray((sb as any)?._state?.tools)) {
+      rows = (sb as any)._state.tools
+    }
+    return rows.filter((t) => isToolEligibleForAllInOne(t))
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Proactively syncs/backfills `user_tools` for all members who own `puppap-all-in-one`
+ * whenever a new tool is created or updated in `/admin/tools` (unless excluded).
+ */
+export async function syncAllInOneEntitlements(
+  sb: SupabaseClient = defaultSupabaseAdmin,
+  specificUserId?: string
+): Promise<{ syncedCount: number }> {
+  try {
+    const eligibleTools = await getAllInOneEligibleTools(sb)
+    const allInOneTool = eligibleTools.find((t) => t.slug === ALL_IN_ONE_SLUG)
+    if (!allInOneTool || eligibleTools.length === 0) {
+      return { syncedCount: 0 }
+    }
+
+    const utQuery = sb
+      .from('user_tools')
+      .select('user_id, license_key_id')
+      .eq('tool_id', allInOneTool.id)
+      .eq('is_active', true)
+    const ordQuery = sb
+      .from('orders')
+      .select('user_id, license_key_id')
+      .eq('tool_id', allInOneTool.id)
+      .eq('status', 'approved')
+
+    const [{ data: utOwners }, { data: ordOwners }] = await Promise.all([
+      specificUserId ? utQuery.eq('user_id', specificUserId) : utQuery,
+      specificUserId ? ordQuery.eq('user_id', specificUserId) : ordQuery,
+    ])
+
+    const userToKeyMap = new Map<string, string | null>()
+    for (const row of [...(utOwners || []), ...(ordOwners || [])]) {
+      if (row?.user_id) {
+        if (!userToKeyMap.has(row.user_id) || row.license_key_id) {
+          userToKeyMap.set(row.user_id, row.license_key_id || null)
+        }
+      }
+    }
+
+    if (userToKeyMap.size === 0) {
+      return { syncedCount: 0 }
+    }
+
+    let syncedCount = 0
+    for (const [uid, keyId] of userToKeyMap.entries()) {
+      for (const tool of eligibleTools) {
+        await sb.from('user_tools').upsert(
+          {
+            user_id: uid,
+            tool_id: tool.id,
+            license_key_id: keyId,
+            is_active: true,
+            activated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,tool_id' }
+        )
+        syncedCount++
+      }
+      invalidateUserBundleCache(uid)
+    }
+
+    return { syncedCount }
+  } catch {
+    return { syncedCount: 0 }
+  }
 }
 
 export function isValidRevokeReason(reason?: string | null): reason is RevokeReason {
@@ -431,10 +567,23 @@ async function fallbackApproveOrderAndGrantBundle(params: {
     return { ok: false, error: 'TOOL_NOT_FOUND', request_id: requestId }
   }
 
-  const isBundle = isCourseBundleSlug(orderedTool.slug)
+  const isAllInOne = isAllInOneSlug(orderedTool.slug)
+  const isBundle = isAllInOne || isCourseBundleSlug(orderedTool.slug)
   let targetTools: { id: string; slug: string }[] = [orderedTool]
 
-  if (isBundle) {
+  if (isAllInOne) {
+    const eligibleTools = await getAllInOneEligibleTools(sb)
+    if (eligibleTools.length > 0) {
+      const seenIds = new Set<string>()
+      targetTools = []
+      for (const t of [orderedTool, ...eligibleTools]) {
+        if (t?.id && !seenIds.has(t.id)) {
+          seenIds.add(t.id)
+          targetTools.push({ id: t.id, slug: t.slug })
+        }
+      }
+    }
+  } else if (isBundle) {
     const { data: bTools } = await sb
       .from('tools')
       .select('id, slug')
@@ -507,7 +656,11 @@ async function fallbackApproveOrderAndGrantBundle(params: {
         activated_at: new Date().toISOString(),
         activated_by: order.user_id,
         activated_email: order.user_email,
-        note: isBundle ? 'Course Bundle Auto-Unlock (3 Items)' : 'Single Tool Order',
+        note: isAllInOne
+          ? 'All-in-One 999 Auto-Unlock (Course + All Eligible Tools)'
+          : isBundle
+          ? 'Course Bundle Auto-Unlock (3 Items)'
+          : 'Single Tool Order',
       })
       .select('id, key_code')
       .single()
@@ -789,9 +942,22 @@ async function fallbackRevokeOrderAndBundle(params: {
     .eq('id', order.tool_id)
     .maybeSingle()
 
-  const isBundle = isCourseBundleSlug(orderedTool?.slug)
+  const isAllInOne = isAllInOneSlug(orderedTool?.slug)
+  const isBundle = isAllInOne || isCourseBundleSlug(orderedTool?.slug)
   let targetTools: { id: string; slug: string }[] = orderedTool ? [orderedTool] : []
-  if (isBundle) {
+  if (isAllInOne) {
+    const eligibleTools = await getAllInOneEligibleTools(sb)
+    if (eligibleTools.length > 0) {
+      const seenIds = new Set<string>()
+      targetTools = []
+      for (const t of [...(orderedTool ? [orderedTool] : []), ...eligibleTools]) {
+        if (t?.id && !seenIds.has(t.id)) {
+          seenIds.add(t.id)
+          targetTools.push({ id: t.id, slug: t.slug })
+        }
+      }
+    }
+  } else if (isBundle) {
     const { data: bTools } = await sb
       .from('tools')
       .select('id, slug')
@@ -924,6 +1090,78 @@ export async function attemptCourseBundleHeal(
 }
 
 async function fallbackHealUserBundle(sb: SupabaseClient, userId: string, requestId: string) {
+  // 1. Check All-in-One 999 Package Eligibility first (Future-proof unlock of all eligible tools)
+  const eligibleAllInOneTools = await getAllInOneEligibleTools(sb)
+  const allInOneTool = eligibleAllInOneTools.find((t) => t.slug === ALL_IN_ONE_SLUG)
+
+  if (allInOneTool && eligibleAllInOneTools.length > 0) {
+    const allEligibleIds = eligibleAllInOneTools.map((t) => t.id)
+    const [{ data: aioUt }, { data: aioOrders }, { data: aioKeys }] = await Promise.all([
+      sb
+        .from('user_tools')
+        .select('id, tool_id, license_key_id, is_active')
+        .eq('user_id', userId)
+        .in('tool_id', allEligibleIds),
+      sb
+        .from('orders')
+        .select('id, tool_id, license_key_id, status')
+        .eq('user_id', userId)
+        .in('tool_id', [allInOneTool.id])
+        .eq('status', 'approved'),
+      sb
+        .from('license_keys')
+        .select('id, status')
+        .eq('activated_by', userId)
+        .in('tool_id', [allInOneTool.id]),
+    ])
+
+    const aioRevokedKeyIds = new Set(
+      (aioKeys || []).filter((k) => k.status === 'revoked').map((k) => k.id)
+    )
+    const validAioUt = (aioUt || []).find(
+      (u) =>
+        u.tool_id === allInOneTool.id &&
+        u.is_active &&
+        (!u.license_key_id || !aioRevokedKeyIds.has(u.license_key_id))
+    )
+    const validAioOrd = (aioOrders || []).find(
+      (o) => !o.license_key_id || !aioRevokedKeyIds.has(o.license_key_id)
+    )
+
+    if (validAioUt || validAioOrd) {
+      const qualifyingKeyId = validAioUt?.license_key_id || validAioOrd?.license_key_id || null
+      const activeToolIds = new Set(
+        (aioUt || []).filter((u) => u.is_active).map((u) => u.tool_id)
+      )
+
+      let healedCount = 0
+      for (const et of eligibleAllInOneTools) {
+        if (!activeToolIds.has(et.id)) {
+          await sb.from('user_tools').upsert(
+            {
+              user_id: userId,
+              tool_id: et.id,
+              license_key_id: qualifyingKeyId,
+              is_active: true,
+              activated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id,tool_id' }
+          )
+          healedCount++
+        }
+      }
+
+      return {
+        ok: true,
+        eligible: true,
+        is_all_in_one: true,
+        healed_count: healedCount,
+        request_id: requestId,
+      }
+    }
+  }
+
+  // 2. Course Bundle (3 items) Heal
   const { data: bTools } = await sb
     .from('tools')
     .select('id, slug')
@@ -1110,9 +1348,25 @@ export const resolveUserBundleAccess = cache(
       const ownedBundleCount = bTools.filter((t: any) => ownedSet.has(t.id)).length
       let healed = false
 
-      // If user owns 1 or 2 of the 3 bundle items (or has an approved bundle order not yet synced),
-      // run synchronous pre-render heal with 1500ms budget
-      if (bTools.length === 3 && ownedBundleCount < 3) {
+      // Check All-in-One 999 ownership & future-proof tool eligibility
+      const eligibleAllInOneTools = await getAllInOneEligibleTools(sb)
+      const allInOneTool = eligibleAllInOneTools.find((t) => t.slug === ALL_IN_ONE_SLUG)
+      const ownsAllInOne = Boolean(allInOneTool && ownedSet.has(allInOneTool.id))
+      const missingAllInOneCount = ownsAllInOne
+        ? eligibleAllInOneTools.filter((t) => !ownedSet.has(t.id)).length
+        : 0
+
+      if (ownsAllInOne) {
+        for (const et of eligibleAllInOneTools) {
+          bundleMap.set(String(et.id), String(et.slug))
+        }
+      }
+
+      // If user owns All-in-One with new unhealed tools OR owns 1-2 of the 3 course bundle items
+      if (
+        (ownsAllInOne && missingAllInOneCount > 0) ||
+        (bTools.length === 3 && ownedBundleCount < 3)
+      ) {
         const healRes = await attemptCourseBundleHeal({
           userId,
           requestId,
@@ -1122,9 +1376,23 @@ export const resolveUserBundleAccess = cache(
 
         if (healRes.ok && (healRes as any).eligible) {
           healed = (healRes as any).healed_count > 0
-          for (const bt of bTools) {
-            ownedSet.add(bt.id)
+          if ((healRes as any).is_all_in_one || ownsAllInOne) {
+            for (const et of eligibleAllInOneTools) {
+              ownedSet.add(et.id)
+              bundleMap.set(String(et.id), String(et.slug))
+            }
+          } else {
+            for (const bt of bTools) {
+              ownedSet.add(bt.id)
+            }
           }
+        }
+      }
+
+      // Guarantee instant runtime access to all eligible tools if user owns All-in-One
+      if (ownsAllInOne) {
+        for (const et of eligibleAllInOneTools) {
+          ownedSet.add(et.id)
         }
       }
 

@@ -186,12 +186,17 @@ export default function CheckoutClient({
   const router = useRouter();
 
   const posterImage = tool.poster_url || null;
+  const isAllInOne = tool.slug === 'puppap-all-in-one';
   const isCourse = tool.slug === 'tiktok-ai-affiliate' || tool.category === 'course';
   const isBundleItem =
     isCourse ||
     tool.slug === 'puppap-fashion-studio' ||
     tool.slug === 'puppap-ugc-product';
-  const destinationUrl = isCourse ? `/course/${tool.slug}` : `/tool/${tool.slug}`;
+  const destinationUrl = isAllInOne
+    ? '/'
+    : isCourse
+    ? `/course/${tool.slug}`
+    : `/tool/${tool.slug}`;
 
   // Clean price display without duplicate 'บาท'
   const rawPrice = String(tool.price || '0').replace(/[^0-9.]/g, '');
@@ -205,7 +210,7 @@ export default function CheckoutClient({
       fbInitiateCheckout({
         contentName: tool?.slug || 'tiktok-ai-affiliate',
         contentId: tool?.slug || 'tiktok-ai-affiliate',
-        value: numericPrice || 299,
+        value: numericPrice || 159,
         currency: 'THB',
       });
     }
@@ -228,7 +233,7 @@ export default function CheckoutClient({
         if (data.latestOrder?.id) {
           fbPurchase({
             orderId: String(data.latestOrder.id),
-            value: numericPrice || 299,
+            value: numericPrice || 159,
             contentId: tool?.slug || 'tiktok-ai-affiliate',
           });
         }
@@ -463,7 +468,7 @@ export default function CheckoutClient({
         captureUtmContent();
         fbPurchase({
           orderId: String(result.id || Date.now()),
-          value: numericPrice || 299,
+          value: numericPrice || 159,
           contentId: tool?.slug || 'tiktok-ai-affiliate',
         });
         setOrderStatus('approved');
@@ -656,7 +661,36 @@ export default function CheckoutClient({
                     </p>
                   </div>
 
-                  {isBundleItem && (
+                  {isAllInOne ? (
+                    <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/50 space-y-2 text-left">
+                      <div className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                        <span>👑</span>
+                        <span>ชำระ ฿{displayPrice} ครั้งเดียว ปลดล็อกครบทุกอย่างในระบบทันที:</span>
+                      </div>
+                      <ul className="space-y-1 text-xs text-[var(--text-primary)] font-semibold">
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>🎓 คอร์สเรียนนายหน้า TikTok ด้วย AI ครบ 22 บทเรียน (มูลค่า ฿799)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>🔥 Ai SALER PRO - UGC Batch สร้างคลิปรีวิวขายดุ (มูลค่า ฿699)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>🎬 AI Content Factory + StoryPro V7.0 DECK (มูลค่ารวม ฿598)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>👗 PUP PAP Fashion Studio + AI UGC Product (มูลค่ารวม ฿598)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black">✓</span>
+                          <span>🚀 เครื่องมือ AI ทุกตัวในปัจจุบัน + อัปเดตเครื่องมือใหม่ในอนาคตที่เข้าร่วมรายการฟรี!</span>
+                        </li>
+                      </ul>
+                    </div>
+                  ) : isBundleItem && (
                     <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/40 space-y-2 text-left">
                       <div className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                         <span>🎁</span>
@@ -767,13 +801,36 @@ export default function CheckoutClient({
                       (ประหยัด ฿{priceInfo.savingsFormatted})
                     </span>
                   </div>
-                  {isBundleItem && (
+                  {isAllInOne ? (
+                    <div className="mt-1.5 text-[11px] font-bold text-amber-800 dark:text-amber-300">
+                      👑 ปลดล็อกครบทุกอย่าง: คอร์สเรียน 22 บท + เครื่องมือ AI ทั้งหมดทุกตัว + อัปเดตเครื่องมือใหม่ในอนาคต
+                    </div>
+                  ) : isBundleItem && (
                     <div className="mt-1.5 text-[11px] font-bold text-amber-800 dark:text-amber-300">
                       🎁 แถมครบชุด 3 รายการ: คอร์สเรียน 22 บท + Fashion Studio AI + UGC Product AI
                     </div>
                   )}
                 </div>
               </div>
+
+              {!isAllInOne && (
+                <div className="p-3.5 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/15 via-[var(--bg-secondary)] to-rose-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-xs">
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-black text-amber-800 dark:text-amber-300">
+                      👑 อยากได้ครบทั้งคอร์สเรียน + เครื่องมือ AI ทั้งหมดทุกตัวในเว็บ (รวมอนาคต)?
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] font-semibold">
+                      อัปเกรดเป็น <strong className="text-[var(--text-primary)]">แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999</strong> (จากมูลค่ารวม ฿2,990 เหลือเพียง ฿999)
+                    </p>
+                  </div>
+                  <Link
+                    href="/checkout/puppap-all-in-one"
+                    className="shrink-0 w-full sm:w-auto px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs text-center shadow-sm"
+                  >
+                    👑 สลับเป็นแพ็กเหมา ฿999 →
+                  </Link>
+                </div>
+              )}
 
               {orderStatus === 'rejected' && (
                 <div className="p-4 rounded-xl bg-red-500/15 border-2 border-red-500/40 text-left space-y-1">
@@ -972,7 +1029,31 @@ export default function CheckoutClient({
                     </p>
                   </div>
 
-                  {isBundleItem && (
+                  {isAllInOne ? (
+                    <div className="max-w-md mx-auto p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-left space-y-2">
+                      <div className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-300">
+                        👑 ปลดล็อกแพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999 ครบทุกรายการเรียบร้อยแล้ว:
+                      </div>
+                      <ul className="space-y-1.5 text-xs text-[var(--text-primary)] font-semibold">
+                        <li className="flex items-center justify-between gap-2">
+                          <span>1. 🎓 คอร์สเรียน ปั้นนายหน้า TikTok (22 บทเรียน)</span>
+                          <Link href="/course/tiktok-ai-affiliate" className="text-[var(--accent)] hover:underline font-black shrink-0">
+                            เข้าเรียน →
+                          </Link>
+                        </li>
+                        <li className="flex items-center justify-between gap-2">
+                          <span>2. ❖ คลังเครื่องมือ AI Flow Tools ทั้งหมดทุกตัว</span>
+                          <Link href="/flow-tools" className="text-[var(--accent)] hover:underline font-black shrink-0">
+                            เปิดคลังเครื่องมือ →
+                          </Link>
+                        </li>
+                        <li className="flex items-center justify-between gap-2">
+                          <span>3. 🚀 รับสิทธิ์อัปเดตเครื่องมือใหม่ในอนาคตอัตโนมัติ</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-black shrink-0">✓ เปิดใช้งาน</span>
+                        </li>
+                      </ul>
+                    </div>
+                  ) : isBundleItem && (
                     <div className="max-w-md mx-auto p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-left space-y-2">
                       <div className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-300">
                         🎁 รายการที่ปลดล็อกให้คุณเรียบร้อยแล้ว (ครบทั้ง 3 รายการ):

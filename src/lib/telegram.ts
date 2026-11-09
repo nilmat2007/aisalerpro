@@ -330,7 +330,7 @@ export async function notifyBundleGrantFailure(params: {
       const { sendEmail } = await import('@/lib/email')
       await sendEmail({
         to: fallbackAdminEmail,
-        subject: `🚨 [ALERT: ${params.errorCode}] ระบบปลดล็อกชุดโปรโมชันคอร์ส ฿299 ต้องการการตรวจสอบ`,
+        subject: `🚨 [ALERT: ${params.errorCode}] ระบบปลดล็อกชุดโปรโมชันคอร์ส ฿159 / แพ็กเหมา ฿999 ต้องการการตรวจสอบ`,
         html: `<div style="font-family:sans-serif;line-height:1.6">
           <h2 style="color:#dc2626">🚨 แจ้งเตือนระบบ Course Bundle (${params.errorCode})</h2>
           <p><b>Context:</b> ${params.context || '-'}</p>

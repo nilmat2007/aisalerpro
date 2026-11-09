@@ -215,7 +215,10 @@ export default function CourseStudioClient({
   const effectiveHasAccess = hasAccess;
   const canViewActiveLesson = effectiveHasAccess || activeLesson?.is_free_preview;
   const progressPercent = lessons.length > 0 ? Math.round((completedIds.length / lessons.length) * 100) : 0;
-  const priceInfo = getPriceInfo(tool?.price || '299', tool?.features);
+  const priceInfo = getPriceInfo(tool?.price || '159', {
+    original_price: '799',
+    ...(tool?.features || {}),
+  });
 
   const embedUrl = activeLesson ? getLessonEmbedUrl(activeLesson) : '';
   const isVideoReady = Boolean(embedUrl) && activeLesson?.status === 'ready';
@@ -299,12 +302,20 @@ export default function CourseStudioClient({
 
           <div className="flex items-center gap-2.5 shrink-0">
             {!effectiveHasAccess && (
-              <Link
-                href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
-                className="puppap-btn-primary px-3.5 py-1.5 text-xs font-black flex items-center gap-1.5 shadow-sm"
-              >
-                <span>🛒 สมัครเรียนราคาเปิดตัว ฿{priceInfo.formattedPrice}</span>
-              </Link>
+              <>
+                <Link
+                  href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
+                  className="puppap-btn-primary px-3.5 py-1.5 text-xs font-black flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>🛒 สมัครเรียนโปรพิเศษ ฿{priceInfo.formattedPrice}</span>
+                </Link>
+                <Link
+                  href="/checkout/puppap-all-in-one"
+                  className="hidden xl:inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-400 hover:bg-amber-300 text-stone-950 text-xs font-black shadow-xs transition-all"
+                >
+                  <span>👑 เหมาทุกอย่าง ฿999</span>
+                </Link>
+              </>
             )}
 
             {/* Progress Pill on Desktop */}
@@ -466,9 +477,10 @@ export default function CourseStudioClient({
                   <p className="text-sm text-stone-300">
                     ปลดล็อกทั้ง {lessons.length || 22} บทเรียนพร้อมเครื่องมือ AI และเทคนิคปักตะกร้าครบสูตร เรียนซ้ำได้ตลอดชีพ
                   </p>
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-900 border border-amber-500/40">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-900 border border-amber-500/40 flex-wrap justify-center">
+                    <span className="text-xs text-stone-400 line-through">ปกติ ฿{priceInfo.formattedOriginal}</span>
                     <span className="text-base sm:text-lg font-black text-amber-300">
-                      ราคาเปิดตัว ฿{priceInfo.formattedPrice} บาท
+                      โปรพิเศษ ฿{priceInfo.formattedPrice} บาท
                     </span>
                     <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-black">
                       แถมฟรี 2 เครื่องมือ AI มูลค่า ฿598
@@ -487,7 +499,13 @@ export default function CourseStudioClient({
                       href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
                       className="puppap-btn-primary inline-flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-black shadow-lg"
                     >
-                      <span>🛒 สมัครเรียนพิเศษ ฿{priceInfo.formattedPrice} บาท</span>
+                      <span>🛒 สมัครเรียนโปรพิเศษ ฿{priceInfo.formattedPrice} บาท</span>
+                    </Link>
+                    <Link
+                      href="/checkout/puppap-all-in-one"
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-stone-950 text-xs sm:text-sm font-black shadow-lg transition-all"
+                    >
+                      <span>👑 เหมาครบทุกอย่าง ฿999</span>
                     </Link>
                   </div>
                 </div>
@@ -1043,7 +1061,7 @@ export default function CourseStudioClient({
 
           {/* Footer CTA for non-members */}
           {!effectiveHasAccess && (
-            <div className="mt-6 pt-4 border-t border-[var(--border-light)] text-center space-y-2">
+            <div className="mt-6 pt-4 border-t border-[var(--border-light)] text-center space-y-2.5">
               <div className="p-3 rounded-xl bg-[var(--bg-deep)] border border-[var(--border-accent)]">
                 <div className="flex items-center justify-center gap-2">
                   <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-black">
@@ -1051,7 +1069,7 @@ export default function CourseStudioClient({
                   </span>
                 </div>
                 <div className="text-2xl font-black text-[var(--accent)] mt-0.5">
-                  <span className="text-xs font-bold text-[var(--text-muted)] mr-1">ราคาเปิดตัว</span>
+                  <span className="text-xs font-bold text-[var(--text-muted)] line-through mr-1.5">฿{priceInfo.formattedOriginal}</span>
                   ฿{priceInfo.formattedPrice} <span className="text-xs font-bold text-[var(--text-secondary)]">บาท</span>
                 </div>
                 <p className="text-[11px] text-[var(--text-muted)]">ปลดล็อกครบทั้ง {lessons.length || 22} บท ตลอดชีพ</p>
@@ -1060,7 +1078,13 @@ export default function CourseStudioClient({
                 href={`/checkout/${tool?.slug || 'tiktok-ai-affiliate'}`}
                 className="puppap-btn-primary w-full py-2.5 text-xs sm:text-sm font-black block shadow-md"
               >
-                🛒 สมัครเรียนราคาเปิดตัว ฿{priceInfo.formattedPrice} บาท
+                🛒 สมัครเรียนโปรพิเศษ ฿{priceInfo.formattedPrice} บาท
+              </Link>
+              <Link
+                href="/checkout/puppap-all-in-one"
+                className="w-full py-2 px-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-800 dark:text-amber-300 text-xs font-black block transition-all"
+              >
+                👑 หรือเหมาครบทุกอย่าง (คอร์ส + ทุก Tools) ฿999 →
               </Link>
             </div>
           )}

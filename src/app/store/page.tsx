@@ -10,6 +10,7 @@ import {
   type Tool,
 } from '@/lib/sanitize-tool'
 import {
+  ALL_IN_ONE_SLUG,
   resolveUserBundleAccess,
   attemptCourseBundleHeal,
   COURSE_BUNDLE_BONUS_TOOL_SLUGS,
@@ -41,7 +42,14 @@ export default async function StorePage() {
     })
   )
 
-  const tools = (allTools || []).filter((t: any) => t.is_active || ownedToolIds.has(t.id) || t.slug === 'tiktok-ai-affiliate')
+  const allInOneTool = (allTools || []).find((t: any) => t.slug === ALL_IN_ONE_SLUG)
+  const ownsAllInOne = Boolean(allInOneTool && ownedToolIds.has(allInOneTool.id))
+
+  const tools = (allTools || []).filter(
+    (t: any) =>
+      t.slug !== ALL_IN_ONE_SLUG &&
+      (t.is_active || ownedToolIds.has(t.id) || t.slug === 'tiktok-ai-affiliate')
+  )
 
   return (
     <div className="min-h-screen text-[var(--text-primary)] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
@@ -96,40 +104,49 @@ export default async function StorePage() {
 
         {/* All-in-One Compact Banner */}
         <section>
-          <div className="puppap-card p-6 sm:p-8 rounded-2xl relative overflow-hidden border-2 border-[var(--border-accent)] bg-gradient-to-br from-[var(--bg-card)] via-[var(--bg-deep)] to-[var(--bg-card)] shadow-md">
+          <div className="puppap-card p-6 sm:p-8 rounded-2xl relative overflow-hidden border-2 border-amber-500/60 bg-gradient-to-br from-amber-500/10 via-[var(--bg-card)] to-rose-500/10 shadow-lg">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-2 max-w-2xl">
+              <div className="space-y-2.5 max-w-2xl">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-[var(--accent)] text-white shadow-xs">
-                    🔥 PRO · LIFETIME
+                    👑 VIP ALL-IN-ONE · LIFETIME
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-                    บุฟเฟ่ต์รวมทุกเครื่องมือ
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-900 dark:text-amber-300 border border-amber-500/40">
+                    🔥 ลด 67% · ประหยัด ฿1,991
                   </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[var(--text-primary)]">
-                  แพ็กเกจบุฟเฟ่ต์ PUP PAP All-in-One
+                  แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999 (ได้ครบทุกอย่าง!)
                 </h2>
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                  ปลดล็อกทุกเครื่องมือสร้างคลิป AI ทั้งปัจจุบันและอนาคต พร้อมรับอัปเดตฟรีตลอดชีพ จ่ายครั้งเดียวจบ ไม่ต้องซื้อแยกทีละตัว
+                  จ่ายครั้งเดียวปลดล็อกให้หมดทั้ง <strong className="text-[var(--text-primary)]">คอร์สเรียนนายหน้า TikTok 22 บทเรียน (มูลค่า ฿799)</strong> + <strong className="text-[var(--text-primary)]">เครื่องมือ AI ทั้งหมดทุกตัวในระบบ</strong> พร้อมรับสิทธิ์อัปเดตเครื่องมือใหม่ในอนาคตที่เข้าร่วมรายการฟรีตลอดชีพ!
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end justify-between gap-3 shrink-0">
                 <div className="text-left md:text-right">
-                  <div className="text-2xl sm:text-3xl font-black text-[var(--accent)]">
-                    เร็วๆ นี้
+                  <div className="text-xs text-[var(--text-muted)] font-semibold">
+                    มูลค่ารวมแยกซื้อ <span className="line-through text-rose-500 font-bold">฿2,990</span>
                   </div>
-                  <div className="text-xs text-[var(--text-muted)]">
-                    ราคาพิเศษเปิดตัว <span className="line-through">฿9,990</span>
+                  <div className="text-3xl sm:text-4xl font-black text-[var(--accent)]">
+                    ฿999 <span className="text-sm font-bold text-[var(--text-secondary)]">บาท</span>
+                  </div>
+                  <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                    ✓ จ่ายครั้งเดียวจบ · ไม่มีรายเดือน
                   </div>
                 </div>
-                <button 
-                  disabled 
-                  className="puppap-btn-secondary px-6 py-2.5 rounded-xl text-xs font-bold cursor-not-allowed opacity-70 w-full sm:w-auto"
-                >
-                  ⏳ Coming Soon
-                </button>
+                {ownsAllInOne ? (
+                  <span className="px-6 py-3 rounded-xl text-xs font-black bg-emerald-700 text-white shadow-sm w-full sm:w-auto text-center">
+                    ✓ คุณปลดล็อกแพ็กเหมาๆ ครบแล้ว
+                  </span>
+                ) : (
+                  <Link
+                    href={`/checkout/${ALL_IN_ONE_SLUG}`}
+                    className="puppap-btn-primary px-6 py-3 rounded-xl text-sm font-black shadow-lg w-full sm:w-auto text-center"
+                  >
+                    👑 สมัครแพ็กเหมาๆ ปุ๊บ ปั๊บ ฿999 →
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -211,7 +228,7 @@ export default async function StorePage() {
                       )}
                       {!isOwned && COURSE_BUNDLE_BONUS_TOOL_SLUGS.includes(tool.slug as any) && (
                         <span className="px-2.5 py-1 text-xs font-black rounded-lg bg-amber-500 text-stone-950 backdrop-blur-md shadow-sm">
-                          🎁 แถมฟรีในคอร์ส ฿299
+                          🎁 แถมฟรีในคอร์ส ฿159 / แพ็กเหมา ฿999
                         </span>
                       )}
                       {!isOwned && isCourse && (

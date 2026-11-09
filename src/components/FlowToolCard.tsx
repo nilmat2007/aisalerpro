@@ -92,7 +92,7 @@ export default function FlowToolCard({
           )}
           {!hasAccess && isCourseBonusTool && (
             <span className="px-2.5 py-1 text-xs font-black rounded-full bg-amber-500 text-stone-950 shadow-md flex items-center gap-1">
-              <span>🎁 แถมฟรีในคอร์ส ฿299</span>
+              <span>🎁 แถมฟรีในคอร์ส ฿159 / แพ็กเหมา ฿999</span>
             </span>
           )}
           {hasAccess && (
@@ -249,7 +249,7 @@ export default function FlowToolCard({
                   </span>
                 </div>
                 <span className="text-[11px] text-[var(--text-secondary)] font-semibold">
-                  {isCourseBonusTool ? '🎁 ซื้อ ฿299 แถมคอร์ส + AI ครบ 3 รายการ' : 'ซื้อขาดตลอดชีพ · อัปเดตฟรี'}
+                  {isCourseBonusTool ? '🎁 แถมฟรีในคอร์ส ฿159 หรือเหมาทุกตัว ฿999' : 'ซื้อขาดตลอดชีพ · หรือเหมาทุกตัว ฿999'}
                 </span>
               </div>
 

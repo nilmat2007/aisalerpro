@@ -436,8 +436,8 @@ export default function CourseHeroVideo({
   const progressPct = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
   const endOverlayCtaCopy =
     abVariant === 'video_A'
-      ? '🛒 สมัครเรียนราคาเปิดตัว ฿299 →'
-      : '📱 เริ่มทำตามบนมือถือ ฿299 →';
+      ? '🛒 สมัครเรียนโปรพิเศษ ฿159 (จาก ฿799) →'
+      : '📱 เริ่มทำตามบนมือถือ ฿159 →';
 
   return (
     <div

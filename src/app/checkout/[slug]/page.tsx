@@ -8,6 +8,7 @@ import {
   type Tool,
 } from '@/lib/sanitize-tool'
 import {
+  ALL_IN_ONE_SLUG,
   resolveUserBundleAccess,
   attemptCourseBundleHeal,
   getCourseBundleToolIds,
@@ -86,7 +87,13 @@ export default async function CheckoutPage(props: { params: Promise<{ slug: stri
     }
   }
 
-  if (!alreadyOwned && (!tool.is_active || (tool.is_coming_soon && tool.slug !== 'tiktok-ai-affiliate'))) {
+  if (
+    !alreadyOwned &&
+    (!tool.is_active ||
+      (tool.is_coming_soon &&
+        tool.slug !== 'tiktok-ai-affiliate' &&
+        tool.slug !== ALL_IN_ONE_SLUG))
+  ) {
     redirect('/store')
   }
 

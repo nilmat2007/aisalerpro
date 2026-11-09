@@ -228,6 +228,15 @@ export function mergePreservedSensitiveToolFields(
     if (incomingFeat.highlights === undefined && existingFeat.highlights) {
       incomingFeat.highlights = existingFeat.highlights;
     }
+    if (incomingFeat.original_price === undefined && existingFeat.original_price) {
+      incomingFeat.original_price = existingFeat.original_price;
+    }
+    if (
+      incomingFeat.exclude_from_all_in_one === undefined &&
+      existingFeat.exclude_from_all_in_one !== undefined
+    ) {
+      incomingFeat.exclude_from_all_in_one = existingFeat.exclude_from_all_in_one;
+    }
     if (Array.isArray(incomingFeat.lessons) && Array.isArray(existingFeat.lessons)) {
       const existingById = new Map<number, any>(
         existingFeat.lessons.map((l: any) => [Number(l.id), l])

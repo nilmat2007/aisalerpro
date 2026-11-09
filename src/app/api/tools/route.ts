@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/auth/require-admin'
+import { syncAllInOneEntitlements } from '@/lib/course-bundle'
 import {
   ADMIN_TOOL_SELECT_COLUMNS,
   PUBLIC_TOOL_SELECT_COLUMNS,
@@ -67,6 +68,9 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Proactively sync All-in-One 999 members if the newly created tool is eligible
+  await syncAllInOneEntitlements(supabase)
 
   const sanitized = sanitizeToolForPublic(data as unknown as Tool, {
     session: auth.session,
