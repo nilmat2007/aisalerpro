@@ -152,7 +152,7 @@ export default function AllInOneUpsellBanner({
 
   return (
     <section
-      aria-label="แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999 ปลดล็อกทุกโปรแกรมและคอร์สเรียน"
+      aria-label={`แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ ${pricing.packagePriceFormatted} ปลดล็อกทุกโปรแกรมและคอร์สเรียน`}
       data-testid="all-in-one-upsell-banner"
       className={`relative space-y-2.5 ${className}`}
     >

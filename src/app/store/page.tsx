@@ -106,7 +106,7 @@ export default async function StorePage() {
         {/* All-in-One Flagship Psychological Banner */}
         <AllInOneUpsellBanner
           variant="hero"
-          tools={tools}
+          tools={allTools}
           ownsAllInOne={ownsAllInOne}
           source="store_banner"
         />
@@ -187,7 +187,7 @@ export default async function StorePage() {
                       )}
                       {!isOwned && COURSE_BUNDLE_BONUS_TOOL_SLUGS.includes(tool.slug as any) && (
                         <span className="px-2.5 py-1 text-xs font-black rounded-lg bg-amber-500 text-stone-950 backdrop-blur-md shadow-sm">
-                          🎁 แถมฟรีในคอร์ส ฿159 / แพ็กเหมา ฿999
+                          🎁 แถมฟรีในคอร์ส ฿159 / แพ็กเหมา VIP
                         </span>
                       )}
                       {!isOwned && isCourse && (

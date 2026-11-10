@@ -12,6 +12,7 @@ export const COURSE_BUNDLE_BONUS_TOOL_SLUGS = [
 ] as const;
 
 export const ALL_IN_ONE_SLUG = 'puppap-all-in-one' as const;
+export const ALL_IN_ONE_TOOL_ID = '422e791a-a8f5-4821-9ae2-097adfcfa4d5' as const;
 
 export const EXCLUDED_FROM_ALL_IN_ONE_SLUGS: readonly string[] = [];
 
@@ -24,7 +25,19 @@ export function isCourseBundleSlug(slug?: string | null): slug is CourseBundleSl
 
 export function isAllInOneSlug(slug?: string | null): boolean {
   if (!slug) return false;
-  return slug === ALL_IN_ONE_SLUG;
+  return slug === ALL_IN_ONE_SLUG || slug === '-799-ai-';
+}
+
+export function isAllInOnePackageRow(tool: any): boolean {
+  if (!tool) return false;
+  if (isAllInOneSlug(tool.slug)) return true;
+  if (tool.id === ALL_IN_ONE_TOOL_ID) return true;
+  const feat =
+    tool.features && typeof tool.features === 'object' && !Array.isArray(tool.features)
+      ? tool.features
+      : null;
+  if (feat?.category === 'bundle' || tool.category === 'bundle') return true;
+  return false;
 }
 
 export function isToolEligibleForAllInOne(
@@ -105,6 +118,7 @@ const SHORT_TITLE_MAP: Record<string, string> = {
   'ai-content-factory': 'โรงงานผลิตคลิป',
   'puppap-fashion-studio': 'แฟชั่น & นายแบบ',
   'puppap-ugc-product': 'คลิปปักตะกร้า',
+  'pup-podcast-studio': 'พอดแคสต์ เล่าเรื่อง',
   'pup-pap-banana-ai-studio': 'โชว์ใช้สินค้า',
   'pup-pap-storypro': 'ละครสั้น ซีรีส์',
 };
@@ -129,8 +143,8 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     slug: 'ugc-batch',
     name: 'Ai SALER PRO - UGC Batch',
     icon: '🎬',
-    poster_url: 'https://lh3.googleusercontent.com/d/1RAulUn2FpSIjMSJca3l2qLKWqhEM8cfT',
-    logo_url: '/images/logo-ugc-batch.jpg',
+    poster_url: 'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/poster_1794299895219.jpeg',
+    logo_url: 'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/logo_1794299907740.jpeg',
     price: '699 บาท',
     is_active: true,
     is_coming_soon: false,
@@ -141,8 +155,8 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     slug: 'ai-content-factory',
     name: 'AI Content Factory',
     icon: '🎥',
-    poster_url: '/images/poster-ai-content-factory.jpg',
-    logo_url: '/images/logo-ai-content-factory.jpg',
+    poster_url: 'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/poster_1794299928881.jpeg',
+    logo_url: 'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/logo_1794299945973.jpeg',
     price: '299 บาท',
     is_active: true,
     is_coming_soon: false,
@@ -168,6 +182,18 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     poster_url: '/images/poster-puppap-ugc-product.jpg',
     logo_url: '/images/poster-puppap-ugc-product.jpg',
     price: '299',
+    is_active: true,
+    is_coming_soon: false,
+    sort_order: 3,
+  },
+  {
+    id: 'default-podcast',
+    slug: 'pup-podcast-studio',
+    name: 'PUP AI Podcast Studio',
+    icon: '🎙️',
+    poster_url: 'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/poster_1794285429589.jpeg',
+    logo_url: '/images/logo-puppap-ai.png',
+    price: '499 บาท',
     is_active: true,
     is_coming_soon: false,
     sort_order: 3,
@@ -227,17 +253,17 @@ export function getAllInOnePricing(
   const sourceList = Array.isArray(rawTools) ? rawTools : DEFAULT_SHOWCASE_TOOLS;
 
   // ดึงราคาแพ็กเกจจากแถว puppap-all-in-one ใน DB อัตโนมัติ (ถ้ามี)
-  const packageTool = sourceList.find((t) => t && t.slug === ALL_IN_ONE_SLUG);
+  const packageTool = sourceList.find((t) => isAllInOnePackageRow(t));
   const packageToolPrice = packageTool ? resolveStandalonePrice(packageTool) : 0;
   const packagePrice =
     typeof packagePriceOverride === 'number' && packagePriceOverride > 0
       ? packagePriceOverride
       : packageToolPrice > 0
         ? packageToolPrice
-        : 999;
+        : 799;
 
   const eligibleRaw = sourceList.filter(
-    (t) => t && t.slug !== ALL_IN_ONE_SLUG && isToolEligibleForAllInOne(t)
+    (t) => t && !isAllInOnePackageRow(t) && isToolEligibleForAllInOne(t)
   );
 
   const items: ShowcaseToolItem[] = eligibleRaw.map((t, idx) => {

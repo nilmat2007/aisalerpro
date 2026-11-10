@@ -109,6 +109,12 @@ describe('Meta Pixel & CAPI v3.1 Verification Suite', () => {
       location: { search: '?utm_source=facebook&utm_content=hook_C&fbclid=IwAR_test_click_123' },
       fbq: fbqMock,
     });
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => (k === 'puppap_pdpa_consent' ? 'accepted' : store[k] || null),
+      setItem: (k: string, v: string) => {
+        store[k] = v;
+      },
+    });
     vi.stubGlobal('sessionStorage', {
       getItem: (k: string) => store[k] || null,
       setItem: (k: string, v: string) => {

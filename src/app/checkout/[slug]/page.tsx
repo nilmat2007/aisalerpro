@@ -18,16 +18,32 @@ export const dynamic = 'force-dynamic';
 
 export default async function CheckoutPage(props: { params: Promise<{ slug: string }> }) {
   const { slug } = await props.params
+  if (slug === '-799-ai-') {
+    redirect(`/checkout/${ALL_IN_ONE_SLUG}`)
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) redirect(`/login?next=/checkout/${slug}`)
   
-  const { data: tool } = await supabase
+  let { data: tool } = await supabase
     .from('tools')
     .select(PUBLIC_TOOL_SELECT_COLUMNS)
     .eq('slug', slug)
     .single()
+
+  if (!tool && slug === ALL_IN_ONE_SLUG) {
+    const { data: fallbackBundle } = await supabase
+      .from('tools')
+      .select(PUBLIC_TOOL_SELECT_COLUMNS)
+      .eq('id', '422e791a-a8f5-4821-9ae2-097adfcfa4d5')
+      .maybeSingle()
+    if (fallbackBundle) {
+      tool = fallbackBundle
+    }
+  }
+
   if (!tool) redirect('/store')
 
   // Check if user already owns this tool (including via Course Bundle)

@@ -187,7 +187,10 @@ export default function CheckoutClient({
   const router = useRouter();
 
   const posterImage = tool.poster_url || null;
-  const isAllInOne = tool.slug === 'puppap-all-in-one';
+  const isAllInOne =
+    tool.slug === 'puppap-all-in-one' ||
+    tool.id === '422e791a-a8f5-4821-9ae2-097adfcfa4d5' ||
+    tool.features?.category === 'bundle';
   const isCourse = tool.slug === 'tiktok-ai-affiliate' || tool.category === 'course';
   const isBundleItem =
     isCourse ||
@@ -1023,7 +1026,7 @@ export default function CheckoutClient({
                   {isAllInOne ? (
                     <div className="max-w-md mx-auto p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-left space-y-2">
                       <div className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-300">
-                        👑 ปลดล็อกแพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999 ครบทุกรายการเรียบร้อยแล้ว:
+                        👑 ปลดล็อกแพ็กเกจเหมาๆ ปุ๊บ ปั๊บ (฿{displayPrice}) ครบทุกรายการเรียบร้อยแล้ว:
                       </div>
                       <ul className="space-y-1.5 text-xs text-[var(--text-primary)] font-semibold">
                         <li className="flex items-center justify-between gap-2">

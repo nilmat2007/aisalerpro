@@ -181,10 +181,18 @@ export function sanitizeToolForPublic(
   return result;
 }
 
+const PROTECTED_SYSTEM_SLUGS = new Set([
+  'puppap-all-in-one',
+  'tiktok-ai-affiliate',
+  'puppap-fashion-studio',
+  'puppap-ugc-product',
+]);
+
 /**
  * Belt-and-suspenders guard for `PUT /api/tools/[id]` so that if a client ever submits
  * a partially sanitized payload (e.g. `video_url === 'locked'`, `prompts === null`,
- * or missing `guide_drive_url` / `demo_video_url`), real DB values are preserved.
+ * missing `guide_drive_url` / `demo_video_url`, or an auto-mangled Thai `slug`),
+ * real DB values are preserved.
  */
 export function mergePreservedSensitiveToolFields(
   existingTool: Record<string, any> | null | undefined,
@@ -192,6 +200,22 @@ export function mergePreservedSensitiveToolFields(
 ): Record<string, any> {
   if (!existingTool) return updateData;
   const merged = { ...updateData };
+
+  // Never allow core system slugs (or the All-in-One row ID) to have their slug overwritten,
+  // and never allow an existing valid slug to be replaced by a mangled hyphen-stripped slug (e.g. "-799-ai-").
+  if (existingTool.id === '422e791a-a8f5-4821-9ae2-097adfcfa4d5') {
+    merged.slug = 'puppap-all-in-one';
+  } else if (
+    typeof existingTool.slug === 'string' &&
+    existingTool.slug.trim() &&
+    (PROTECTED_SYSTEM_SLUGS.has(existingTool.slug) ||
+      typeof merged.slug !== 'string' ||
+      !merged.slug.trim() ||
+      merged.slug.startsWith('-') ||
+      merged.slug.endsWith('-'))
+  ) {
+    merged.slug = existingTool.slug;
+  }
 
   if (merged.flow_url === null && existingTool.flow_url) {
     merged.flow_url = existingTool.flow_url;

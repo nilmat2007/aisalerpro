@@ -253,14 +253,14 @@ export default function AdminToolsPage() {
                           {tool.features.tier_required.toUpperCase()}
                         </span>
                       )}
-                      {tool.slug !== 'puppap-all-in-one' && (
+                      {tool.slug !== 'puppap-all-in-one' && tool.id !== '422e791a-a8f5-4821-9ae2-097adfcfa4d5' && (
                         tool.features?.exclude_from_all_in_one ? (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 border border-rose-500/40 text-rose-300 font-semibold">
-                            🚫 แยกขาย (ไม่รวมในแพ็ก 999)
+                            🚫 แยกขาย (ไม่รวมในแพ็กเหมา)
                           </span>
                         ) : (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-semibold">
-                            👑 รวมในแพ็กเหมา 999
+                            👑 รวมในแพ็กเหมา VIP
                           </span>
                         )
                       )}
@@ -306,13 +306,67 @@ export default function AdminToolsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">ชื่อเครื่องมือ</label>
-                  <input type="text" value={formData.name} onChange={(e) => {
-                    setFormData({...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[\s\W-]+/g, '-')})
-                  }} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" required />
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => {
+                      const nextName = e.target.value
+                      if (editingTool) {
+                        setFormData({ ...formData, name: nextName })
+                      } else {
+                        const autoSlug = nextName
+                          .toLowerCase()
+                          .replace(/[\s\W-]+/g, '-')
+                          .replace(/^-+|-+$/g, '')
+                        setFormData({ ...formData, name: nextName, slug: autoSlug })
+                      }
+                    }}
+                    className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white"
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Slug (URL)</label>
-                  <input type="text" value={formData.slug} onChange={(e) => setFormData({...formData, slug: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white" required />
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    readOnly={Boolean(
+                      editingTool &&
+                        ([
+                          'puppap-all-in-one',
+                          'tiktok-ai-affiliate',
+                          'puppap-fashion-studio',
+                          'puppap-ugc-product',
+                        ].includes(editingTool.slug) ||
+                          editingTool.id === '422e791a-a8f5-4821-9ae2-097adfcfa4d5')
+                    )}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    className={`w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-white ${
+                      editingTool &&
+                      ([
+                        'puppap-all-in-one',
+                        'tiktok-ai-affiliate',
+                        'puppap-fashion-studio',
+                        'puppap-ugc-product',
+                      ].includes(editingTool.slug) ||
+                        editingTool.id === '422e791a-a8f5-4821-9ae2-097adfcfa4d5')
+                        ? 'opacity-70 cursor-not-allowed'
+                        : ''
+                    }`}
+                    required
+                  />
+                  {editingTool &&
+                    ([
+                      'puppap-all-in-one',
+                      'tiktok-ai-affiliate',
+                      'puppap-fashion-studio',
+                      'puppap-ugc-product',
+                    ].includes(editingTool.slug) ||
+                      editingTool.id === '422e791a-a8f5-4821-9ae2-097adfcfa4d5') && (
+                      <p className="text-[11px] text-amber-400 mt-1">
+                        🔒 Slug หลักของระบบถูกล็อกเพื่อป้องกันลิงก์ชำระเงินเสียหาย
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -427,6 +481,9 @@ export default function AdminToolsPage() {
                       <option value="showhow">🧼 ทำให้ดู / โชว์สินค้า (Showhow Demo)</option>
                       <option value="minimal">📦 โฆษณามินิมอล (Minimal Ad)</option>
                       <option value="video">🎥 วิดีโอทั่วไป (General Video)</option>
+                      <option value="flow_tool">❖ เครื่องมือเสริม (Flow Tool)</option>
+                      <option value="course">🎓 คอร์สเรียน (Course)</option>
+                      <option value="bundle">👑 แพ็กเกจเหมาๆ (All-in-One Bundle)</option>
                     </select>
                   </div>
                   <div>
@@ -503,7 +560,7 @@ export default function AdminToolsPage() {
                     className="w-4 h-4 rounded bg-slate-800 border-slate-700 accent-rose-500"
                   />
                   <span className="text-rose-300 font-medium text-sm">
-                    🚫 ยกเว้นจากแพ็กเกจเหมาๆ 999 (ต้องซื้อแยกเท่านั้น ไม่ปลดล็อกอัตโนมัติ)
+                    🚫 ยกเว้นจากแพ็กเกจเหมาๆ VIP (ต้องซื้อแยกเท่านั้น ไม่ปลดล็อกอัตโนมัติ)
                   </span>
                 </label>
               </div>
