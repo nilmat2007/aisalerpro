@@ -2,27 +2,27 @@ import { cache } from 'react'
 import { supabase as defaultSupabaseAdmin } from '@/lib/supabase'
 import { notifyBundleGrantFailure } from '@/lib/telegram'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  ALL_IN_ONE_SLUG,
+  COURSE_BUNDLE_BONUS_TOOL_SLUGS,
+  COURSE_BUNDLE_SLUGS,
+  EXCLUDED_FROM_ALL_IN_ONE_SLUGS,
+  isAllInOneSlug,
+  isCourseBundleSlug,
+  isToolEligibleForAllInOne,
+  type CourseBundleSlug,
+} from '@/lib/all-in-one-pricing'
 
-export const COURSE_BUNDLE_SLUGS = [
-  'tiktok-ai-affiliate',
-  'puppap-fashion-studio',
-  'puppap-ugc-product',
-] as const
-
-export const COURSE_BUNDLE_BONUS_TOOL_SLUGS = [
-  'puppap-fashion-studio',
-  'puppap-ugc-product',
-] as const
-
-export const ALL_IN_ONE_SLUG = 'puppap-all-in-one' as const
-
-/**
- * List of tool/course slugs explicitly excluded from the ฿999 All-in-One package.
- * Admin can also toggle `features.exclude_from_all_in_one = true` per tool in `/admin/tools`.
- */
-export const EXCLUDED_FROM_ALL_IN_ONE_SLUGS: readonly string[] = []
-
-export type CourseBundleSlug = (typeof COURSE_BUNDLE_SLUGS)[number]
+export {
+  ALL_IN_ONE_SLUG,
+  COURSE_BUNDLE_BONUS_TOOL_SLUGS,
+  COURSE_BUNDLE_SLUGS,
+  EXCLUDED_FROM_ALL_IN_ONE_SLUGS,
+  isAllInOneSlug,
+  isCourseBundleSlug,
+  isToolEligibleForAllInOne,
+  type CourseBundleSlug,
+}
 
 export const COURSE_BUNDLE_GUIDE_DRIVE_URL =
   'https://drive.google.com/drive/folders/1v8Kyr1GRW7mqA5sd6SiZvLJFayOOQjiA?usp=drive_link'
@@ -114,50 +114,6 @@ export const BUNDLE_ERROR_CATALOG: Record<
     messageTh:
       'ระบบได้รับข้อมูลการชำระเงินแล้วและกำลังซิงก์สิทธิ์ให้อัตโนมัติ (กรุณาอย่าโอนเงินซ้ำ)',
   },
-}
-
-export function isCourseBundleSlug(slug?: string | null): slug is CourseBundleSlug {
-  if (!slug) return false
-  return (COURSE_BUNDLE_SLUGS as readonly string[]).includes(slug)
-}
-
-export function isAllInOneSlug(slug?: string | null): boolean {
-  if (!slug) return false
-  return slug === ALL_IN_ONE_SLUG
-}
-
-/**
- * Determines whether a tool/course row should be unlocked by the ฿999 All-in-One package
- * (including any future tools added to `public.tools`), unless explicitly excluded via
- * `features.exclude_from_all_in_one === true` or `EXCLUDED_FROM_ALL_IN_ONE_SLUGS`.
- */
-export function isToolEligibleForAllInOne(tool: {
-  id?: string | null
-  slug?: string | null
-  is_active?: boolean | null
-  is_coming_soon?: boolean | null
-  features?: any
-} | null | undefined): boolean {
-  if (!tool || !tool.slug) return false
-  if (tool.is_active === false) return false
-  if (
-    tool.is_coming_soon === true &&
-    tool.slug !== 'tiktok-ai-affiliate' &&
-    tool.slug !== ALL_IN_ONE_SLUG
-  ) {
-    return false
-  }
-  if ((EXCLUDED_FROM_ALL_IN_ONE_SLUGS as readonly string[]).includes(tool.slug)) {
-    return false
-  }
-  const feat =
-    tool.features && typeof tool.features === 'object' && !Array.isArray(tool.features)
-      ? tool.features
-      : null
-  if (feat?.exclude_from_all_in_one === true) {
-    return false
-  }
-  return true
 }
 
 export async function getAllInOneEligibleTools(

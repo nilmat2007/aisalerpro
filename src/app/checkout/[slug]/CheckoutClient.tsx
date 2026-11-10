@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import {
@@ -814,22 +815,12 @@ export default function CheckoutClient({
               </div>
 
               {!isAllInOne && (
-                <div className="p-3.5 rounded-2xl border-2 border-amber-500/60 bg-gradient-to-r from-amber-500/15 via-[var(--bg-secondary)] to-rose-500/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-xs">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-black text-amber-800 dark:text-amber-300">
-                      👑 อยากได้ครบทั้งคอร์สเรียน + เครื่องมือ AI ทั้งหมดทุกตัวในเว็บ (รวมอนาคต)?
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-[var(--text-secondary)] font-semibold">
-                      อัปเกรดเป็น <strong className="text-[var(--text-primary)]">แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999</strong> (จากมูลค่ารวม ฿2,990 เหลือเพียง ฿999)
-                    </p>
-                  </div>
-                  <Link
-                    href="/checkout/puppap-all-in-one"
-                    className="shrink-0 w-full sm:w-auto px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs text-center shadow-sm"
-                  >
-                    👑 สลับเป็นแพ็กเหมา ฿999 →
-                  </Link>
-                </div>
+                <AllInOneUpsellBanner
+                  variant="compact"
+                  currentToolSlug={tool.slug}
+                  dismissPersistence="tab"
+                  source="checkout_page"
+                />
               )}
 
               {orderStatus === 'rejected' && (

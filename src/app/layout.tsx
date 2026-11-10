@@ -3,6 +3,7 @@ import "./globals.css";
 import { createClient } from '@supabase/supabase-js'
 import NavigationProgress from '@/components/NavigationProgress'
 import MetaPixel from '@/components/MetaPixel'
+import FloatingPromoWidgetLoader from '@/components/FloatingPromoWidgetLoader'
 
 async function getSettings() {
   try {
@@ -67,6 +68,7 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <NavigationProgress />
         {children}
+        <FloatingPromoWidgetLoader />
         <MetaPixel />
       </body>
     </html>

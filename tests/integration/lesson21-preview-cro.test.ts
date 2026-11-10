@@ -317,30 +317,35 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
     });
   });
 
-  describe('7. AllInOneUpsellBanner Psychological CRO Suite (฿999 VIP Flagship)', () => {
+  describe('7. AllInOneUpsellBanner Visual Layer CRO Suite (฿999 VIP Flagship)', () => {
     const bannerSource = fs.readFileSync(
       path.join(ROOT, 'src/components/AllInOneUpsellBanner.tsx'),
       'utf8'
     );
 
-    it('includes Decoy Break-Even Math, 3-Pillar Value Stack, Unit-Cost Reframing (~฿142), and Shimmer Gold CTA', () => {
-      expect(bannerSource).toContain('ซื้อแยกแค่ 3 เครื่องมือก็');
-      expect(bannerSource).toContain('฿897');
-      expect(bannerSource).toContain('ประหยัดทันที ฿1,991');
-      expect(bannerSource).toContain('~฿142');
+    it('includes Visual Layer Showcase, Rule-of-100 Savings Hook, Dynamic getAllInOnePricing, and Shimmer Gold CTA', () => {
+      expect(bannerSource).toContain('getAllInOnePricing');
+      expect(bannerSource).toContain('AllInOneToolGrid');
+      expect(bannerSource).toContain('ก่อนตัดสินใจ');
+      expect(bannerSource).toContain('shouldUseDiffFraming');
+      expect(bannerSource).toContain('ประหยัดทันที ฿{pricing.savingsFormatted}');
+      expect(bannerSource).toContain('คุ้มกว่าซื้อแยก 2 เท่า!');
+      expect(bannerSource).toContain('อัปเดตและเติมโปรแกรม AI ใหม่ให้ฟรีตลอดชีพ');
       expect(bannerSource).toContain('puppap-gold-cta-animated');
       expect(bannerSource).toContain('puppap-vip-card-glow');
       expect(bannerSource).toContain('/checkout/puppap-all-in-one');
       expect(bannerSource).not.toContain('ยกเว้นรายการพิเศษที่ระบุแยกต่างหาก');
     });
 
-    it('renders AllInOneUpsellBanner across all 5 conversion surfaces (/flow-tools, /store, /dashboard, /, /courses)', () => {
+    it('renders AllInOneUpsellBanner across all 7 conversion surfaces (/flow-tools, /store, /dashboard, /, /courses, /tool/[slug], /checkout/[slug])', () => {
       for (const rel of [
         'src/app/flow-tools/FlowToolsClient.tsx',
         'src/app/store/page.tsx',
         'src/app/DashboardClient.tsx',
         'src/app/page.tsx',
         'src/app/courses/CoursesClient.tsx',
+        'src/app/tool/[slug]/ToolGuideClient.tsx',
+        'src/app/checkout/[slug]/CheckoutClient.tsx',
       ]) {
         const content = fs.readFileSync(path.join(ROOT, rel), 'utf8');
         expect(content, `${rel} must render <AllInOneUpsellBanner`).toContain(

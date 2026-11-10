@@ -32,7 +32,36 @@ export type FunnelEventName =
   | 'hero_video_50'
   | 'hero_video_75'
   | 'hero_video_complete'
-  | 'hero_poster_zoom_click';
+  | 'hero_poster_zoom_click'
+  | 'promo_pill_shown'
+  | 'promo_pill_expanded'
+  | 'promo_bar_expanded'
+  | 'promo_bar_dismissed'
+  | 'promo_modal_opened'
+  | 'promo_modal_closed'
+  | 'promo_modal_tab_switch'
+  | 'all_in_one_cta_click'
+  | 'upsell_shown_on_tool';
+
+export type PromoEventSource =
+  | 'floating_bar'
+  | 'floating_modal'
+  | 'tool_page'
+  | 'checkout_page'
+  | 'store_banner'
+  | 'dashboard_banner'
+  | 'courses_banner'
+  | 'flow_tools_banner'
+  | 'home_banner';
+
+export interface PromoEventPayload {
+  source?: PromoEventSource;
+  currentToolSlug?: string | null;
+  tab?: 'all_in_one_999' | 'course_159';
+  itemCount?: number;
+  upgradeDiffAmount?: number;
+  utm_content?: string;
+}
 
 export type PreviewEventName = FunnelEventName;
 

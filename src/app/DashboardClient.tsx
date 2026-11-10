@@ -443,7 +443,9 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                           {!hasAllInOneAccess && (
                             <AllInOneUpsellBanner
                               variant="compact"
-                              toolCount={flowTools?.length || 6}
+                              tools={allTools}
+                              currentToolSlug={courseSlug}
+                              source="dashboard_banner"
                             />
                           )}
 
@@ -529,7 +531,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
         {!hasAllInOneAccess && (
           <AllInOneUpsellBanner
             variant="hero"
-            toolCount={flowTools?.length || 6}
+            tools={allTools}
+            source="dashboard_banner"
           />
         )}
 

@@ -254,7 +254,12 @@ export default async function HomePage() {
                 </div>
 
                 {/* All-in-One 999 VIP Bundle Upsell Card (puppap-all-in-one) */}
-                <AllInOneUpsellBanner variant="compact" toolCount={6} />
+                <AllInOneUpsellBanner
+                  variant="compact"
+                  tools={allTools}
+                  currentToolSlug="tiktok-ai-affiliate"
+                  source="home_banner"
+                />
 
                 <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 text-center">
                   ⚡ สแกน QR ปุ๊บ ระบบ AI ตรวจสลิปเปิดห้องเรียนให้ทันทีใน 5 วินาที
@@ -275,7 +280,7 @@ export default async function HomePage() {
 
         {/* Tools Section */}
         <main className="max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
-          <AllInOneUpsellBanner variant="hero" toolCount={6} />
+          <AllInOneUpsellBanner variant="hero" tools={allTools} source="home_banner" />
 
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>

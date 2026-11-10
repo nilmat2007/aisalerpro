@@ -229,7 +229,7 @@ export default function FlowToolsClient({
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
         {/* All-in-One 999 Package Flagship Psychological Banner */}
         {!hasAllInOneAccess && (
-          <AllInOneUpsellBanner variant="hero" toolCount={activeFlowTools.length} />
+          <AllInOneUpsellBanner variant="hero" tools={tools} source="flow_tools_banner" />
         )}
 
         {/* Search & Category Filter Tabs */}

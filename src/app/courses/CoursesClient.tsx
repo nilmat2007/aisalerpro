@@ -305,7 +305,12 @@ export default function CoursesClient({
                     </div>
 
                     {/* All-in-One 999 VIP Package Upsell (puppap-all-in-one) */}
-                    <AllInOneUpsellBanner variant="compact" toolCount={6} className="mt-2" />
+                    <AllInOneUpsellBanner
+                      variant="compact"
+                      currentToolSlug={course?.slug || 'tiktok-ai-affiliate'}
+                      source="courses_banner"
+                      className="mt-2"
+                    />
                   </>
                 )}
               </div>

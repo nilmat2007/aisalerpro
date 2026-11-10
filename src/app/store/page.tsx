@@ -106,8 +106,9 @@ export default async function StorePage() {
         {/* All-in-One Flagship Psychological Banner */}
         <AllInOneUpsellBanner
           variant="hero"
-          toolCount={tools?.filter((t: any) => t.slug !== 'tiktok-ai-affiliate').length || 6}
+          tools={tools}
           ownsAllInOne={ownsAllInOne}
+          source="store_banner"
         />
 
         {/* Individual Tools Grid */}

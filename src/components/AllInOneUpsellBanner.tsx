@@ -1,285 +1,300 @@
-import React from 'react';
-import Link from 'next/link';
+'use client';
 
-interface AllInOneUpsellBannerProps {
-  variant?: 'hero' | 'compact';
-  toolCount?: number;
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import AllInOneToolGrid from '@/components/AllInOneToolGrid';
+import { getAllInOnePricing } from '@/lib/all-in-one-pricing';
+import {
+  trackFunnelEvent,
+  type PromoEventSource,
+} from '@/lib/meta-pixel';
+
+const DISMISS_DAY_MS = 24 * 60 * 60 * 1000;
+
+export interface AllInOneUpsellBannerProps {
+  variant?: 'hero' | 'compact' | 'modal';
+  tools?: any[] | null;
+  currentToolSlug?: string | null;
   ownsAllInOne?: boolean;
+  dismissPersistence?: 'day' | 'tab' | 'none';
+  source?: PromoEventSource;
   className?: string;
 }
 
 export default function AllInOneUpsellBanner({
   variant = 'hero',
-  toolCount = 6,
+  tools = null,
+  currentToolSlug = null,
   ownsAllInOne = false,
+  dismissPersistence = 'none',
+  source = 'store_banner',
   className = '',
 }: AllInOneUpsellBannerProps) {
-  const effectiveToolCount = Math.max(6, toolCount || 6);
-  const separateToolsPrice = (effectiveToolCount * 299).toLocaleString('en-US');
+  const [liveTools, setLiveTools] = useState<any[] | null>(tools);
+  const [isDismissed, setIsDismissed] = useState(false);
 
-  if (variant === 'compact') {
-    return (
-      <div
-        className={`relative rounded-2xl overflow-hidden border-2 border-amber-400/90 bg-gradient-to-br from-stone-950 via-[#1F150B] to-stone-950 text-white p-4 sm:p-5 puppap-vip-card-glow text-left ${className}`}
-      >
-        {/* Top psychological ribbon */}
-        <div className="flex items-center justify-between gap-2 flex-wrap mb-2.5 pb-2.5 border-b border-amber-400/25">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-stone-950 text-[11px] sm:text-xs font-black shadow-xs">
-              👑 BEST VALUE · แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black puppap-badge-flash">
-              🔥 ลด 67% · ประหยัดทันที ฿1,991!
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-amber-300">
-            ⚡ ตกเฉลี่ยชิ้นละ ~฿142 เท่านั้น
-          </span>
-        </div>
+  const pricing = getAllInOnePricing(liveTools ?? tools, currentToolSlug);
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="space-y-2 flex-1">
-            {/* Decoy Break-Even Math */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-400/15 border border-amber-400/40 text-amber-200 text-xs font-extrabold">
-              <span>💡</span>
-              <span>
-                คิดง่ายๆ: ซื้อแยกแค่ 3 เครื่องมือก็ <strong className="text-white underline decoration-rose-500">฿897</strong> แล้ว! เพิ่มอีกนิดได้ครบทั้งเว็บ
-              </span>
-            </div>
+  // Sync when server-passed tools prop changes
+  useEffect(() => {
+    if (Array.isArray(tools) && tools.length > 0) {
+      setLiveTools(tools);
+    }
+  }, [tools]);
 
-            <p className="text-sm sm:text-base font-black text-white leading-snug">
-              ปลดล็อกครบทั้ง <span className="text-amber-300">เครื่องมือ AI ทั้ง {effectiveToolCount} ตัว (มูลค่า ฿{separateToolsPrice})</span> +{' '}
-              <span className="text-emerald-300">คอร์สเรียน 22 บท (฿799)</span> +{' '}
-              <span className="text-sky-300">อัปเดตเครื่องมือใหม่ในอนาคตฟรีตลอดชีพ!</span>
-            </p>
+  // Fetch live tools in idle time only if no tools prop was passed
+  useEffect(() => {
+    if (Array.isArray(tools) && tools.length > 0) return;
 
-            {/* Mini Value Pills */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-0.5 text-[11px] font-bold text-stone-200">
-              <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/15">
-                ✅ โฆษณาปักตะกร้า + ละครสั้น + พอดแคสต์ + แฟชั่น + UGC + โชว์สินค้า
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-emerald-200">
-                ♾️ จ่ายครั้งเดียวจบ ไม่มีรายเดือน
-              </span>
-            </div>
-          </div>
+    let cancelled = false;
+    const schedule =
+      typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback.bind(window)
+        : (cb: () => void) => window.setTimeout(cb, 1200);
 
-          <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2.5 shrink-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-white/10">
-            <div className="text-left sm:text-right">
-              <div className="text-[11px] text-stone-400 font-semibold">
-                มูลค่ารวม <span className="line-through text-rose-400 font-bold">฿2,990</span>
-              </div>
-              <div className="text-2xl sm:text-3xl font-black text-amber-300 leading-none">
-                ฿999 <span className="text-xs font-bold text-stone-300">บาท</span>
-              </div>
-            </div>
+    const handle = schedule(async () => {
+      try {
+        const res = await fetch('/api/tools');
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setLiveTools(data);
+        }
+      } catch {
+        // Fallback to DEFAULT_SHOWCASE_TOOLS inside getAllInOnePricing
+      }
+    });
 
-            <Link
-              href="/checkout/puppap-all-in-one"
-              className="puppap-gold-cta-animated px-5 py-3 rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-1.5 shrink-0 shadow-xl"
-            >
-              <span>👑 เหมาครบทุกอย่าง ฿999</span>
-              <span className="puppap-arrow-nudge text-base">→</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return () => {
+      cancelled = true;
+      if (typeof window !== 'undefined' && typeof window.cancelIdleCallback === 'function') {
+        try {
+          window.cancelIdleCallback(handle as number);
+        } catch {
+          clearTimeout(handle as number);
+        }
+      } else {
+        clearTimeout(handle as number);
+      }
+    };
+  }, [tools]);
+
+  // Check dismiss state (24h localStorage or tab sessionStorage)
+  useEffect(() => {
+    if (dismissPersistence === 'none' || typeof window === 'undefined') return;
+    const key = `puppap_upsell_dismiss_${currentToolSlug || 'global'}`;
+    try {
+      if (dismissPersistence === 'day') {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const ts = Number(raw);
+          if (Number.isFinite(ts) && Date.now() - ts < DISMISS_DAY_MS) {
+            setIsDismissed(true);
+            return;
+          }
+          localStorage.removeItem(key);
+        }
+      } else if (dismissPersistence === 'tab') {
+        if (sessionStorage.getItem(key) === '1') {
+          setIsDismissed(true);
+        }
+      }
+    } catch {
+      // Ignore storage errors in private mode
+    }
+  }, [dismissPersistence, currentToolSlug]);
+
+  // Fire upsell_shown_on_tool when rendered on a specific tool/checkout context
+  useEffect(() => {
+    if (ownsAllInOne || isDismissed || pricing.isEmpty || !currentToolSlug) return;
+    trackFunnelEvent('upsell_shown_on_tool', {
+      source,
+      currentToolSlug,
+      itemCount: pricing.itemCount,
+      upgradeDiffAmount: pricing.upgradeDiffAmount,
+    });
+  }, [
+    ownsAllInOne,
+    isDismissed,
+    pricing.isEmpty,
+    currentToolSlug,
+    source,
+    pricing.itemCount,
+    pricing.upgradeDiffAmount,
+  ]);
+
+  if (ownsAllInOne || isDismissed || pricing.isEmpty) {
+    return null;
   }
 
-  // Hero Flagship Variant (for /flow-tools, /store, /dashboard)
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    const key = `puppap_upsell_dismiss_${currentToolSlug || 'global'}`;
+    try {
+      if (dismissPersistence === 'day') {
+        localStorage.setItem(key, String(Date.now()));
+      } else if (dismissPersistence === 'tab') {
+        sessionStorage.setItem(key, '1');
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  const handleCtaClick = () => {
+    trackFunnelEvent('all_in_one_cta_click', {
+      source,
+      currentToolSlug,
+      itemCount: pricing.itemCount,
+      upgradeDiffAmount: pricing.upgradeDiffAmount,
+      utm_content: `all_in_one_${source}`,
+    });
+  };
+
+  const isCompact = variant === 'compact';
+  const isModal = variant === 'modal';
+
   return (
     <section
-      className={`relative rounded-3xl overflow-hidden border-2 border-amber-400 bg-gradient-to-br from-stone-950 via-[#1E140A] to-stone-950 text-white puppap-vip-card-glow ${className}`}
+      aria-label="แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ 999 ปลดล็อกทุกโปรแกรมและคอร์สเรียน"
+      data-testid="all-in-one-upsell-banner"
+      className={`relative space-y-3 ${className}`}
     >
-      {/* Top Urgent Psychological Ribbon */}
-      <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-stone-950 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-2.5 py-0.5 rounded-full bg-stone-950 text-amber-300 text-[11px] sm:text-xs font-black tracking-wide">
-            👑 VIP ALL-IN-ONE PASS
-          </span>
-          <span className="text-xs sm:text-sm font-black">
-            ดีลคุ้มที่สุดในเว็บ! ซื้อแยกแค่ 3 เครื่องมือก็ ฿897 แล้ว — เหมาหมดคุ้มกว่า 3 เท่า
-          </span>
+      {/* Layer 1: Contextual "ก่อนตัดสินใจ" Header (inspired by Reference Image 1) */}
+      <div
+        className="relative rounded-2xl bg-[var(--bg-surface)]/95 border border-[var(--border-accent)] px-4 py-3 text-center shadow-sm"
+        data-testid="upsell-contextual-header"
+      >
+        {dismissPersistence !== 'none' && (
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="ซ่อนคำแนะนำโปรโมชันนี้ชั่วคราว"
+            data-testid="dismiss-upsell-btn"
+            className="absolute top-1.5 right-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-black/5 transition-colors cursor-pointer"
+          >
+            ✕
+          </button>
+        )}
+
+        <div className="inline-flex items-center gap-1.5 text-xs font-extrabold text-rose-600 dark:text-rose-400 tracking-wide">
+          <span>💡</span>
+          <span>ก่อนตัดสินใจ</span>
         </div>
-        <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[11px] sm:text-xs font-black shadow-xs">
-          🔥 ลดโหด 67% · ประหยัดทันที ฿1,991!
-        </span>
+
+        {pricing.isCurrentToolEligible && pricing.currentItem ? (
+          pricing.shouldUseDiffFraming ? (
+            <>
+              <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-amber-900 dark:text-amber-300 leading-tight">
+                เพิ่มอีกแค่ ฿{pricing.upgradeDiffFormatted} ได้ครบทั้ง {pricing.toolOnlyCount} โปรแกรม AI + คอร์สเรียน!
+              </h3>
+              <p className="mt-1 text-xs sm:text-sm text-[var(--text-secondary)] font-semibold">
+                <strong className="text-[var(--text-primary)]">{pricing.currentItem.name}</strong> ที่คุณกำลังดูอยู่ คือ{' '}
+                <span className="underline decoration-emerald-500 font-black text-emerald-700 dark:text-emerald-400">
+                  รายการที่ #{pricing.currentItemIndex + 1} ใน {pricing.itemCount} รายการ
+                </span>{' '}
+                ของแพ็กเกจเหมาๆ ปุ๊บ ปั๊บ {pricing.packagePriceFormatted}
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-amber-900 dark:text-amber-300 leading-tight">
+                เหมาครบทั้ง {pricing.toolOnlyCount} โปรแกรม AI + คอร์สเรียน 22 บท เพียง ฿{pricing.packagePriceFormatted}!
+              </h3>
+              <p className="mt-1 text-xs sm:text-sm text-[var(--text-secondary)] font-semibold">
+                รวม <strong className="text-[var(--text-primary)]">{pricing.currentItem.name}</strong> (รายการที่ #{pricing.currentItemIndex + 1}) ไว้ในแพ็กแล้ว — ประหยัดกว่าซื้อแยกทันที{' '}
+                <strong className="text-rose-600 dark:text-rose-400">฿{pricing.savingsFormatted}</strong>
+              </p>
+            </>
+          )
+        ) : (
+          <>
+            <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-amber-900 dark:text-amber-300 leading-tight">
+              เหมาครบทั้ง {pricing.toolOnlyCount} โปรแกรม AI + คอร์สเรียน 22 บท เพียง ฿{pricing.packagePriceFormatted}!
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-[var(--text-secondary)] font-semibold">
+              ไม่ต้องซื้อแยกทีละตัว (มูลค่ารวม ฿{pricing.totalSeparateFormatted}) — จ่ายครั้งเดียวได้ครบทั้ง {pricing.itemCount} รายการในภาพด้านล่างทันที
+            </p>
+          </>
+        )}
       </div>
 
-      {/* Main 2-Column Body */}
-      <div className="p-5 sm:p-7 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center relative">
-        {/* Subtle Ambient Glow */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-20 -left-20 w-72 h-72 rounded-full bg-amber-500/15 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-20 -right-20 w-72 h-72 rounded-full bg-rose-500/15 blur-3xl"
-        />
+      {/* Layer 2 & 3: HTML Visual Poster Showcase Card (Minimal Reading, Maximum Visual Memory) */}
+      <div className="puppap-vip-card-glow relative rounded-3xl overflow-hidden bg-gradient-to-b from-stone-950 via-[#161109] to-stone-950 text-white border-2 border-amber-400 shadow-2xl p-3.5 sm:p-5 space-y-3.5">
+        {/* Ambient radial gold & crimson spotlights */}
+        <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-44 bg-amber-400/20 rounded-full blur-3xl" />
 
-        {/* Left Column (7 cols): Headline + Break-Even Math + 3-Pillar Visual Value Stack */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-4 relative z-10">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-amber-400/20 text-amber-300 border border-amber-400/40">
-                <span>🏆</span>
-                <span>แพ็กเกจขายดีอันดับ 1 สำหรับสายปั้นช่อง & นายหน้า TikTok</span>
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                <span>♾️</span>
-                <span>สิทธิ์ใช้งานตลอดชีพ · ไม่มีรายเดือน</span>
-              </span>
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight text-white">
-              แพ็กเกจเหมาๆ ปุ๊บ ปั๊บ{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400">
-                999.-
-              </span>{' '}
-              <span className="block sm:inline text-lg sm:text-2xl text-amber-100 font-extrabold">
-                ปลดล็อกทุกเครื่องมือ AI + คอร์สเรียนครบจบในครั้งเดียว!
-              </span>
-            </h2>
+        {/* Poster Top Header: 3D Gold Title & Giant 999 Price + Rule-of-100 Savings Hook */}
+        <div className="relative z-10 text-center space-y-1.5">
+          <div className="inline-flex flex-wrap items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/95 border border-rose-300/50 text-[11px] sm:text-xs font-black text-white shadow-md">
+            <span>🔥 ประหยัดทันที ฿{pricing.savingsFormatted}</span>
+            <span>·</span>
+            <span>ลด {pricing.discountPercent}% (คุ้มกว่าซื้อแยก 2 เท่า!)</span>
           </div>
 
-          {/* Decoy Effect & Break-Even Callout Box */}
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-l-4 border-amber-400 flex items-start gap-3">
-            <span className="text-xl sm:text-2xl shrink-0 leading-none mt-0.5">💡</span>
-            <p className="text-xs sm:text-sm text-amber-100 leading-relaxed">
-              <strong className="text-amber-300 font-black">ทำไมคนส่วนใหญ่เลือกแพ็กนี้?</strong>{' '}
-              เพราะซื้อแยกแค่ 3 เครื่องมือก็ <strong className="text-white underline decoration-rose-500 font-black">฿897</strong> แล้ว! เพิ่มเงินอีกแค่ร้อยเดียว (฿999) คุณได้ปลดล็อก{' '}
-              <strong className="text-white font-black">ครบทุกเครื่องมือทั้งเว็บ + คอร์สเรียน 22 บท + อัปเดตเครื่องมือใหม่ฟรีในอนาคต</strong>
-            </p>
+          <div className="pt-0.5">
+            <div className="text-sm sm:text-base font-black text-amber-200 tracking-wide uppercase">
+              👑 แพ็กเหมาๆ ปุ๊บ ปั๊บ VIP ALL-IN-ONE
+            </div>
+            <div className="flex items-baseline justify-center gap-2 flex-wrap mt-0.5">
+              <span
+                className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-amber-400 to-amber-500 drop-shadow-[0_3px_10px_rgba(245,158,11,0.45)] tracking-tight"
+                data-testid="poster-package-price"
+              >
+                {pricing.packagePriceFormatted}
+              </span>
+              <span className="text-lg sm:text-xl font-black text-white">บาท</span>
+              <span
+                className="px-2 py-0.5 rounded-lg bg-stone-900/90 border border-white/15 text-xs sm:text-sm text-stone-300 line-through font-bold"
+                data-testid="poster-separate-total"
+              >
+                ปกติรวม ฿{pricing.totalSeparateFormatted}
+              </span>
+            </div>
           </div>
 
-          {/* 3-Pillar Visual Value Stack Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            {/* Pillar 1 */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-amber-400/30 flex flex-col justify-between gap-2">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-base">🛠️</span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[11px] font-black">
-                    มูลค่า ฿{separateToolsPrice}
-                  </span>
-                </div>
-                <h3 className="text-xs sm:text-sm font-black text-white">
-                  ครบทั้ง {effectiveToolCount} เครื่องมือ AI
-                </h3>
-                <p className="text-[11px] text-stone-300 leading-relaxed">
-                  คลิปขายของ, ละครสั้น, พอดแคสต์, แฟชั่น, UGC และคลิปโชว์สินค้า (ปกติตัวละ ฿299)
-                </p>
-              </div>
-              <div className="text-[11px] font-extrabold text-emerald-400 flex items-center gap-1">
-                <span>✓</span>
-                <span>ปลดล็อกครบทุกตัวทันที</span>
-              </div>
-            </div>
-
-            {/* Pillar 2 */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-amber-400/30 flex flex-col justify-between gap-2">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-base">🎓</span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[11px] font-black">
-                    มูลค่า ฿799
-                  </span>
-                </div>
-                <h3 className="text-xs sm:text-sm font-black text-white">
-                  คอร์สเรียน 22 บทเต็ม
-                </h3>
-                <p className="text-[11px] text-stone-300 leading-relaxed">
-                  สอนจับมือทำบนมือถือตั้งแต่ศูนย์ ปั้นช่องนายหน้า TikTok + Prompt + คู่มือ PDF
-                </p>
-              </div>
-              <div className="text-[11px] font-extrabold text-emerald-400 flex items-center gap-1">
-                <span>✓</span>
-                <span>ดูซ้ำได้ตลอดชีพ 24 ชม.</span>
-              </div>
-            </div>
-
-            {/* Pillar 3 */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-amber-400/30 flex flex-col justify-between gap-2">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-base">🚀</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 text-[11px] font-black">
-                    ฟรีในอนาคต!
-                  </span>
-                </div>
-                <h3 className="text-xs sm:text-sm font-black text-white">
-                  อัปเดตเครื่องมือใหม่ฟรี
-                </h3>
-                <p className="text-[11px] text-stone-300 leading-relaxed">
-                  เมื่อมี Flow Tool ใหม่ที่เข้าร่วมแพ็กเกจ ระบบปลดล็อกเข้าบัญชีให้อัตโนมัติทันที
-                </p>
-              </div>
-              <div className="text-[11px] font-extrabold text-emerald-400 flex items-center gap-1">
-                <span>✓</span>
-                <span>ไม่ต้องเสียเงินซื้อซ้ำ</span>
-              </div>
-            </div>
+          {/* Center Value Ribbon (Matches "ได้ทุกโปรแกรม คุ้มสุดๆ" from Reference Image 1) */}
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500/25 via-amber-400/35 to-amber-500/25 border border-amber-300/60 text-xs sm:text-sm font-black text-amber-200 shadow-inner">
+            <span>✨ ได้ครบทุกโปรแกรม + คอร์สเรียน ({pricing.itemCount} รายการ)</span>
+            <span className="hidden sm:inline text-amber-300">·</span>
+            <span className="hidden sm:inline text-emerald-300">
+              ⚡ เฉลี่ยเพียง ฿{pricing.unitCostAvg}/รายการ
+            </span>
           </div>
         </div>
 
-        {/* Right Column (5 cols): VIP Ticket Price & Action Box */}
-        <div className="lg:col-span-5 xl:col-span-4 relative z-10">
-          <div className="rounded-3xl p-5 sm:p-6 bg-stone-950/90 border-2 border-amber-400/80 shadow-2xl text-center space-y-4">
-            {/* Value Anchor Header */}
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-black puppap-badge-flash">
-                <span>🔥</span>
-                <span>ประหยัดทันที ฿1,991 (ลด 67%)</span>
-              </div>
-              <div className="text-xs sm:text-sm text-stone-300 font-semibold pt-1">
-                มูลค่ารวมเมื่อซื้อแยก{' '}
-                <span className="line-through text-rose-400 font-extrabold text-sm sm:text-base">
-                  ฿2,990 บาท
-                </span>
-              </div>
-            </div>
+        {/* Dynamic 1..N Visual Cards + Bottom Interactive Thumbnail Strip */}
+        <div className="relative z-10 pt-1">
+          <AllInOneToolGrid
+            items={pricing.items}
+            currentItemIndex={pricing.currentItemIndex}
+            showThumbnailStrip={true}
+            compact={isCompact}
+          />
+        </div>
 
-            {/* Giant Hero Price */}
-            <div className="py-2.5 px-4 rounded-2xl bg-gradient-to-b from-amber-500/15 to-amber-500/5 border border-amber-400/30">
-              <div className="text-xs font-bold text-amber-200">ราคาพิเศษเหมาครบทุกอย่าง</div>
-              <div className="flex items-baseline justify-center gap-1.5 mt-0.5">
-                <span className="text-5xl sm:text-6xl font-black text-amber-300 tracking-tight leading-none drop-shadow">
-                  ฿999
-                </span>
-                <span className="text-base sm:text-lg font-extrabold text-stone-200">บาท</span>
-              </div>
-              <div className="mt-1.5 inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[11px] font-black text-emerald-300">
-                ⚡ เฉลี่ยรายการละ ~฿142 เท่านั้น!
-              </div>
-            </div>
+        {/* Bottom Lifetime Free Updates Ribbon (Matches "อัปเดทและเติมโปรแกรมให้ตลอดชีพ" from Reference Image 1) */}
+        <div className="relative z-10 py-1.5 px-3 rounded-2xl bg-gradient-to-r from-emerald-950/90 via-emerald-900/80 to-emerald-950/90 border border-emerald-400/50 text-center shadow-md">
+          <span className="text-xs sm:text-sm font-black text-emerald-200">
+            ♾️ อัปเดตและเติมโปรแกรม AI ใหม่ให้ฟรีตลอดชีพ (ไม่มีค่ารายเดือน)
+          </span>
+        </div>
 
-            {/* Primary Shimmer Gold CTA */}
-            {ownsAllInOne ? (
-              <div className="w-full py-4 px-6 rounded-2xl bg-emerald-700 text-white font-black text-sm sm:text-base shadow-lg flex items-center justify-center gap-2">
-                <span>✅</span>
-                <span>คุณปลดล็อกแพ็กเหมาๆ ครบแล้ว</span>
-              </div>
-            ) : (
-              <Link
-                href="/checkout/puppap-all-in-one"
-                className="puppap-gold-cta-animated w-full min-h-[58px] py-3.5 px-6 rounded-2xl text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-2xl"
-              >
-                <span>👑 เหมาครบทุกตัว ฿999 ทันที</span>
-                <span className="puppap-arrow-nudge text-xl">→</span>
-              </Link>
-            )}
-
-            {/* Instant Trust & Zero-Wait Guarantee */}
-            <div className="space-y-1 text-[11px] sm:text-xs text-stone-300 font-semibold">
-              <p className="text-emerald-300 font-bold">
-                ⚡ สแกน QR ปุ๊บ AI ตรวจสลิปเปิดสิทธิ์ครบทุกตัวใน 5 วินาที
-              </p>
-              <p className="text-[11px] text-stone-400">
-                ✓ จ่ายครั้งเดียวจบ · ไม่มีค่ารายเดือน · ใช้ได้ทุกอุปกรณ์
-              </p>
-            </div>
+        {/* Layer 4: Primary Animated Gold Shimmer CTA */}
+        <div className="relative z-10 pt-0.5 flex flex-col items-center gap-1.5">
+          <Link
+            href="/checkout/puppap-all-in-one"
+            onClick={handleCtaClick}
+            data-testid="all-in-one-cta-link"
+            className={`puppap-gold-cta-animated w-full ${
+              isCompact || isModal ? 'py-3 text-sm sm:text-base' : 'py-3.5 sm:py-4 text-base sm:text-lg'
+            } px-6 rounded-2xl font-black inline-flex items-center justify-center gap-2 text-center`}
+          >
+            <span>👑 เหมาครบทั้ง {pricing.itemCount} รายการ เพียง ฿{pricing.packagePriceFormatted}</span>
+            <span>→</span>
+          </Link>
+          <div className="text-[11px] text-amber-200/85 font-semibold text-center">
+            ⚡ สแกน PromptPay ปลดล็อกครบทุกตัวเข้าบัญชีทันที · เฉลี่ยเพียง ฿{pricing.unitCostAvg}/รายการ
           </div>
         </div>
       </div>
