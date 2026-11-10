@@ -330,7 +330,8 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       expect(bannerSource).toContain('shouldUseDiffFraming');
       expect(bannerSource).toContain('ประหยัดทันที ฿{pricing.savingsFormatted}');
       expect(bannerSource).toContain('คุ้มกว่าซื้อแยก 2 เท่า!');
-      expect(bannerSource).toContain('อัปเดตและเติมโปรแกรม AI ใหม่ให้ฟรีตลอดชีพ');
+      expect(bannerSource).toContain('puppap-poster-3d-title');
+      expect(bannerSource).toContain('puppap-poster-3d-price');
       expect(bannerSource).toContain('puppap-gold-cta-animated');
       expect(bannerSource).toContain('puppap-vip-card-glow');
       expect(bannerSource).toContain('/checkout/puppap-all-in-one');

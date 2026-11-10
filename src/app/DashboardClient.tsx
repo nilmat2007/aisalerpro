@@ -377,20 +377,31 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                     {/* Action Buttons */}
                     <div className="space-y-3 pt-1">
                       {hasCourseAccess ? (
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <Link
-                            href={`/course/${courseSlug}`}
-                            className="puppap-btn-primary py-4 px-8 text-center text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-transform flex-1"
-                          >
-                            <span className="text-xl">▶</span>
-                            <span>กดตรงนี้เพื่อเข้าห้องเรียน</span>
-                          </Link>
-                          <Link
-                            href="/courses#curriculum"
-                            className="puppap-btn-secondary py-3.5 px-5 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)] flex items-center justify-center"
-                          >
-                            📑 ดูสารบัญ 22 บทเรียน
-                          </Link>
+                        <div className="space-y-3">
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <Link
+                              href={`/course/${courseSlug}`}
+                              className="puppap-btn-primary py-4 px-8 text-center text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-transform flex-1"
+                            >
+                              <span className="text-xl">▶</span>
+                              <span>กดตรงนี้เพื่อเข้าห้องเรียน</span>
+                            </Link>
+                            <Link
+                              href="/courses#curriculum"
+                              className="puppap-btn-secondary py-3.5 px-5 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)] flex items-center justify-center"
+                            >
+                              📑 ดูสารบัญ 22 บทเรียน
+                            </Link>
+                          </div>
+
+                          {!hasAllInOneAccess && (
+                            <AllInOneUpsellBanner
+                              variant="compact"
+                              tools={allTools}
+                              currentToolSlug={courseSlug}
+                              source="dashboard_banner"
+                            />
+                          )}
                         </div>
                       ) : (
                         <>

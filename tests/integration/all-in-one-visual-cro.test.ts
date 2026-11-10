@@ -238,6 +238,9 @@ describe('All-in-One ฿999 HTML Visual Layer & Global Floating Promo Suite (v4 
       expect(gridSource).toContain('data-testid={`tool-slot-${idx + 1}`}');
       expect(gridSource).toContain('data-testid={`tool-thumb-${idx + 1}`}');
       expect(gridSource).toContain('data-testid="current-tool-badge"');
+      expect(gridSource).toContain('grid-cols-7');
+      expect(gridSource).toContain('อัปเดตและเติมโปรแกรม AI ใหม่ให้ฟรี');
+      expect(gridSource).toContain('ตลอดชีพ');
       expect(gridSource).toContain('ตัวนี้');
       expect(gridSource).toContain('loading="lazy"');
       expect(gridSource).toContain('decoding="async"');

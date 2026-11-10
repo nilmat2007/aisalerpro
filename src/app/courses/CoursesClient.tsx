@@ -252,21 +252,31 @@ export default function CoursesClient({
               {/* Strict Button Hierarchy: Primary Filled on Top/Left + Secondary Outline Curriculum & Preview Buttons Adjacent */}
               <div className="space-y-2.5">
                 {hasAccess ? (
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                    <Link
-                      href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
-                      className="puppap-btn-primary min-h-[56px] px-8 py-4 text-base sm:text-lg font-black shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-transform flex-1"
-                    >
-                      <span>🚀 เข้าสู่ห้องเรียนของคุณ</span>
-                      <span className="puppap-arrow-nudge">→</span>
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={scrollToCurriculum}
-                      className="min-h-[42px] px-4 py-2 rounded-xl bg-transparent hover:bg-[var(--accent-dim)] text-[var(--text-primary)] border-[1.5px] border-[var(--border)] text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
-                    >
-                      <span>📑 ดูสารบัญ {lessons.length || 22} บท ↓</span>
-                    </button>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                      <Link
+                        href={`/course/${course?.slug || 'tiktok-ai-affiliate'}`}
+                        className="puppap-btn-primary min-h-[56px] px-8 py-4 text-base sm:text-lg font-black shadow-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-transform flex-1"
+                      >
+                        <span>🚀 เข้าสู่ห้องเรียนของคุณ</span>
+                        <span className="puppap-arrow-nudge">→</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={scrollToCurriculum}
+                        className="min-h-[42px] px-4 py-2 rounded-xl bg-transparent hover:bg-[var(--accent-dim)] text-[var(--text-primary)] border-[1.5px] border-[var(--border)] text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                      >
+                        <span>📑 ดูสารบัญ {lessons.length || 22} บท ↓</span>
+                      </button>
+                    </div>
+
+                    {/* All-in-One 999 VIP Package Upsell (puppap-all-in-one) immediately after ดูสารบัญ 22 บท */}
+                    <AllInOneUpsellBanner
+                      variant="compact"
+                      currentToolSlug={course?.slug || 'tiktok-ai-affiliate'}
+                      source="courses_banner"
+                      className="mt-2"
+                    />
                   </div>
                 ) : (
                   <>
@@ -287,6 +297,14 @@ export default function CoursesClient({
                       </button>
                     </div>
 
+                    {/* All-in-One 999 VIP Package Upsell (puppap-all-in-one) immediately after ดูสารบัญ 22 บท */}
+                    <AllInOneUpsellBanner
+                      variant="compact"
+                      currentToolSlug={course?.slug || 'tiktok-ai-affiliate'}
+                      source="courses_banner"
+                      className="mt-2"
+                    />
+
                     <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap pt-0.5">
                       <button
                         type="button"
@@ -303,14 +321,6 @@ export default function CoursesClient({
                         <span>🎁 ดูบทที่ 1 เต็มบทฟรี</span>
                       </Link>
                     </div>
-
-                    {/* All-in-One 999 VIP Package Upsell (puppap-all-in-one) */}
-                    <AllInOneUpsellBanner
-                      variant="compact"
-                      currentToolSlug={course?.slug || 'tiktok-ai-affiliate'}
-                      source="courses_banner"
-                      className="mt-2"
-                    />
                   </>
                 )}
               </div>
