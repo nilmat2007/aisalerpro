@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap');
 
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* ─── PUP PAP AI Dual Theme System (Cream Paper ↔ Obsidian Dark) ─── */
 /* Default / Cream Theme (ดึงจาก pheembot/sidepanel.css ตรง 100%) */

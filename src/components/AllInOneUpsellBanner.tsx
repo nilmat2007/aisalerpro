@@ -173,15 +173,19 @@ export default function AllInOneUpsellBanner({
           </button>
         )}
 
-        <div className="text-xs sm:text-sm font-extrabold text-orange-700 dark:text-amber-400 tracking-wide">
+        <div className="text-xs sm:text-sm font-extrabold text-[#9a2810] dark:text-amber-400 tracking-wide">
           ก่อนตัดสินใจ
         </div>
 
         {pricing.isCurrentToolEligible && pricing.currentItem ? (
           pricing.shouldUseDiffFraming ? (
             <>
-              <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-[#6b210b] dark:text-amber-200 leading-snug">
-                เพิ่มอีก ฿{pricing.upgradeDiffFormatted} ได้ครบทั้ง {pricing.toolOnlyCount} โปรแกรม + คอร์สเรียน
+              <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-[#3b1106] dark:text-amber-200 leading-snug">
+                เพิ่มอีก{' '}
+                <span className="text-[#b91c1c] dark:text-yellow-300">
+                  ฿{pricing.upgradeDiffFormatted}
+                </span>{' '}
+                ได้ครบทั้ง {pricing.toolOnlyCount} โปรแกรม + คอร์สเรียน
               </h3>
               <p className="mt-0.5 text-xs sm:text-sm text-[var(--text-secondary)] font-medium">
                 {pricing.currentItem.shortTitle}ที่คุณกำลังจะซื้อ คือ 1 ใน {pricing.itemCount} รายการ ของแพ็กเกจเหมาๆ ปุ๊บ ปั๊บ
@@ -189,8 +193,11 @@ export default function AllInOneUpsellBanner({
             </>
           ) : (
             <>
-              <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-[#6b210b] dark:text-amber-200 leading-snug">
-                เหมาครบทั้ง {pricing.toolOnlyCount} โปรแกรม + คอร์สเรียน เพียง ฿{pricing.packagePriceFormatted}
+              <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-[#3b1106] dark:text-amber-200 leading-snug">
+                เหมาครบทั้ง {pricing.toolOnlyCount} โปรแกรม + คอร์สเรียน เพียง{' '}
+                <span className="text-[#b91c1c] dark:text-yellow-300">
+                  ฿{pricing.packagePriceFormatted}
+                </span>
               </h3>
               <p className="mt-0.5 text-xs sm:text-sm text-[var(--text-secondary)] font-medium">
                 {pricing.currentItem.shortTitle}ที่คุณกำลังดู คือรายการที่ #{pricing.currentItemIndex + 1} ใน {pricing.itemCount} รายการ (ประหยัดทันที ฿{pricing.savingsFormatted})
@@ -199,8 +206,11 @@ export default function AllInOneUpsellBanner({
           )
         ) : (
           <>
-            <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-[#6b210b] dark:text-amber-200 leading-snug">
-              เหมาครบทั้ง {pricing.toolOnlyCount} โปรแกรม + คอร์สเรียน เพียง ฿{pricing.packagePriceFormatted}
+            <h3 className="mt-0.5 text-lg sm:text-2xl font-black text-[#3b1106] dark:text-amber-200 leading-snug">
+              เหมาครบทั้ง {pricing.toolOnlyCount} โปรแกรม + คอร์สเรียน เพียง{' '}
+              <span className="text-[#b91c1c] dark:text-yellow-300">
+                ฿{pricing.packagePriceFormatted}
+              </span>
             </h3>
             <p className="mt-0.5 text-xs sm:text-sm text-[var(--text-secondary)] font-medium">
               ปลดล็อกครบทั้ง {pricing.itemCount} รายการในโปสเตอร์ด้านล่าง (จากปกติรวม ฿{pricing.totalSeparateFormatted})

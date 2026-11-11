@@ -312,6 +312,14 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
         'utf8'
       );
       expect(layoutSource).toContain('<FloatingPromoWidgetLoader />');
+
+      const globalsCssSource = fs.readFileSync(
+        path.join(ROOT, 'src/app/globals.css'),
+        'utf8'
+      );
+      expect(globalsCssSource).toContain(
+        '@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));'
+      );
     });
   });
 });
