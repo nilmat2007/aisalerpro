@@ -377,31 +377,20 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                     {/* Action Buttons */}
                     <div className="space-y-3 pt-1">
                       {hasCourseAccess ? (
-                        <div className="space-y-3">
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            <Link
-                              href={`/course/${courseSlug}`}
-                              className="puppap-btn-primary py-4 px-8 text-center text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-transform flex-1"
-                            >
-                              <span className="text-xl">▶</span>
-                              <span>กดตรงนี้เพื่อเข้าห้องเรียน</span>
-                            </Link>
-                            <Link
-                              href="/courses#curriculum"
-                              className="puppap-btn-secondary py-3.5 px-5 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)] flex items-center justify-center"
-                            >
-                              📑 ดูสารบัญ 22 บทเรียน
-                            </Link>
-                          </div>
-
-                          {!hasAllInOneAccess && (
-                            <AllInOneUpsellBanner
-                              variant="compact"
-                              tools={allTools}
-                              currentToolSlug={courseSlug}
-                              source="dashboard_banner"
-                            />
-                          )}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <Link
+                            href={`/course/${courseSlug}`}
+                            className="puppap-btn-primary py-4 px-8 text-center text-base sm:text-lg font-black flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-transform flex-1"
+                          >
+                            <span className="text-xl">▶</span>
+                            <span>กดตรงนี้เพื่อเข้าห้องเรียน</span>
+                          </Link>
+                          <Link
+                            href="/courses#curriculum"
+                            className="puppap-btn-secondary py-3.5 px-5 text-center text-xs sm:text-sm font-bold text-[var(--text-secondary)] flex items-center justify-center"
+                          >
+                            📑 ดูสารบัญ 22 บทเรียน
+                          </Link>
                         </div>
                       ) : (
                         <>
@@ -451,15 +440,6 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                             </Link>
                           </div>
 
-                          {!hasAllInOneAccess && (
-                            <AllInOneUpsellBanner
-                              variant="compact"
-                              tools={allTools}
-                              currentToolSlug={courseSlug}
-                              source="dashboard_banner"
-                            />
-                          )}
-
                           <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 text-center">
                             ⚡ สแกน QR ปุ๊บ ระบบ AI ตรวจสลิปเปิดห้องเรียนให้ทันทีใน 5 วินาที
                           </p>
@@ -467,6 +447,17 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
                       )}
                     </div>
                   </div>
+
+                  {!hasAllInOneAccess && (
+                    <div className="lg:col-span-12 pt-2 border-t border-[var(--border-light)]/70">
+                      <AllInOneUpsellBanner
+                        variant="hero"
+                        tools={allTools}
+                        currentToolSlug={courseSlug}
+                        source="dashboard_banner"
+                      />
+                    </div>
+                  )}
                 </div>
               </section>
 

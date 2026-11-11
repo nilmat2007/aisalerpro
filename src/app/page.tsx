@@ -253,18 +253,20 @@ export default async function HomePage() {
                   </Link>
                 </div>
 
-                {/* All-in-One 999 VIP Bundle Upsell Card (puppap-all-in-one) */}
-                <AllInOneUpsellBanner
-                  variant="compact"
-                  tools={allTools}
-                  currentToolSlug="tiktok-ai-affiliate"
-                  source="home_banner"
-                />
-
                 <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-400 text-center">
                   ⚡ สแกน QR ปุ๊บ ระบบ AI ตรวจสลิปเปิดห้องเรียนให้ทันทีใน 5 วินาที
                 </p>
               </div>
+            </div>
+
+            {/* Full-Width All-in-One 799 VIP Bundle Upsell Card immediately after ดูสารบัญ 22 บท */}
+            <div className="lg:col-span-12 pt-2 border-t border-[var(--border-light)]/70">
+              <AllInOneUpsellBanner
+                variant="hero"
+                tools={allTools}
+                currentToolSlug="tiktok-ai-affiliate"
+                source="home_banner"
+              />
             </div>
           </div>
 

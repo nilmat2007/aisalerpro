@@ -16,116 +16,242 @@ export const COURSE_CORE_HIGHLIGHTS = [
 
 export interface CourseVisualHighlightItem {
   step: number;
+  iconKey:
+    | 'tiktok_affiliate'
+    | 'google_flow'
+    | 'tiktok_shop_cart'
+    | 'minimal_faceless'
+    | 'pro_review'
+    | 'short_drama'
+    | 'anime_2d'
+    | 'multi_platform';
   shortTitle: string;
+  subText: string;
   fullTitle: (typeof COURSE_CORE_HIGHLIGHTS)[number];
-  tag: string;
-  icon: string;
-  imageUrl: string;
-  badgeGradient: string;
-  cardBorder: string;
+  badgeColor: string;
+  iconBg: string;
 }
 
 export const COURSE_VISUAL_HIGHLIGHTS: readonly CourseVisualHighlightItem[] = [
   {
     step: 1,
-    shortTitle: 'ปั้นช่องนายหน้า',
+    iconKey: 'tiktok_affiliate',
+    shortTitle: 'นายหน้า TikTok',
+    subText: 'ปูพื้นฐาน & ปักตะกร้า',
     fullTitle: COURSE_CORE_HIGHLIGHTS[0],
-    tag: 'เริ่มต้น 0',
-    icon: '🛒',
-    imageUrl: '/images/course-hero-intro-poster.webp',
-    badgeGradient: 'from-rose-500 to-red-600 border-rose-200',
-    cardBorder: 'border-rose-400/70 from-rose-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-stone-950 text-white border-rose-400',
+    iconBg: 'from-stone-950 via-stone-900 to-rose-950 border-rose-500/40',
   },
   {
     step: 2,
+    iconKey: 'google_flow',
     shortTitle: 'Google Flow AI',
+    subText: 'เจนคลิปด้วย AI ตัวใหม่',
     fullTitle: COURSE_CORE_HIGHLIGHTS[1],
-    tag: 'เจนคลิปไว',
-    icon: '⚡',
-    imageUrl: '/images/poster-puppap-fashion-studio.jpg',
-    badgeGradient: 'from-amber-400 to-orange-600 border-amber-200',
-    cardBorder: 'border-amber-400/70 from-amber-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-sky-600 text-white border-sky-200',
+    iconBg: 'from-sky-950 via-blue-950 to-indigo-950 border-sky-400/50',
   },
   {
     step: 3,
+    iconKey: 'tiktok_shop_cart',
     shortTitle: 'คลิปปักตะกร้า',
+    subText: 'ทำคลิปขายดุ 24 ชม.',
     fullTitle: COURSE_CORE_HIGHLIGHTS[2],
-    tag: 'ขายดุ 24 ชม.',
-    icon: '🛍️',
-    imageUrl: '/images/poster-puppap-ugc-product.jpg',
-    badgeGradient: 'from-emerald-500 to-green-600 border-emerald-200',
-    cardBorder: 'border-emerald-400/70 from-emerald-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-orange-600 text-white border-amber-200',
+    iconBg: 'from-amber-950 via-orange-950 to-red-950 border-amber-400/50',
   },
   {
     step: 4,
+    iconKey: 'minimal_faceless',
     shortTitle: 'คลิปมินิมอล',
+    subText: 'ขายดีโดยไม่ออกกล้อง',
     fullTitle: COURSE_CORE_HIGHLIGHTS[3],
-    tag: 'ไม่ต้องออกกล้อง',
-    icon: '✨',
-    imageUrl:
-      'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/poster_1794145940853.jpeg',
-    badgeGradient: 'from-sky-500 to-blue-600 border-sky-200',
-    cardBorder: 'border-sky-400/70 from-sky-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-emerald-600 text-white border-emerald-200',
+    iconBg: 'from-emerald-950 via-teal-950 to-stone-950 border-emerald-400/50',
   },
   {
     step: 5,
-    shortTitle: 'รีวิวสินค้าคนจริง',
+    iconKey: 'pro_review',
+    shortTitle: 'คลิปรีวิวสินค้า',
+    subText: 'พรีเซนเตอร์คนจริง AI',
     fullTitle: COURSE_CORE_HIGHLIGHTS[4],
-    tag: 'สมจริง 100%',
-    icon: '🎬',
-    imageUrl: '/images/poster-ugc-batch.jpg',
-    badgeGradient: 'from-pink-500 to-rose-600 border-pink-200',
-    cardBorder: 'border-pink-400/70 from-pink-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-rose-600 text-white border-pink-200',
+    iconBg: 'from-rose-950 via-pink-950 to-stone-950 border-pink-400/50',
   },
   {
     step: 6,
+    iconKey: 'short_drama',
     shortTitle: 'ละครสั้นมือถือ',
+    subText: 'ปั้นช่องไวรัลล้านวิว',
     fullTitle: COURSE_CORE_HIGHLIGHTS[5],
-    tag: 'ไวรัลล้านวิว',
-    icon: '🎭',
-    imageUrl: '/images/poster-ai-content-factory.jpg',
-    badgeGradient: 'from-purple-500 to-violet-600 border-purple-200',
-    cardBorder: 'border-purple-400/70 from-purple-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-purple-600 text-white border-purple-200',
+    iconBg: 'from-purple-950 via-violet-950 to-stone-950 border-purple-400/50',
   },
   {
     step: 7,
+    iconKey: 'anime_2d',
     shortTitle: 'การ์ตูน 2D AI',
+    subText: 'ทำอนิเมชั่นบนมือถือ',
     fullTitle: COURSE_CORE_HIGHLIGHTS[6],
-    tag: 'ทำบนมือถือ',
-    icon: '🎨',
-    imageUrl: '/images/lesson-21-preview-poster.webp',
-    badgeGradient: 'from-yellow-400 to-amber-500 border-yellow-100',
-    cardBorder: 'border-yellow-400/70 from-amber-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-amber-500 text-stone-950 border-yellow-100',
+    iconBg: 'from-amber-900 via-yellow-950 to-stone-950 border-yellow-400/50',
   },
   {
     step: 8,
-    shortTitle: 'โพสต์สร้างรายได้',
+    iconKey: 'multi_platform',
+    shortTitle: 'โพสต์ทุกแพลตฟอร์ม',
+    subText: 'TikTok · Reels · Shopee',
     fullTitle: COURSE_CORE_HIGHLIGHTS[7],
-    tag: 'ทุกแพลตฟอร์ม',
-    icon: '💰',
-    imageUrl:
-      'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images/poster_1794117210595.jpg',
-    badgeGradient: 'from-teal-500 to-emerald-600 border-teal-200',
-    cardBorder: 'border-teal-400/70 from-teal-950/90 via-stone-950 to-stone-950',
+    badgeColor: 'bg-teal-600 text-white border-teal-200',
+    iconBg: 'from-teal-950 via-emerald-950 to-stone-950 border-teal-400/50',
   },
 ] as const;
 
-const FREE_BONUS_TOOLS_PREVIEW = [
-  {
-    slug: 'puppap-fashion-studio',
-    shortName: 'PUP PAP Fashion Studio',
-    role: 'เสกนางแบบ-นายแบบใส่เสื้อผ้า',
-    posterUrl: '/images/poster-puppap-fashion-studio.jpg',
-    normalPrice: '฿299',
-  },
-  {
-    slug: 'puppap-ugc-product',
-    shortName: 'PUPPAP AI UGC Product',
-    role: 'ทำคลิปรีวิวสินค้าปักตะกร้า',
-    posterUrl: '/images/poster-puppap-ugc-product.jpg',
-    normalPrice: '฿299',
-  },
-] as const;
+function renderHighlightVisualLogo(iconKey: CourseVisualHighlightItem['iconKey']) {
+  switch (iconKey) {
+    case 'tiktok_affiliate':
+      return (
+        /* TikTok Musical Note Logo (Cyan/Rose Glitch) + Gold Affiliate Bag Badge */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8 overflow-visible" aria-hidden="true">
+            {/* Cyan offset layer */}
+            <path
+              d="M23.2 7.5c.7 2.4 2.5 4.2 4.9 4.6v3.7c-1.8-.1-3.5-.7-4.9-1.7v7.6c0 4.6-3.7 8.3-8.3 8.3s-8.3-3.7-8.3-8.3 3.7-8.3 8.3-8.3c.5 0 .9 0 1.4.1v4c-.4-.1-.9-.2-1.4-.2-2.4 0-4.4 2-4.4 4.4s2 4.4 4.4 4.4 4.4-2 4.4-4.4V7.5h3.9z"
+              fill="#25F4EE"
+              transform="translate(-1.2, -1)"
+            />
+            {/* Rose offset layer */}
+            <path
+              d="M23.2 7.5c.7 2.4 2.5 4.2 4.9 4.6v3.7c-1.8-.1-3.5-.7-4.9-1.7v7.6c0 4.6-3.7 8.3-8.3 8.3s-8.3-3.7-8.3-8.3 3.7-8.3 8.3-8.3c.5 0 .9 0 1.4.1v4c-.4-.1-.9-.2-1.4-.2-2.4 0-4.4 2-4.4 4.4s2 4.4 4.4 4.4 4.4-2 4.4-4.4V7.5h3.9z"
+              fill="#FE2C55"
+              transform="translate(1.2, 1)"
+            />
+            {/* White core note */}
+            <path
+              d="M23.2 7.5c.7 2.4 2.5 4.2 4.9 4.6v3.7c-1.8-.1-3.5-.7-4.9-1.7v7.6c0 4.6-3.7 8.3-8.3 8.3s-8.3-3.7-8.3-8.3 3.7-8.3 8.3-8.3c.5 0 .9 0 1.4.1v4c-.4-.1-.9-.2-1.4-.2-2.4 0-4.4 2-4.4 4.4s2 4.4 4.4 4.4 4.4-2 4.4-4.4V7.5h3.9z"
+              fill="#FFFFFF"
+            />
+          </svg>
+          <span className="absolute -bottom-1 -right-1 px-1 py-[1px] rounded bg-amber-400 text-stone-950 text-[7.5px] font-black leading-none shadow-xs">
+            SHOP
+          </span>
+        </div>
+      );
+
+    case 'google_flow':
+      return (
+        /* Google Flow Play + AI Sparkle Emblem */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true">
+            <circle cx="17" cy="18" r="12" fill="#38BDF8" fillOpacity="0.2" stroke="#38BDF8" strokeWidth="2" />
+            <polygon points="14,12.5 23.5,18 14,23.5" fill="#FACC15" />
+            <path
+              d="M28 5l1.2 3.2L32.5 9.5l-3.3 1.2L28 14l-1.2-3.3-3.3-1.2 3.3-1.3L28 5z"
+              fill="#FDE047"
+            />
+          </svg>
+          <span className="absolute -bottom-1 -right-1 px-1 py-[1px] rounded bg-sky-400 text-stone-950 text-[7.5px] font-black leading-none shadow-xs">
+            FLOW
+          </span>
+        </div>
+      );
+
+    case 'tiktok_shop_cart':
+      return (
+        /* TikTok Shop Orange Basket + Checkmark */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true">
+            <rect x="7" y="12" width="22" height="17" rx="4" fill="#F97316" stroke="#FDE047" strokeWidth="1.8" />
+            <path d="M13 12V9.5a5 5 0 0 1 10 0V12" fill="none" stroke="#FDE047" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M14 20.5l2.8 2.8 5.5-5.5" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="absolute -bottom-1 -right-1 px-1 py-[1px] rounded bg-emerald-400 text-stone-950 text-[7.5px] font-black leading-none shadow-xs">
+            24h
+          </span>
+        </div>
+      );
+
+    case 'minimal_faceless':
+      return (
+        /* Minimal Faceless Phone Tripod + Sparkle */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true">
+            <rect x="10" y="6" width="16" height="24" rx="3.5" fill="#10B981" fillOpacity="0.2" stroke="#34D399" strokeWidth="2" />
+            <circle cx="18" cy="16" r="4" fill="#FDE047" />
+            <path d="M14 24h8" stroke="#A7F3D0" strokeWidth="2" strokeLinecap="round" />
+            <path d="M28 7l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9L28 7z" fill="#FDE047" />
+          </svg>
+        </div>
+      );
+
+    case 'pro_review':
+      return (
+        /* 5-Star Product Review + Badge */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true">
+            <path
+              d="M18 6l3.3 6.7 7.4 1.1-5.3 5.2 1.3 7.4L18 22.9l-6.7 3.5 1.3-7.4-5.3-5.2 7.4-1.1L18 6z"
+              fill="#FACC15"
+              stroke="#FB7185"
+              strokeWidth="1.5"
+            />
+          </svg>
+          <span className="absolute -bottom-1 -right-1 px-1 py-[1px] rounded bg-rose-500 text-white text-[7.5px] font-black leading-none shadow-xs">
+            5.0★
+          </span>
+        </div>
+      );
+
+    case 'short_drama':
+      return (
+        /* Cinema Clapperboard SVG */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true">
+            <rect x="6" y="13" width="24" height="16" rx="3" fill="#A855F7" fillOpacity="0.25" stroke="#C084FC" strokeWidth="2" />
+            <path d="M6 13l2-5h20l2 5H6z" fill="#E9D5FF" stroke="#C084FC" strokeWidth="1.5" />
+            <polygon points="15,17 22,21 15,25" fill="#FACC15" />
+          </svg>
+        </div>
+      );
+
+    case 'anime_2d':
+      return (
+        /* 2D Animation Palette & Sparkle Frame */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <svg viewBox="0 0 36 36" className="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true">
+            <rect x="6" y="8" width="24" height="20" rx="4" fill="#F59E0B" fillOpacity="0.25" stroke="#FBBF24" strokeWidth="2" />
+            <text x="18" y="22" textAnchor="middle" fill="#FEF08A" fontSize="11" fontWeight="900" fontFamily="sans-serif">
+              2D
+            </text>
+          </svg>
+          <span className="absolute -bottom-1 -right-1 px-1 py-[1px] rounded bg-amber-400 text-stone-950 text-[7.5px] font-black leading-none shadow-xs">
+            AI
+          </span>
+        </div>
+      );
+
+    case 'multi_platform':
+      return (
+        /* Multi-Platform (TikTok / Reels / Shopee) Badges */
+        <div className="relative flex items-center justify-center w-full h-full">
+          <div className="grid grid-cols-2 gap-0.5 p-0.5">
+            <span className="w-3.5 h-3.5 rounded bg-stone-950 border border-cyan-400 text-[7px] font-black text-white flex items-center justify-center">
+              ♪
+            </span>
+            <span className="w-3.5 h-3.5 rounded bg-gradient-to-br from-pink-500 to-amber-500 text-[7px] font-black text-white flex items-center justify-center">
+              ▶
+            </span>
+            <span className="w-3.5 h-3.5 rounded bg-orange-600 text-[7px] font-black text-white flex items-center justify-center">
+              S
+            </span>
+            <span className="w-3.5 h-3.5 rounded bg-red-600 text-[7px] font-black text-white flex items-center justify-center">
+              Y
+            </span>
+          </div>
+        </div>
+      );
+  }
+}
 
 const VS_VIEW_SESSION_KEY = 'puppap_vs_viewed';
 const VS_EXPAND_SESSION_KEY = 'puppap_vs_expanded';
@@ -141,7 +267,6 @@ export default function CourseCoreHighlights({
 }: CourseCoreHighlightsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
-  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const reactId = useId();
   const listId = `core-highlights-list-${reactId}`;
 
@@ -197,9 +322,9 @@ export default function CourseCoreHighlights({
     <div
       ref={containerRef}
       data-testid="course-core-highlights"
-      className="rounded-2xl bg-[var(--bg-primary)] border-2 border-[var(--border-accent)] p-3 sm:p-4 text-left shadow-md space-y-3"
+      className="rounded-2xl bg-[var(--bg-primary)] border-[1.5px] border-[var(--border-accent)] p-3 sm:p-3.5 text-left shadow-sm space-y-2.5"
     >
-      {/* Header Bar: “มือใหม่ก็ทำได้บนมือถือเครื่องเดียว” + Visual Count Pill */}
+      {/* Header Bar: “มือใหม่ก็ทำได้บนมือถือเครื่องเดียว” */}
       <div className="flex items-center justify-between gap-2 flex-wrap border-b border-[var(--border-light)] pb-2">
         <p className="text-[13px] sm:text-sm font-black text-[var(--text-primary)] leading-snug">
           <span className="text-[var(--accent)]">
@@ -209,20 +334,16 @@ export default function CourseCoreHighlights({
             — สิ่งที่คุณจะได้เรียนครบในคอร์สนี้:
           </span>
         </p>
-        <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-[10.5px] sm:text-xs font-black text-amber-800 dark:text-amber-300 whitespace-nowrap">
-          🎓 22 บทเรียน + 🎁 ฟรี 2 Tools
-        </span>
       </div>
 
-      {/* 8 Visual Poster Skill Cards (4+4 collapse on mobile <640px; 4-col visual grid on all screens) */}
+      {/* 8 Compact Visual Logo & Icon Cards (2x2 + expand on mobile <640px; 4x2 grid on sm+) */}
       <ul
         id={listId}
         data-testid="course-visual-highlights-grid"
-        className="grid grid-cols-4 gap-1.5 sm:gap-2.5 pt-2"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5"
       >
         {COURSE_VISUAL_HIGHLIGHTS.map((item, idx) => {
           const isHiddenOnMobile = idx >= 4 && !isMobileExpanded;
-          const imgFailed = Boolean(failedImages[item.shortTitle]);
 
           return (
             <li
@@ -230,63 +351,31 @@ export default function CourseCoreHighlights({
               data-testid={`course-highlight-card-${item.step}`}
               className={`${
                 isHiddenOnMobile ? 'hidden sm:flex' : 'flex'
-              } group relative flex-col items-center justify-between rounded-2xl bg-gradient-to-b ${
-                item.cardBorder
-              } border-[1.5px] p-1 sm:p-1.5 pt-3 text-center shadow-sm hover:-translate-y-0.5 transition-transform`}
+              } items-center gap-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-light)] hover:border-[var(--border-accent)] p-2 transition-colors shadow-2xs`}
             >
-              {/* 3D Glossy Number Badge overlapping top border */}
-              <span
-                aria-hidden="true"
-                className={`-mt-4 mb-0.5 inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-b ${item.badgeGradient} border-[1.5px] text-[10px] sm:text-xs font-black text-white shadow-[0_2px_4px_rgba(0,0,0,0.4)]`}
+              {/* Left: Crisp Topic/Brand Logo Tile (TikTok / Google Flow / Shop Cart / etc.) */}
+              <div
+                className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br ${item.iconBg} border shrink-0 flex items-center justify-center shadow-xs`}
               >
-                {item.step}
-              </span>
-
-              {/* Short Punchy Visual Title (2 words, zero cognitive load) */}
-              <div className="px-0.5 min-h-[26px] sm:min-h-[30px] flex flex-col items-center justify-center">
-                <span className="text-[9.5px] xs:text-[10.5px] sm:text-xs font-black text-white leading-tight tracking-tight line-clamp-2">
-                  {item.shortTitle}
-                </span>
-              </div>
-
-              {/* Phone Screen Visual Preview Frame */}
-              <div className="mt-1 w-full aspect-[9/12] rounded-xl overflow-hidden border border-white/20 bg-stone-900 relative flex items-center justify-center shadow-inner">
-                {/* Tiny phone speaker notch */}
-                <span className="absolute top-0.5 left-1/2 -translate-x-1/2 z-10 w-3 h-0.5 rounded-full bg-black/70 pointer-events-none" />
-
-                {!imgFailed ? (
-                  <img
-                    src={item.imageUrl}
-                    alt={item.fullTitle}
-                    loading="lazy"
-                    decoding="async"
-                    onError={() =>
-                      setFailedImages((prev) => ({ ...prev, [item.shortTitle]: true }))
-                    }
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <span className="text-xl sm:text-2xl">{item.icon}</span>
-                )}
-
-                {/* Top-right floating icon badge */}
                 <span
                   aria-hidden="true"
-                  className="absolute top-1 right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-black/70 backdrop-blur-xs border border-white/20 flex items-center justify-center text-[9px] sm:text-[11px]"
+                  className={`absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full border text-[9px] font-black flex items-center justify-center shadow-2xs ${item.badgeColor}`}
                 >
-                  {item.icon}
+                  {item.step}
                 </span>
-
-                {/* Bottom Visual Tag Pill inside Phone Screen */}
-                <span className="absolute bottom-0.5 inset-x-0.5 py-0.5 px-1 rounded-md bg-stone-950/90 border border-amber-400/40 text-[7.5px] sm:text-[9px] font-black text-amber-300 truncate leading-tight">
-                  ✓ {item.tag}
-                </span>
+                {renderHighlightVisualLogo(item.iconKey)}
               </div>
 
-              {/* Full Accessible Title (Screen-reader & desktop sub-caption) */}
-              <span className="sr-only sm:not-sr-only sm:mt-1 sm:text-[10px] sm:font-bold sm:text-stone-300 sm:line-clamp-1">
-                {item.fullTitle}
-              </span>
+              {/* Right: Short Memorable Title + Tiny Subtitle (Zero truncation, zero tool poster clutter) */}
+              <div className="min-w-0 flex-1">
+                <div className="text-xs sm:text-[12.5px] font-black text-[var(--text-primary)] leading-tight">
+                  {item.shortTitle}
+                </div>
+                <div className="text-[10px] sm:text-[10.5px] font-bold text-[var(--text-secondary)] leading-tight mt-0.5">
+                  {item.subText}
+                </div>
+                <span className="sr-only">{item.fullTitle}</span>
+              </div>
             </li>
           );
         })}
@@ -305,59 +394,8 @@ export default function CourseCoreHighlights({
         </button>
       )}
 
-      {/* Visual Bonus Strip: Show the 2 Free AI Tools (฿598 Value) with Real Posters */}
-      <div
-        data-testid="course-free-bonus-tools-strip"
-        className="rounded-xl bg-gradient-to-r from-stone-950 via-[#231206] to-stone-950 border border-amber-400/60 p-2 sm:p-2.5 text-white space-y-1.5"
-      >
-        <div className="flex items-center justify-between gap-1.5 flex-wrap">
-          <span className="text-[11px] sm:text-xs font-black text-amber-300 flex items-center gap-1">
-            <span>🎁</span>
-            <span>สมัครคอร์สนี้ แถมฟรีทันที 2 โปรแกรม AI:</span>
-          </span>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9.5px] sm:text-[10.5px] font-black">
-            มูลค่ารวม ฿598 ฟรี!
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-          {FREE_BONUS_TOOLS_PREVIEW.map((tool, idx) => (
-            <div
-              key={tool.slug}
-              className="flex items-center gap-2 p-1.5 rounded-lg bg-stone-900/95 border border-amber-400/30"
-            >
-              <div className="w-9 h-11 sm:w-10 sm:h-12 rounded-md overflow-hidden border border-amber-300/50 bg-stone-950 shrink-0">
-                <img
-                  src={tool.posterUrl}
-                  alt={tool.shortName}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1">
-                  <span className="px-1 py-[1px] rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[8.5px] sm:text-[9.5px] font-black">
-                    ฟรี #{idx + 1}
-                  </span>
-                  <span className="text-[8.5px] sm:text-[9.5px] text-stone-400 line-through font-bold">
-                    {tool.normalPrice}
-                  </span>
-                </div>
-                <div className="text-[10px] sm:text-xs font-black text-white truncate mt-0.5">
-                  {tool.shortName}
-                </div>
-                <div className="text-[9px] sm:text-[10px] text-amber-200/90 font-semibold truncate">
-                  {tool.role}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Summary Footer Bar (migrated from Quick Info Badges) */}
-      <div className="pt-1.5 border-t border-[var(--border-light)] text-[11px] sm:text-xs font-bold text-[var(--text-secondary)] flex items-center justify-between flex-wrap gap-1.5">
+      {/* Summary Footer Bar */}
+      <div className="pt-2 border-t border-[var(--border-light)] text-[11px] sm:text-xs font-bold text-[var(--text-secondary)] flex items-center justify-between flex-wrap gap-1.5">
         <span>🎬 ครบ 22 บทเรียนเต็ม • ♾️ ดูซ้ำได้ตลอดชีพ ไม่มีพื้นฐานก็เรียนตามได้ทันที</span>
         {showBonusLineInFooter && (
           <span className="text-[var(--accent)] font-black">

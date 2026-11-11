@@ -282,7 +282,7 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
         'utf8'
       );
       expect(bannerSource).toContain('data-testid="poster-tool-count-badge"');
-      expect(bannerSource).toContain('ได้ครบ {pricing.toolOnlyCount} Tools + คอร์ส ({pricing.itemCount} ตัว!)');
+      expect(bannerSource).toContain('{pricing.toolOnlyCount} โปรแกรม AI');
       expect(bannerSource).toContain('รวม {pricing.itemCount} รายการ!');
 
       const widgetSource = fs.readFileSync(

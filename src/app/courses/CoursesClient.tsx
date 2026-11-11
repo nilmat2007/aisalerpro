@@ -297,14 +297,6 @@ export default function CoursesClient({
                       </button>
                     </div>
 
-                    {/* All-in-One 999 VIP Package Upsell (puppap-all-in-one) immediately after ดูสารบัญ 22 บท */}
-                    <AllInOneUpsellBanner
-                      variant="compact"
-                      currentToolSlug={course?.slug || 'tiktok-ai-affiliate'}
-                      source="courses_banner"
-                      className="mt-2"
-                    />
-
                     <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap pt-0.5">
                       <button
                         type="button"
@@ -336,6 +328,17 @@ export default function CoursesClient({
               🔒 รับประกันสิทธิ์ตลอดชีพ · เข้าเรียนได้ทันทีหลังชำระเงิน · มีทีมงานคอยช่วยเหลือตลอดเวลา
             </p>
           </div>
+
+          {!hasAccess && (
+            <div className="lg:col-span-12 pt-2 border-t border-[var(--border-light)]/70">
+              {/* All-in-One 799 VIP Package Upsell (puppap-all-in-one) Spanning Full Width for Balanced Desktop Grid */}
+              <AllInOneUpsellBanner
+                variant="hero"
+                currentToolSlug={course?.slug || 'tiktok-ai-affiliate'}
+                source="courses_banner"
+              />
+            </div>
+          )}
         </div>
       </section>
 
