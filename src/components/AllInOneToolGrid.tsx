@@ -81,7 +81,11 @@ export default function AllInOneToolGrid({
             ? 'grid-cols-6'
             : items.length === 7
               ? 'grid-cols-7'
-              : 'grid-cols-4 sm:grid-cols-8';
+              : items.length === 8
+                ? 'grid-cols-4 sm:grid-cols-8'
+                : items.length === 9
+                  ? 'grid-cols-3 sm:grid-cols-9'
+                  : 'grid-cols-5 sm:grid-cols-10';
 
   const selectedItem =
     highlightedIndex >= 0 && highlightedIndex < items.length

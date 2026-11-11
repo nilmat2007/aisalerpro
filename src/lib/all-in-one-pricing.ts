@@ -121,6 +121,7 @@ const SHORT_TITLE_MAP: Record<string, string> = {
   'pup-podcast-studio': 'พอดแคสต์ เล่าเรื่อง',
   'pup-pap-banana-ai-studio': 'โชว์ใช้สินค้า',
   'pup-pap-storypro': 'ละครสั้น ซีรีส์',
+  'puppap-asmr': 'คลิป ASMR ขายของ',
 };
 
 // ตรงกับข้อมูลจริงในตาราง public.tools บน Supabase 100% (ไม่มี dead features.original_price)
@@ -221,6 +222,18 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     is_active: true,
     is_coming_soon: false,
     sort_order: 5,
+  },
+  {
+    id: 'default-asmr',
+    slug: 'puppap-asmr',
+    name: 'PUP PAP ASMR',
+    icon: '🎧',
+    poster_url: '/images/poster-puppap-asmr.jpg',
+    logo_url: '/images/poster-puppap-asmr.jpg',
+    price: '299 บาท',
+    is_active: true,
+    is_coming_soon: false,
+    sort_order: 4,
   },
 ];
 
