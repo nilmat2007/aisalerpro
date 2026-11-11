@@ -269,12 +269,21 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
       expect(gridSource).toContain('data-testid={`tool-slot-${idx + 1}`}');
       expect(gridSource).toContain('data-testid={`tool-thumb-${idx + 1}`}');
       expect(gridSource).toContain('data-testid="current-tool-badge"');
+      expect(gridSource).toContain('data-testid="grid-dynamic-item-count"');
       expect(gridSource).toContain('grid-cols-7');
       expect(gridSource).toContain('อัปเดตและเติมโปรแกรม AI ใหม่ให้ฟรี');
       expect(gridSource).toContain('ตลอดชีพ');
       expect(gridSource).toContain('ตัวนี้');
       expect(gridSource).toContain('loading="lazy"');
       expect(gridSource).toContain('decoding="async"');
+
+      const bannerSource = fs.readFileSync(
+        path.join(ROOT, 'src/components/AllInOneUpsellBanner.tsx'),
+        'utf8'
+      );
+      expect(bannerSource).toContain('data-testid="poster-tool-count-badge"');
+      expect(bannerSource).toContain('ได้ครบ {pricing.toolOnlyCount} Tools + คอร์ส ({pricing.itemCount} ตัว!)');
+      expect(bannerSource).toContain('รวม {pricing.itemCount} รายการ!');
 
       const widgetSource = fs.readFileSync(
         path.join(ROOT, 'src/components/FloatingPromoWidget.tsx'),

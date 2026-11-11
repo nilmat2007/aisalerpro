@@ -9,7 +9,10 @@ import {
   trackPreviewEvent,
   trackFunnelEvent,
 } from '@/lib/meta-pixel';
-import { COURSE_CORE_HIGHLIGHTS } from '@/components/CourseCoreHighlights';
+import {
+  COURSE_CORE_HIGHLIGHTS,
+  COURSE_VISUAL_HIGHLIGHTS,
+} from '@/components/CourseCoreHighlights';
 
 const ROOT = process.cwd();
 
@@ -208,13 +211,16 @@ describe('Lesson 21 ~1-Minute Preview Player & Psychological CRO Suite', () => {
       'utf8'
     );
 
-    it('exports 8 outcome-focused items without repetitive "สอนทำ" prefix', () => {
+    it('exports 8 outcome-focused items and 8 visual poster cards without repetitive "สอนทำ" prefix', () => {
       expect(COURSE_CORE_HIGHLIGHTS).toHaveLength(8);
+      expect(COURSE_VISUAL_HIGHLIGHTS).toHaveLength(8);
       for (const item of COURSE_CORE_HIGHLIGHTS) {
         expect(item).not.toContain('สอนทำ');
         expect(item).not.toContain('ตระกร้า');
       }
       expect(COURSE_CORE_HIGHLIGHTS).toContain('คลิปการ์ตูนแอนิเมชั่น 2D บนมือถือ');
+      expect(highlightsSource).toContain('data-testid="course-visual-highlights-grid"');
+      expect(highlightsSource).toContain('data-testid="course-free-bonus-tools-strip"');
     });
 
     it('includes the full header, mobile 4+4 collapse with aria-controls, and summary footer bar', () => {

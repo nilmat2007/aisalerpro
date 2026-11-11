@@ -171,12 +171,18 @@ export default function AllInOneToolGrid({
 
       {/* Bottom Lifetime Free Updates Ribbon Inside the Poster */}
       {renderPosterFooterRibbon && (
-        <div className="py-1.5 sm:py-2 px-3 rounded-full bg-gradient-to-r from-[#2b1204] via-[#451a03] to-[#2b1204] border-2 border-amber-400 text-center shadow-[0_4px_14px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(254,240,138,0.45)]">
+        <div className="py-1.5 sm:py-2 px-3 rounded-full bg-gradient-to-r from-[#2b1204] via-[#451a03] to-[#2b1204] border-2 border-amber-400 text-center shadow-[0_4px_14px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(254,240,138,0.45)] flex items-center justify-center gap-1.5 flex-wrap">
           <span className="text-xs sm:text-base font-black text-white tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
             อัปเดตและเติมโปรแกรม AI ใหม่ให้ฟรี{' '}
             <span className="text-yellow-300 underline decoration-amber-400/80">
               ตลอดชีพ
             </span>
+          </span>
+          <span
+            data-testid="grid-dynamic-item-count"
+            className="px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 text-[10px] sm:text-xs font-black shadow-xs"
+          >
+            ปัจจุบันครบ {items.length} รายการ (1–{items.length})
           </span>
         </div>
       )}

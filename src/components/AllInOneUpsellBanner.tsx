@@ -220,7 +220,7 @@ export default function AllInOneUpsellBanner({
           ✦
         </div>
 
-        {/* Poster Top Header: 3D Extruded Title + Giant 999 บาท + Mascot Badge on Right */}
+        {/* Poster Top Header: 3D Extruded Title + Giant 799 บาท + Prominent Dynamic Tool Count + Mascot Badge */}
         <div className="relative z-10 flex items-center justify-between gap-2 px-1 sm:px-3 pt-0.5">
           <div className="flex-1 text-center sm:pl-10">
             {/* 3D Title ("แพ็กเหมาๆ ปุ๊บ ปั๊บ") */}
@@ -228,20 +228,28 @@ export default function AllInOneUpsellBanner({
               แพ็กเหมาๆ ปุ๊บ ปั๊บ
             </div>
 
-            {/* Giant 3D Gold "999" + "บาท" + "ปกติ 2,054" tucked underneath */}
-            <div className="mt-0.5 inline-flex items-end justify-center gap-1.5">
+            {/* Giant 3D Gold "799" + "บาท" + "ปกติ 2,553" + Prominent Dynamic Tool Count Pill */}
+            <div className="mt-0.5 inline-flex items-end justify-center gap-1.5 flex-wrap">
               <span
                 className="puppap-poster-3d-price text-5xl xs:text-6xl sm:text-7xl font-black leading-[0.88] tracking-tighter"
                 data-testid="poster-package-price"
               >
                 {pricing.packagePriceFormatted}
               </span>
-              <div className="flex flex-col items-start leading-none pb-0.5">
-                <span className="puppap-poster-3d-baht text-lg xs:text-xl sm:text-2xl font-black">
-                  บาท
-                </span>
+              <div className="flex flex-col items-start leading-none pb-0.5 gap-0.5">
+                <div className="flex items-center gap-1">
+                  <span className="puppap-poster-3d-baht text-lg xs:text-xl sm:text-2xl font-black">
+                    บาท
+                  </span>
+                  <span
+                    data-testid="poster-tool-count-badge"
+                    className="px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 border-[1.5px] border-yellow-200 text-[10px] sm:text-xs font-black text-white shadow-[0_2px_8px_rgba(16,185,129,0.5)] whitespace-nowrap"
+                  >
+                    🛠️ ได้ครบ {pricing.toolOnlyCount} Tools + คอร์ส ({pricing.itemCount} ตัว!)
+                  </span>
+                </div>
                 <span
-                  className="mt-0.5 px-1.5 py-0.5 rounded-md bg-stone-950/90 border border-amber-400/50 text-[9px] sm:text-[11px] font-black text-amber-200 line-through"
+                  className="px-1.5 py-0.5 rounded-md bg-stone-950/90 border border-amber-400/50 text-[9px] sm:text-[11px] font-black text-amber-200 line-through"
                   data-testid="poster-separate-total"
                 >
                   ปกติ ฿{pricing.totalSeparateFormatted}
@@ -265,12 +273,12 @@ export default function AllInOneUpsellBanner({
               />
             </div>
             <span className="mt-1 px-1.5 py-0.5 rounded-full bg-rose-600 border border-rose-300 text-[8.5px] sm:text-[10px] font-black text-white shadow-xs whitespace-nowrap">
-              ลด {pricing.discountPercent}%
+              ลด {pricing.discountPercent}% · ครบ {pricing.itemCount} ตัว
             </span>
           </div>
         </div>
 
-        {/* Glowing Stage Ring + "▶ FLOW | Google Flow" Pill */}
+        {/* Glowing Stage Ring + "▶ FLOW | Google Flow {toolOnlyCount} โปรแกรม + คอร์ส 22 บท" Pill */}
         <div className="relative z-10 flex flex-col items-center -mt-1">
           <div className="puppap-poster-stage-ring px-4 py-1 rounded-full inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-950/95 via-stone-900/95 to-amber-950/95">
             <span className="w-4 h-4 rounded-full bg-amber-400 text-stone-950 text-[9px] font-black flex items-center justify-center shadow-xs">
@@ -280,17 +288,26 @@ export default function AllInOneUpsellBanner({
               FLOW
             </span>
             <span className="text-amber-500/60">|</span>
-            <span className="text-[10px] sm:text-xs font-bold text-white">
-              Google Flow + คอร์ส 22 บท
+            <span className="text-[10px] sm:text-xs font-extrabold text-white">
+              Google Flow ครบ {pricing.toolOnlyCount} โปรแกรม + คอร์ส 22 บท
             </span>
           </div>
         </div>
 
-        {/* Full-Width Glossy Banner Bar ("✨ ได้ทุกโปรแกรม คุ้มสุดๆ ✨") */}
+        {/* Full-Width Glossy Banner Bar ("✨ ได้ครบทั้ง {toolOnlyCount} โปรแกรม AI + คอร์ส คุ้มสุดๆ ✨") */}
         <div className="relative z-10 py-1.5 px-3 rounded-full bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 border-2 border-amber-300 text-center shadow-[0_4px_12px_rgba(0,0,0,0.45),inset_0_1px_1px_rgba(255,255,255,0.45)]">
           <div className="flex items-center justify-center gap-1.5 flex-wrap text-sm sm:text-lg font-black tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.75)]">
             <span className="text-yellow-300 text-xs sm:text-sm">✦</span>
-            <span className="text-white">ได้ทุกโปรแกรม + คอร์ส</span>
+            <span className="text-white">
+              ได้ครบทั้ง{' '}
+              <span className="underline decoration-yellow-300 text-yellow-200">
+                {pricing.toolOnlyCount} โปรแกรม AI
+              </span>{' '}
+              + คอร์ส
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-yellow-300 text-stone-950 text-xs sm:text-sm font-black shadow-xs">
+              รวม {pricing.itemCount} รายการ!
+            </span>
             <span className="text-yellow-300">คุ้มสุดๆ!</span>
             <span className="text-[10px] sm:text-xs font-extrabold text-amber-100 bg-black/35 px-2 py-0.5 rounded-full">
               ประหยัดทันที ฿{pricing.savingsFormatted} · คุ้มกว่าซื้อแยก 2 เท่า!
