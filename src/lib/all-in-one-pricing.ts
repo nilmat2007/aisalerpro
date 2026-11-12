@@ -123,6 +123,7 @@ const SHORT_TITLE_MAP: Record<string, string> = {
   'pup-pap-storypro': 'ละครสั้น ซีรีส์',
   'puppap-asmr': 'คลิป ASMR ขายของ',
   'puppap-drama': 'ละครสั้น ดราม่า',
+  'puppap-renovate': 'คลิปรีโนเวทบ้าน',
 };
 
 // ตรงกับข้อมูลจริงในตาราง public.tools บน Supabase 100% (ไม่มี dead features.original_price)
@@ -244,6 +245,18 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     poster_url: '/images/poster-puppap-drama.jpg',
     logo_url: '/images/poster-puppap-drama.jpg',
     price: '599 บาท',
+    is_active: true,
+    is_coming_soon: false,
+    sort_order: 2,
+  },
+  {
+    id: 'default-renovate',
+    slug: 'puppap-renovate',
+    name: 'PUP PAP RENOVATE (Easy Renovate AI Studio v4.0 Pro)',
+    icon: '🏚️',
+    poster_url: '/images/poster-puppap-renovate.jpg',
+    logo_url: '/images/poster-puppap-renovate.jpg',
+    price: '399 บาท',
     is_active: true,
     is_coming_soon: false,
     sort_order: 2,
