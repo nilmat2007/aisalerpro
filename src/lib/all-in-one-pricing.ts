@@ -122,6 +122,7 @@ const SHORT_TITLE_MAP: Record<string, string> = {
   'pup-pap-banana-ai-studio': 'โชว์ใช้สินค้า',
   'pup-pap-storypro': 'ละครสั้น ซีรีส์',
   'puppap-asmr': 'คลิป ASMR ขายของ',
+  'puppap-drama': 'ละครสั้น ดราม่า',
 };
 
 // ตรงกับข้อมูลจริงในตาราง public.tools บน Supabase 100% (ไม่มี dead features.original_price)
@@ -234,6 +235,18 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     is_active: true,
     is_coming_soon: false,
     sort_order: 4,
+  },
+  {
+    id: 'default-drama',
+    slug: 'puppap-drama',
+    name: 'PUP PAP DRAMA (Studio Director v6.6.19)',
+    icon: '🎭',
+    poster_url: '/images/poster-puppap-drama.jpg',
+    logo_url: '/images/poster-puppap-drama.jpg',
+    price: '599 บาท',
+    is_active: true,
+    is_coming_soon: false,
+    sort_order: 2,
   },
 ];
 

@@ -601,8 +601,13 @@ export default function ToolGuideClient({
 
                         {/* Code Block (Tool Link) */}
                         {step.code_block && !isVideo && (() => {
-                          const displayUrl = isTrial && trialFlowUrl ? trialFlowUrl : (activeFlowUrl || step.code_block);
-                          return isUnlocked ? (
+                          const rawStepCode =
+                            step.code_block === 'LOCKED_FLOW_LINK' ? '' : step.code_block;
+                          const displayUrl =
+                            isTrial && trialFlowUrl
+                              ? trialFlowUrl
+                              : activeFlowUrl || rawStepCode;
+                          return isUnlocked && displayUrl ? (
                             <div className="bg-slate-950 p-3 rounded-lg mt-2 text-sm text-slate-400 break-all border border-slate-800">
                               <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
                                 {displayUrl}

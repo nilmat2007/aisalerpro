@@ -29,7 +29,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ tool
 
   const result = sections.map(section => ({
     ...section,
-    steps: steps?.filter(step => step.section_id === section.id) || []
+    steps: (steps?.filter(step => step.section_id === section.id) || []).map(step => {
+      // Never leak raw Google Flow / Labs URLs in public guide_steps.code_block
+      if (
+        section.style_variant !== 'video' &&
+        typeof step.code_block === 'string' &&
+        (step.code_block.includes('flow.google.com') || step.code_block.includes('labs.google'))
+      ) {
+        return { ...step, code_block: 'LOCKED_FLOW_LINK' };
+      }
+      return step;
+    }),
   }));
 
   return NextResponse.json(result);
