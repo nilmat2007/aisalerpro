@@ -48,6 +48,8 @@ const MOCK_COURSE_TOOL = {
         title: 'บทเรียนลับเฉพาะสมาชิก',
         description: 'บทที่ 2 ล็อกสำหรับสมาชิก',
         video_url: 'https://drive.google.com/file/d/LOCKED_SECRET_DRIVE_ID_999/preview',
+        example_video_url: 'https://drive.google.com/file/d/LOCKED_EXAMPLE_DRIVE_ID_888/preview',
+        example_video_title: 'ตัวอย่างผลงานมาสเตอร์คลาส',
         duration: '15:00 นาที',
         status: 'ready',
         is_free_preview: false,
@@ -223,13 +225,16 @@ describe('Public Data Leak Prevention Tests', () => {
     const serializedProps = JSON.stringify(element.props);
     const html = renderToStaticMarkup(element as React.ReactElement);
 
-    // Lesson 2 is locked -> its video_url must be 'locked' and its Drive ID must never appear in RSC props or HTML
+    // Lesson 2 is locked -> its video_url & example_video_url must be 'locked' and its Drive IDs must never appear in RSC props or HTML
     const lessons = element.props.tool.features.lessons;
     const lockedLesson = lessons.find((l: any) => !l.is_free_preview);
     expect(lockedLesson.video_url).toBe('locked');
+    expect(lockedLesson.example_video_url).toBe('locked');
     expect(lockedLesson.video_url).not.toContain('drive.google.com');
     expect(serializedProps).not.toContain('LOCKED_SECRET_DRIVE_ID_999');
+    expect(serializedProps).not.toContain('LOCKED_EXAMPLE_DRIVE_ID_888');
     expect(html).not.toContain('LOCKED_SECRET_DRIVE_ID_999');
+    expect(html).not.toContain('LOCKED_EXAMPLE_DRIVE_ID_888');
   });
 
   test('GET /course/[slug] guest: prompts ของบท locked ไม่อยู่ใน HTML', async () => {

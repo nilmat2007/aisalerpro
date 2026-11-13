@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getPriceInfo } from '@/lib/price-utils';
-import { getLessonEmbedUrl, type LessonPromptStep, type PublicLesson } from '@/lib/sanitize-tool';
+import { getLessonEmbedUrl, getLessonExampleEmbedUrl, type LessonPromptStep, type PublicLesson } from '@/lib/sanitize-tool';
 
 type Lesson = Omit<PublicLesson, 'prompts'> & {
   prompts?: LessonPromptStep[] | null;
@@ -33,11 +33,13 @@ export default function CourseStudioClient({
   const [customVars, setCustomVars] = useState<Record<string, string>>({});
   const [customPrompts, setCustomPrompts] = useState<Record<string, string>>({});
   const [isVideoLoading, setIsVideoLoading] = useState<boolean>(true);
+  const [videoMode, setVideoMode] = useState<'main' | 'example'>('main');
 
   const selectLesson = (lessonId: number) => {
     setSidebarOpen(false);
     if (lessonId !== activeLessonId) {
       setIsVideoLoading(true);
+      setVideoMode('main');
       setActiveLessonId(lessonId);
     }
     if (typeof window !== 'undefined') {
@@ -221,7 +223,9 @@ export default function CourseStudioClient({
   });
 
   const embedUrl = activeLesson ? getLessonEmbedUrl(activeLesson) : '';
-  const isVideoReady = Boolean(embedUrl) && activeLesson?.status === 'ready';
+  const exampleEmbedUrl = activeLesson ? getLessonExampleEmbedUrl(activeLesson) : '';
+  const currentEmbedUrl = videoMode === 'example' && exampleEmbedUrl ? exampleEmbedUrl : embedUrl;
+  const isVideoReady = Boolean(currentEmbedUrl) && activeLesson?.status === 'ready';
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -351,6 +355,50 @@ export default function CourseStudioClient({
       <div className="flex-1 flex max-w-7xl w-full mx-auto p-4 sm:p-6 gap-6 relative">
         {/* Left Column: 16:9 Video Player & Lesson Content */}
         <main className="flex-1 min-w-0 space-y-6">
+          {/* Optional Dual Video Switcher (Main Tutorial vs Example Master Video) */}
+          {canViewActiveLesson && exampleEmbedUrl && (
+            <div className="p-2 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-accent)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 shadow-xs">
+              <div className="flex items-center gap-1.5 px-2 text-xs font-extrabold text-[var(--accent)]">
+                <span>🎬</span>
+                <span>เลือกสลับโหมดวิดีโอในบทเรียนนี้:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (videoMode !== 'main') {
+                      setIsVideoLoading(true);
+                      setVideoMode('main');
+                    }
+                  }}
+                  className={`flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all ${
+                    videoMode === 'main'
+                      ? 'puppap-btn-primary shadow-sm'
+                      : 'bg-[var(--bg-deep)] hover:bg-[var(--accent-dim)] text-[var(--text-secondary)] border border-[var(--border-light)]'
+                  }`}
+                >
+                  <span>🎓 คลิปสอนบทเรียนหลัก</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (videoMode !== 'example') {
+                      setIsVideoLoading(true);
+                      setVideoMode('example');
+                    }
+                  }}
+                  className={`flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all ${
+                    videoMode === 'example'
+                      ? 'bg-emerald-600 text-white border border-emerald-700 shadow-sm'
+                      : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30'
+                  }`}
+                >
+                  <span>🍿 ดูคลิปตัวอย่างผลงานจริง ({activeLesson?.example_video_title || 'ตัวอย่างจากบทเรียน'})</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* 16:9 Landscape Video Container with Protection Suite */}
           <div
             ref={playerContainerRef}
@@ -369,7 +417,7 @@ export default function CourseStudioClient({
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-stone-950/90 text-white p-4 text-center pointer-events-none">
                       <div className="w-11 h-11 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin mb-3" />
                       <p className="text-xs sm:text-sm font-bold text-white">
-                        🎬 กำลังโหลดวิดีโอบทที่ {activeLesson?.id}: {activeLesson?.title}
+                        🎬 กำลังโหลด{videoMode === 'example' ? `คลิปตัวอย่าง (${activeLesson?.example_video_title || 'ผลงานจริง'})` : `วิดีโอบทที่ ${activeLesson?.id}: ${activeLesson?.title}`}
                       </p>
                       <p className="text-[11px] text-stone-400 mt-1">
                         กรุณารอสักครู่...
@@ -378,9 +426,9 @@ export default function CourseStudioClient({
                   )}
 
                   <iframe
-                    key={embedUrl}
-                    src={embedUrl}
-                    title={activeLesson.title}
+                    key={currentEmbedUrl}
+                    src={currentEmbedUrl}
+                    title={videoMode === 'example' ? (activeLesson.example_video_title || activeLesson.title) : activeLesson.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     onLoad={() => setIsVideoLoading(false)}

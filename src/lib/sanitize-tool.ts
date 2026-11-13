@@ -26,6 +26,8 @@ export interface Lesson {
   title: string;
   description: string;
   video_url: string;
+  example_video_url?: string;
+  example_video_title?: string;
   duration?: string;
   status: 'ready' | 'coming_soon';
   is_free_preview: boolean;
@@ -83,8 +85,9 @@ export type PublicTool = Omit<Tool, 'password' | 'flow_url' | 'trial_flow_url' |
   password?: never;
 };
 
-export type PublicLesson = Omit<Lesson, 'video_url' | 'prompts'> & {
+export type PublicLesson = Omit<Lesson, 'video_url' | 'example_video_url' | 'prompts'> & {
   video_url: string | 'locked';
+  example_video_url?: string | 'locked';
   prompts: any | null;
   promptStepCount: number;
 };
@@ -98,7 +101,7 @@ export function sanitizeLessonForPublic(
   lesson: Lesson,
   opts: { hasAccess: boolean; isFreePreview: boolean }
 ): PublicLesson {
-  const { video_url, prompts, ...rest } = lesson || ({} as Lesson);
+  const { video_url, example_video_url, prompts, ...rest } = lesson || ({} as Lesson);
 
   const promptStepCount = Array.isArray(prompts)
     ? prompts.length
@@ -113,6 +116,9 @@ export function sanitizeLessonForPublic(
   return {
     ...rest,
     video_url: canViewVideo ? (video_url || '') : 'locked',
+    ...(example_video_url
+      ? { example_video_url: canViewVideo ? example_video_url : 'locked' }
+      : {}),
     prompts: opts.hasAccess ? (prompts ?? null) : null,
     promptStepCount,
   };
@@ -275,6 +281,14 @@ export function mergePreservedSensitiveToolFields(
             !incLesson.video_url || incLesson.video_url === 'locked'
               ? orig.video_url
               : incLesson.video_url,
+          example_video_url:
+            !incLesson.example_video_url || incLesson.example_video_url === 'locked'
+              ? orig.example_video_url
+              : incLesson.example_video_url,
+          example_video_title:
+            incLesson.example_video_title !== undefined
+              ? incLesson.example_video_title
+              : orig.example_video_title,
           prompts:
             incLesson.prompts === null || incLesson.prompts === undefined
               ? orig.prompts
@@ -302,6 +316,12 @@ export function getLessonVideoLink(lesson: any): string {
   return String(raw);
 }
 
+export function getLessonExampleVideoLink(lesson: any): string {
+  const raw = lesson?.example_video_url;
+  if (!raw || raw === 'locked') return '';
+  return String(raw);
+}
+
 export function hasLessonVideoLink(lesson: any): boolean {
   const link = getLessonVideoLink(lesson);
   return link.trim().length > 0;
@@ -316,6 +336,11 @@ export function withLessonVideoLink<T extends Record<string, any>>(lesson: T, ur
 
 export function getLessonEmbedUrl(lesson: any): string {
   const url = getLessonVideoLink(lesson);
+  return getToolTutorialEmbedUrl(url);
+}
+
+export function getLessonExampleEmbedUrl(lesson: any): string {
+  const url = getLessonExampleVideoLink(lesson);
   return getToolTutorialEmbedUrl(url);
 }
 
