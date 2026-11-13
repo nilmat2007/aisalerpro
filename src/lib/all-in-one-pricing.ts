@@ -125,6 +125,7 @@ const SHORT_TITLE_MAP: Record<string, string> = {
   'puppap-drama': 'ละครสั้น ดราม่า',
   'puppap-renovate': 'คลิปรีโนเวทบ้าน',
   'puppap-medical-docu': 'คลิปหมอ & สารคดี',
+  'puppap-affiliate-factory': 'โกดัง & สายพานป้ายยา',
 };
 
 // ตรงกับข้อมูลจริงในตาราง public.tools บน Supabase 100% (ไม่มี dead features.original_price)
@@ -269,6 +270,18 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     icon: '👩‍⚕️',
     poster_url: '/images/poster-puppap-medical-docu.jpg',
     logo_url: '/images/poster-puppap-medical-docu.jpg',
+    price: '399 บาท',
+    is_active: true,
+    is_coming_soon: false,
+    sort_order: 2,
+  },
+  {
+    id: 'default-affiliate-factory',
+    slug: 'puppap-affiliate-factory',
+    name: 'PUP PAP AFFILIATE & FACTORY LIVE (สตูดิโอโกดังแพ็คของ & สายพานโรงงานป้ายยา v4.1 Pro)',
+    icon: '🏭',
+    poster_url: '/images/poster-puppap-affiliate-factory.jpg',
+    logo_url: '/images/poster-puppap-affiliate-factory.jpg',
     price: '399 บาท',
     is_active: true,
     is_coming_soon: false,

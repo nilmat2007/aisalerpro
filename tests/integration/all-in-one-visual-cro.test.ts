@@ -16,7 +16,7 @@ const ROOT = process.cwd();
 
 describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', () => {
   describe('1. DEFAULT_SHOWCASE_TOOLS DB Sync & Zero Dead Fields', () => {
-    it('matches the exact 12 eligible active slugs in public.tools with zero dead original_price fields', () => {
+    it('matches the exact 13 eligible active slugs in public.tools with zero dead original_price fields', () => {
       const slugs = DEFAULT_SHOWCASE_TOOLS.map((t) => t.slug);
       expect(slugs).toEqual([
         'tiktok-ai-affiliate',
@@ -31,6 +31,7 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
         'puppap-drama',
         'puppap-renovate',
         'puppap-medical-docu',
+        'puppap-affiliate-factory',
       ]);
 
       for (const tool of DEFAULT_SHOWCASE_TOOLS) {
@@ -61,6 +62,9 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
         'คลิปหมอ & สารคดี'
       );
       expect(
+        getShortVisualTitle({ slug: 'puppap-affiliate-factory', name: 'PUP PAP AFFILIATE' })
+      ).toBe('โกดัง & สายพานป้ายยา');
+      expect(
         getShortVisualTitle({
           slug: 'puppap-future-2027',
           name: 'PUP PAP AI Super Voice Cloning Studio',
@@ -77,21 +81,21 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
   });
 
   describe('2. getAllInOnePricing() Dynamic Math, DB Package Price & Empty Guard', () => {
-    it('computes exact standalone sum (฿4,249), packagePrice (฿799), savings (฿3,450 / 81%), unitCostAvg (฿67), and courseBonusToolsValue (฿598)', () => {
+    it('computes exact standalone sum (฿4,648), packagePrice (฿799), savings (฿3,849 / 83%), unitCostAvg (฿61), and courseBonusToolsValue (฿598)', () => {
       const p = getAllInOnePricing();
       expect(p.isEmpty).toBe(false);
-      expect(p.itemCount).toBe(12);
-      expect(p.toolOnlyCount).toBe(11);
+      expect(p.itemCount).toBe(13);
+      expect(p.toolOnlyCount).toBe(12);
       expect(p.packagePrice).toBe(799);
       expect(p.packagePriceFormatted).toBe('799');
 
-      // 159 + 699 + 299 + 299 + 299 + 499 + 0 + 299 + 299 + 599 + 399 + 399 = 4249
-      expect(p.totalSeparateValue).toBe(4249);
-      expect(p.totalSeparateFormatted).toBe('4,249');
-      expect(p.savingsAmount).toBe(4249 - 799); // 3450
-      expect(p.savingsFormatted).toBe('3,450');
-      expect(p.discountPercent).toBe(Math.round((3450 / 4249) * 100)); // 81
-      expect(p.unitCostAvg).toBe(Math.round(799 / 12)); // 67
+      // 159 + 699 + 299 + 299 + 299 + 499 + 0 + 299 + 299 + 599 + 399 + 399 + 399 = 4648
+      expect(p.totalSeparateValue).toBe(4648);
+      expect(p.totalSeparateFormatted).toBe('4,648');
+      expect(p.savingsAmount).toBe(4648 - 799); // 3849
+      expect(p.savingsFormatted).toBe('3,849');
+      expect(p.discountPercent).toBe(Math.round((3849 / 4648) * 100)); // 83
+      expect(p.unitCostAvg).toBe(Math.round(799 / 13)); // 61
       expect(p.coursePrice).toBe(159);
       expect(p.courseBonusToolsValue).toBe(598);
       expect(p.courseBonusToolsFormatted).toBe('598');
@@ -118,7 +122,7 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
       const p = getAllInOnePricing(toolsWith1299Package, 'puppap-fashion-studio');
       expect(p.packagePrice).toBe(1299);
       expect(p.packagePriceFormatted).toBe('1,299');
-      expect(p.savingsAmount).toBe(4249 - 1299); // 2950
+      expect(p.savingsAmount).toBe(4648 - 1299); // 3349
       expect(p.upgradeDiffAmount).toBe(1299 - 299); // 1000
 
       // Defense-in-depth: even if slug was corrupted to "-799-ai-", it recognizes the package row and filters it out of items
@@ -147,11 +151,11 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
       expect(merged.price).toBe('799 บาท');
     });
 
-    it('dynamically expands when a 13th tool is added and excludes tools with exclude_from_all_in_one: true', () => {
-      const toolsWith13thAndExcluded = [
+    it('dynamically expands when a 14th tool is added and excludes tools with exclude_from_all_in_one: true', () => {
+      const toolsWith14thAndExcluded = [
         ...DEFAULT_SHOWCASE_TOOLS,
         {
-          id: 'tool-13',
+          id: 'tool-14',
           slug: 'puppap-voice-clone',
           name: 'PUP PAP Voice Clone',
           price: '399 บาท',
@@ -169,11 +173,11 @@ describe('All-in-One ฿799 HTML Visual Layer & Global Floating Promo Suite', ()
         },
       ];
 
-      const p = getAllInOnePricing(toolsWith13thAndExcluded, 'puppap-enterprise-only');
-      expect(p.itemCount).toBe(13);
-      expect(p.toolOnlyCount).toBe(12);
-      expect(p.totalSeparateValue).toBe(4249 + 399); // 4648
-      expect(p.savingsAmount).toBe(4648 - 799); // 3849
+      const p = getAllInOnePricing(toolsWith14thAndExcluded, 'puppap-enterprise-only');
+      expect(p.itemCount).toBe(14);
+      expect(p.toolOnlyCount).toBe(13);
+      expect(p.totalSeparateValue).toBe(4648 + 399); // 5047
+      expect(p.savingsAmount).toBe(5047 - 799); // 4248
       // Excluded tool must not be marked eligible
       expect(p.isCurrentToolEligible).toBe(false);
       expect(p.currentItem).toBeNull();
