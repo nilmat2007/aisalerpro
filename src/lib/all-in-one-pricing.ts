@@ -124,6 +124,7 @@ const SHORT_TITLE_MAP: Record<string, string> = {
   'puppap-asmr': 'คลิป ASMR ขายของ',
   'puppap-drama': 'ละครสั้น ดราม่า',
   'puppap-renovate': 'คลิปรีโนเวทบ้าน',
+  'puppap-medical-docu': 'คลิปหมอ & สารคดี',
 };
 
 // ตรงกับข้อมูลจริงในตาราง public.tools บน Supabase 100% (ไม่มี dead features.original_price)
@@ -256,6 +257,18 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     icon: '🏚️',
     poster_url: '/images/poster-puppap-renovate.jpg',
     logo_url: '/images/poster-puppap-renovate.jpg',
+    price: '399 บาท',
+    is_active: true,
+    is_coming_soon: false,
+    sort_order: 2,
+  },
+  {
+    id: 'default-medical-docu',
+    slug: 'puppap-medical-docu',
+    name: 'PUP PAP MEDICAL & DOCU-VIRAL (สตูดิโอพยาบาล/หมอให้ความรู้ & สารคดีไวรัล v4.0 Pro)',
+    icon: '👩‍⚕️',
+    poster_url: '/images/poster-puppap-medical-docu.jpg',
+    logo_url: '/images/poster-puppap-medical-docu.jpg',
     price: '399 บาท',
     is_active: true,
     is_coming_soon: false,
