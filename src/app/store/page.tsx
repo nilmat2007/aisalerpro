@@ -16,6 +16,7 @@ import {
   attemptCourseBundleHeal,
   COURSE_BUNDLE_BONUS_TOOL_SLUGS,
 } from '@/lib/course-bundle'
+import { isAdminBypassActiveForEmail } from '@/lib/ai-slip-config'
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +27,17 @@ export default async function StorePage() {
 
   const ownedToolIds = new Set<string>()
   if (user) {
-    const bundleAccess = await resolveUserBundleAccess(supabaseAdmin, user.id, user.email || '')
+    const [adminBypass, bundleAccess] = await Promise.all([
+      isAdminBypassActiveForEmail(user.email),
+      resolveUserBundleAccess(supabaseAdmin, user.id, user.email || ''),
+    ])
     for (const tid of bundleAccess.ownedToolIds) {
       ownedToolIds.add(tid)
+    }
+    if (adminBypass) {
+      for (const t of rawAllTools || []) {
+        ownedToolIds.add((t as any).id)
+      }
     }
     if (bundleAccess.needsBackgroundSync) {
       await attemptCourseBundleHeal(supabaseAdmin, user.id, user.email || '')

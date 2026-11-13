@@ -24,8 +24,11 @@ export default function AdminSettingsPage() {
     has_slipok_key: false,
     slipok_key_masked: '',
     slipok_api_key_input: '',
+    admin_bypass_enabled: false,
+    admin_bypass_emails_input: 'nilmat2007@gmail.com, nilmat200757@gmail.com',
   })
 
+  const [togglingBypass, setTogglingBypass] = useState(false)
   const [showAdvancedSlipOk, setShowAdvancedSlipOk] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -101,6 +104,10 @@ export default function AdminSettingsPage() {
               slipok_api_url: data.ai_slip_config.slipok_api_url || '',
               has_slipok_key: Boolean(data.ai_slip_config.has_slipok_key),
               slipok_key_masked: data.ai_slip_config.slipok_key_masked || '',
+              admin_bypass_enabled: Boolean(data.ai_slip_config.admin_bypass_enabled),
+              admin_bypass_emails_input: Array.isArray(data.ai_slip_config.admin_bypass_emails)
+                ? data.ai_slip_config.admin_bypass_emails.join(', ')
+                : 'nilmat2007@gmail.com, nilmat200757@gmail.com',
             }))
           }
         }
@@ -111,6 +118,50 @@ export default function AdminSettingsPage() {
         setLoading(false)
       })
   }, [])
+
+  const handleQuickToggleBypass = async (nextEnabled: boolean) => {
+    setTogglingBypass(true)
+    setAiConfig(prev => ({ ...prev, admin_bypass_enabled: nextEnabled }))
+    try {
+      const payload = {
+        ...settings,
+        ai_slip_config: {
+          ai_slip_enabled: aiConfig.ai_slip_enabled,
+          gemini_api_key: '__KEEP__',
+          max_slip_age_minutes: aiConfig.max_slip_age_minutes,
+          slipok_api_url: aiConfig.slipok_api_url.trim(),
+          slipok_api_key: '__KEEP__',
+          admin_bypass_enabled: nextEnabled,
+          admin_bypass_emails: aiConfig.admin_bypass_emails_input,
+        },
+      }
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await res.json()
+      if (res.ok && result?.ai_slip_config) {
+        setAiConfig(prev => ({
+          ...prev,
+          admin_bypass_enabled: Boolean(result.ai_slip_config.admin_bypass_enabled),
+          admin_bypass_emails_input: Array.isArray(result.ai_slip_config.admin_bypass_emails)
+            ? result.ai_slip_config.admin_bypass_emails.join(', ')
+            : prev.admin_bypass_emails_input,
+        }))
+        setToast(
+          nextEnabled
+            ? '🟢 เปิดโหมดแอดมินปลดล็อกทุกลิงก์เรียบร้อย! (อีเมลแอดมินเห็นทุกเครื่องมือ & คอร์สเรียน)'
+            : '🔒 ปิดโหมดแอดมินเรียบร้อย! (จำลองมุมมองลูกค้าจริง 100% — เห็นเฉพาะที่ซื้อจริง)'
+        )
+        setTimeout(() => setToast(''), 4000)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setTogglingBypass(false)
+    }
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,6 +180,8 @@ export default function AdminSettingsPage() {
           slipok_api_key: aiConfig.slipok_api_key_input.trim()
             ? aiConfig.slipok_api_key_input.trim()
             : '__KEEP__',
+          admin_bypass_enabled: aiConfig.admin_bypass_enabled,
+          admin_bypass_emails: aiConfig.admin_bypass_emails_input,
         },
       }
 
@@ -152,6 +205,10 @@ export default function AdminSettingsPage() {
             has_slipok_key: Boolean(result.ai_slip_config.has_slipok_key),
             slipok_key_masked: result.ai_slip_config.slipok_key_masked || '',
             slipok_api_key_input: '',
+            admin_bypass_enabled: Boolean(result.ai_slip_config.admin_bypass_enabled),
+            admin_bypass_emails_input: Array.isArray(result.ai_slip_config.admin_bypass_emails)
+              ? result.ai_slip_config.admin_bypass_emails.join(', ')
+              : prev.admin_bypass_emails_input,
           }))
         }
         setToast('✅ บันทึกการตั้งค่าเว็บไซต์และระบบ AI ตรวจสลิปสำเร็จ!')
@@ -181,6 +238,75 @@ export default function AdminSettingsPage() {
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* 👑👁️ แผงสลับโหมดแอดมินปลดล็อกทุกลิงก์ vs โหมดจำลองมุมมองลูกค้าจริง */}
+        <div
+          className={`bg-slate-900 border-2 rounded-2xl p-6 space-y-4 shadow-xl transition-colors ${
+            aiConfig.admin_bypass_enabled
+              ? 'border-amber-500/60'
+              : 'border-cyan-500/40'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                  <span>👑👁️</span>
+                  <span>โหมดแอดมินดูทุกลิงก์ vs โหมดจำลองมุมมองลูกค้าจริง</span>
+                </h2>
+                {aiConfig.admin_bypass_enabled ? (
+                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    🟢 เปิดโหมดแอดมิน (เห็นทุกลิงก์โดยไม่ต้องซื้อ)
+                  </span>
+                ) : (
+                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                    🔒 ปิดโหมดแอดมิน (จำลองมุมมองลูกค้าจริง 100%)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                เมื่อ <strong>ปิดโหมดแอดมิน (🔒)</strong> เวลาคุณล็อกอินหน้าเว็บด้วยอีเมลตัวเอง ระบบจะแสดงผลเหมือนลูกค้าทั่วไป 100% (ซ่อนลิงก์ที่ยังไม่ได้ซื้อทั้งหมด) • เมื่อ <strong>เปิดโหมดแอดมิน (🟢)</strong> อีเมลของคุณจะปลดล็อกเข้าดูได้ทุกเครื่องมือและคอร์สเรียนครบทั้ง 23 บททันที
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                disabled={togglingBypass}
+                onClick={() => handleQuickToggleBypass(!aiConfig.admin_bypass_enabled)}
+                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold border transition-all shadow-md active:scale-95 ${
+                  aiConfig.admin_bypass_enabled
+                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-400'
+                    : 'bg-slate-950 hover:bg-slate-800 text-cyan-300 border-cyan-500/50'
+                }`}
+              >
+                {togglingBypass
+                  ? '⏳ กำลังสลับโหมด...'
+                  : aiConfig.admin_bypass_enabled
+                  ? '🟢 เปิดอยู่ (คลิกเพื่อสลับเป็นมุมมองลูกค้า 🔒)'
+                  : '🔒 มุมมองลูกค้า (คลิกเพื่อปลดล็อกแอดมิน 🟢)'}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs sm:text-sm font-semibold text-slate-300">
+              📧 รายชื่ออีเมลแอดมินที่ได้รับสิทธิ์เมื่อเปิดโหมดนี้ (คั่นด้วยลูกน้ำ ,)
+            </label>
+            <input
+              type="text"
+              value={aiConfig.admin_bypass_emails_input}
+              onChange={e =>
+                setAiConfig({ ...aiConfig, admin_bypass_emails_input: e.target.value })
+              }
+              placeholder="nilmat2007@gmail.com, nilmat200757@gmail.com"
+              className="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-lg px-4 py-2 text-white text-xs sm:text-sm font-mono focus:outline-none"
+            />
+            <p className="text-[11px] text-slate-500">
+              💡 เฉพาะอีเมลที่ระบุในช่องนี้เท่านั้นที่จะเห็นทุกลิงก์เมื่อสวิตช์ด้านบนเป็น <strong>🟢 เปิดโหมดแอดมิน</strong> (ลูกค้าคนอื่นไม่มีผลใดๆ ทั้งสิ้น)
+            </p>
+          </div>
+        </div>
+
         {/* 🤖 แผงควบคุมระบบ AI ตรวจสลิปและอนุมัติอัตโนมัติ 24 ชม. */}
         <div className="bg-slate-900 border-2 border-emerald-500/40 rounded-2xl p-6 space-y-5 shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">

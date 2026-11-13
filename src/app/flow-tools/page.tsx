@@ -10,6 +10,7 @@ import {
   resolveUserBundleAccess,
   attemptCourseBundleHeal,
 } from '@/lib/course-bundle';
+import { isAdminBypassActiveForEmail } from '@/lib/ai-slip-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,7 @@ export default async function FlowToolsPage() {
   const ownedSet = new Set<string>();
 
   if (user) {
-    const [userToolsRes, userTrialsRes, keysByEmailRes, ordersByEmailRes, bundleAccess] = await Promise.all([
+    const [userToolsRes, userTrialsRes, keysByEmailRes, ordersByEmailRes, bundleAccess, adminBypass] = await Promise.all([
       supabase.from('user_tools').select('id, user_id, tool_id, license_key_id, activated_at, is_active').eq('user_id', user.id),
       supabase.from('user_trials').select('id, user_id, tool_id, status, started_at').eq('user_id', user.id),
       user.email
@@ -50,6 +51,7 @@ export default async function FlowToolsPage() {
             .ilike('user_email', user.email)
         : Promise.resolve({ data: [] as any[] }),
       resolveUserBundleAccess(supabaseAdmin, user.id, user.email || ''),
+      isAdminBypassActiveForEmail(user.email),
     ]);
 
     userTools = userToolsRes.data || [];
@@ -60,6 +62,11 @@ export default async function FlowToolsPage() {
     }
     for (const tid of bundleAccess?.ownedToolIds || []) {
       ownedSet.add(tid);
+    }
+    if (adminBypass) {
+      for (const t of tools || []) {
+        ownedSet.add((t as any).id);
+      }
     }
 
     let healed = false;

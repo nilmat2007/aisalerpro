@@ -15,6 +15,7 @@ import {
   resolveUserBundleAccess,
   attemptCourseBundleHeal,
 } from '@/lib/course-bundle';
+import { isAdminBypassActiveForEmail } from '@/lib/ai-slip-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,15 +59,9 @@ export default async function CoursePage(props: {
 
   let hasAccess = false;
 
-  const ADMIN_EMAILS = ['nilmat2007@gmail.com', 'nilmat200757@gmail.com'];
-
   if (user) {
-    const [{ data: profile }, { data: userTool }, bundleAccess] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle(),
+    const [adminBypass, { data: userTool }, bundleAccess] = await Promise.all([
+      isAdminBypassActiveForEmail(user.email),
       supabase
         .from('user_tools')
         .select('id')
@@ -77,11 +72,7 @@ export default async function CoursePage(props: {
       resolveUserBundleAccess(supabaseAdmin, user.id, user.email || ''),
     ]);
 
-    const isTrueAdmin =
-      profile?.role === 'admin' &&
-      ADMIN_EMAILS.includes((user.email || '').toLowerCase());
-
-    if (isTrueAdmin || userTool || bundleAccess.ownedToolIds.includes(tool.id)) {
+    if (adminBypass || userTool || bundleAccess.ownedToolIds.includes(tool.id)) {
       hasAccess = true;
     }
 

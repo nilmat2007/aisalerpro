@@ -9,6 +9,8 @@ export interface AiSlipConfig {
   max_slip_age_minutes: number;
   receiver_name_keywords: string[];
   receiver_account_digits: string;
+  admin_bypass_enabled: boolean;
+  admin_bypass_emails: string[];
 }
 
 export interface MaskedAiSlipConfig {
@@ -19,10 +21,14 @@ export interface MaskedAiSlipConfig {
   has_slipok_key: boolean;
   slipok_key_masked: string;
   max_slip_age_minutes: number;
+  admin_bypass_enabled: boolean;
+  admin_bypass_emails: string[];
 }
 
 const CONFIG_BUCKET = 'slips';
 const CONFIG_PATH = '_config/ai_slip_settings_v1.enc';
+
+const DEFAULT_ADMIN_BYPASS_EMAILS = ['nilmat2007@gmail.com', 'nilmat200757@gmail.com'];
 
 const DEFAULT_CONFIG: AiSlipConfig = {
   ai_slip_enabled: true,
@@ -39,7 +45,13 @@ const DEFAULT_CONFIG: AiSlipConfig = {
     'NILMAT',
   ],
   receiver_account_digits: '0905556356',
+  admin_bypass_enabled: false,
+  admin_bypass_emails: DEFAULT_ADMIN_BYPASS_EMAILS,
 };
+
+let _cachedConfig: AiSlipConfig | null = null;
+let _cachedAtMs = 0;
+const CACHE_TTL_MS = 10_000;
 
 function getEncryptionKey(): Buffer {
   const raw = process.env.ADMIN_JWT_SECRET;
@@ -79,19 +91,26 @@ export function maskSecretKey(secret: string): string {
   return `${clean.slice(0, 6)}••••••••${clean.slice(-4)}`;
 }
 
-export async function getAiSlipConfig(): Promise<AiSlipConfig> {
+export async function getAiSlipConfig(opts?: { bypassCache?: boolean }): Promise<AiSlipConfig> {
+  if (!opts?.bypassCache && _cachedConfig && Date.now() - _cachedAtMs < CACHE_TTL_MS) {
+    return _cachedConfig;
+  }
+
   try {
     const { data, error } = await supabaseAdmin.storage
       .from(CONFIG_BUCKET)
       .download(CONFIG_PATH);
 
     if (error || !data) {
-      return {
+      const fallback: AiSlipConfig = {
         ...DEFAULT_CONFIG,
         gemini_api_key: process.env.GEMINI_API_KEY || '',
         slipok_api_url: process.env.SLIPOK_API_URL || '',
         slipok_api_key: process.env.SLIPOK_API_KEY || '',
       };
+      _cachedConfig = fallback;
+      _cachedAtMs = Date.now();
+      return fallback;
     }
 
     const rawText = await data.text();
@@ -101,7 +120,7 @@ export async function getAiSlipConfig(): Promise<AiSlipConfig> {
     }
 
     const parsed = JSON.parse(jsonStr);
-    return {
+    const result: AiSlipConfig = {
       ai_slip_enabled:
         typeof parsed.ai_slip_enabled === 'boolean' ? parsed.ai_slip_enabled : true,
       gemini_api_key: parsed.gemini_api_key || process.env.GEMINI_API_KEY || '',
@@ -110,14 +129,38 @@ export async function getAiSlipConfig(): Promise<AiSlipConfig> {
       max_slip_age_minutes: Number(parsed.max_slip_age_minutes) || 30,
       receiver_name_keywords: DEFAULT_CONFIG.receiver_name_keywords,
       receiver_account_digits: DEFAULT_CONFIG.receiver_account_digits,
+      admin_bypass_enabled:
+        typeof parsed.admin_bypass_enabled === 'boolean' ? parsed.admin_bypass_enabled : false,
+      admin_bypass_emails: Array.isArray(parsed.admin_bypass_emails)
+        ? parsed.admin_bypass_emails.map((e: any) => String(e || '').trim().toLowerCase()).filter(Boolean)
+        : DEFAULT_ADMIN_BYPASS_EMAILS,
     };
+    _cachedConfig = result;
+    _cachedAtMs = Date.now();
+    return result;
   } catch {
     return { ...DEFAULT_CONFIG };
   }
 }
 
+export async function isAdminBypassActiveForEmail(email?: string | null): Promise<boolean> {
+  if (!email) return false;
+  const cleanEmail = String(email).trim().toLowerCase();
+  if (!cleanEmail) return false;
+  try {
+    const cfg = await getAiSlipConfig();
+    if (!cfg.admin_bypass_enabled) return false;
+    const allowed = Array.isArray(cfg.admin_bypass_emails) && cfg.admin_bypass_emails.length > 0
+      ? cfg.admin_bypass_emails
+      : DEFAULT_ADMIN_BYPASS_EMAILS;
+    return allowed.includes(cleanEmail);
+  } catch {
+    return false;
+  }
+}
+
 export async function getMaskedAiSlipConfig(): Promise<MaskedAiSlipConfig> {
-  const cfg = await getAiSlipConfig();
+  const cfg = await getAiSlipConfig({ bypassCache: true });
   return {
     ai_slip_enabled: cfg.ai_slip_enabled,
     has_gemini_key: Boolean(cfg.gemini_api_key && cfg.gemini_api_key.trim().length > 10),
@@ -126,6 +169,8 @@ export async function getMaskedAiSlipConfig(): Promise<MaskedAiSlipConfig> {
     has_slipok_key: Boolean(cfg.slipok_api_key && cfg.slipok_api_key.trim().length > 4),
     slipok_key_masked: maskSecretKey(cfg.slipok_api_key),
     max_slip_age_minutes: cfg.max_slip_age_minutes || 30,
+    admin_bypass_enabled: Boolean(cfg.admin_bypass_enabled),
+    admin_bypass_emails: cfg.admin_bypass_emails || DEFAULT_ADMIN_BYPASS_EMAILS,
   };
 }
 
@@ -135,8 +180,27 @@ export async function saveAiSlipConfig(updates: {
   slipok_api_url?: string;
   slipok_api_key?: string;
   max_slip_age_minutes?: number;
+  admin_bypass_enabled?: boolean;
+  admin_bypass_emails?: string[] | string;
 }): Promise<MaskedAiSlipConfig> {
-  const current = await getAiSlipConfig();
+  const current = await getAiSlipConfig({ bypassCache: true });
+
+  const parsedEmails = (() => {
+    if (Array.isArray(updates.admin_bypass_emails)) {
+      const list = updates.admin_bypass_emails
+        .map((e) => String(e || '').trim().toLowerCase())
+        .filter(Boolean);
+      return list.length > 0 ? list : DEFAULT_ADMIN_BYPASS_EMAILS;
+    }
+    if (typeof updates.admin_bypass_emails === 'string') {
+      const list = updates.admin_bypass_emails
+        .split(/[\s,;]+/)
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      return list.length > 0 ? list : DEFAULT_ADMIN_BYPASS_EMAILS;
+    }
+    return current.admin_bypass_emails || DEFAULT_ADMIN_BYPASS_EMAILS;
+  })();
 
   const nextConfig: AiSlipConfig = {
     ...current,
@@ -160,6 +224,11 @@ export async function saveAiSlipConfig(updates: {
       updates.max_slip_age_minutes !== undefined
         ? Math.max(5, Math.min(1440, Number(updates.max_slip_age_minutes) || 30))
         : current.max_slip_age_minutes,
+    admin_bypass_enabled:
+      typeof updates.admin_bypass_enabled === 'boolean'
+        ? updates.admin_bypass_enabled
+        : Boolean(current.admin_bypass_enabled),
+    admin_bypass_emails: parsedEmails,
   };
 
   const encrypted = encryptPayload(JSON.stringify(nextConfig));
@@ -176,6 +245,9 @@ export async function saveAiSlipConfig(updates: {
     throw new Error(`บันทึกการตั้งค่า AI ไม่สำเร็จ: ${error.message}`);
   }
 
+  _cachedConfig = nextConfig;
+  _cachedAtMs = Date.now();
+
   return {
     ai_slip_enabled: nextConfig.ai_slip_enabled,
     has_gemini_key: Boolean(nextConfig.gemini_api_key && nextConfig.gemini_api_key.length > 10),
@@ -184,5 +256,7 @@ export async function saveAiSlipConfig(updates: {
     has_slipok_key: Boolean(nextConfig.slipok_api_key && nextConfig.slipok_api_key.length > 4),
     slipok_key_masked: maskSecretKey(nextConfig.slipok_api_key),
     max_slip_age_minutes: nextConfig.max_slip_age_minutes,
+    admin_bypass_enabled: Boolean(nextConfig.admin_bypass_enabled),
+    admin_bypass_emails: nextConfig.admin_bypass_emails,
   };
 }

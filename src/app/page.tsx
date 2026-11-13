@@ -19,6 +19,7 @@ import {
   resolveUserBundleAccess,
   attemptCourseBundleHeal,
 } from '@/lib/course-bundle'
+import { isAdminBypassActiveForEmail } from '@/lib/ai-slip-config'
 
 export const dynamic = 'force-dynamic';
 
@@ -335,6 +336,7 @@ export default async function HomePage() {
     { data: emailKeys },
     { data: approvedOrders },
     bundleAccess,
+    adminBypass,
   ] = await Promise.all([
     supabase.from('profiles').select('id, email, full_name, role, display_name, avatar_url').eq('id', user.id).maybeSingle(),
     supabase.from('user_tools').select(`id, user_id, tool_id, license_key_id, activated_at, is_active, tools(${PUBLIC_TOOL_SELECT_COLUMNS})`).eq('user_id', user.id),
@@ -363,12 +365,14 @@ export default async function HomePage() {
           .ilike('user_email', user.email)
       : Promise.resolve({ data: [] as any[] }),
     resolveUserBundleAccess(supabaseAdmin, user.id, user.email || ''),
+    isAdminBypassActiveForEmail(user.email),
   ])
 
   let userTools = initialUserTools
   const ownedSet = new Set<string>([
     ...(userTools || []).filter((ut: any) => ut.is_active !== false).map((ut: any) => ut.tool_id),
     ...(bundleAccess?.ownedToolIds || []),
+    ...(adminBypass ? (rawAllTools || []).map((t: any) => t.id) : []),
   ])
 
   // Auto-heal entitlements: Course Bundle + any non-bundle activated keys/orders

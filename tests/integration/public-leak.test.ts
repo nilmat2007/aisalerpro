@@ -301,4 +301,23 @@ describe('Public Data Leak Prevention Tests', () => {
       'https://labs.google/fx/tools/flow/shared/tool/secret-trial-flow-id'
     );
   });
+
+  test('Admin Bypass Mode OFF (default): nilmat200757@gmail.com ที่ยังไม่ได้ซื้อคอร์สจะถูกจำลองเป็นลูกค้าทั่วไป (ไม่เห็นลิงก์ที่ล็อก)', async () => {
+    mockCurrentUser = { id: 'admin-test-user', email: 'nilmat200757@gmail.com' };
+    mockHasUserToolAccess = false;
+
+    const element = await CoursePage({
+      params: Promise.resolve({ slug: 'tiktok-ai-affiliate' }),
+    });
+    const serializedProps = JSON.stringify(element.props);
+
+    expect(element.props.hasAccess).toBe(false);
+    const lessons = element.props.tool.features.lessons;
+    const lockedLesson = lessons.find((l: any) => !l.is_free_preview);
+    expect(lockedLesson.video_url).toBe('locked');
+    expect(lockedLesson.example_video_url).toBe('locked');
+    expect(serializedProps).not.toContain('LOCKED_SECRET_DRIVE_ID_999');
+    expect(serializedProps).not.toContain('LOCKED_EXAMPLE_DRIVE_ID_888');
+    expect(serializedProps).not.toContain('ULTRA_SECRET_MEMBER_ONLY_PROMPT_TEXT_XYZ_98765');
+  });
 });
