@@ -182,8 +182,15 @@ export async function GET(request: Request) {
             await supabaseAdmin.from('user_trials').update({ status: 'expired' }).eq('id', t.id)
             t.status = 'expired'
           }
+          const activeAccess = t.status === 'active' && !expired
           return {
             ...t,
+            tools: t.tools
+              ? {
+                  ...t.tools,
+                  trial_flow_url: activeAccess ? t.tools.trial_flow_url : null,
+                }
+              : t.tools,
             expires_at: computeEffectiveExpiresAt(t),
             isExpired: expired,
           }
@@ -221,6 +228,12 @@ export async function GET(request: Request) {
       isExpired: expired,
       trial: {
         ...trial,
+        tools: trial.tools
+          ? {
+              ...trial.tools,
+              trial_flow_url: activeTrialAccess ? trial.tools.trial_flow_url : null,
+            }
+          : trial.tools,
         expires_at: computeEffectiveExpiresAt(trial),
       },
     })

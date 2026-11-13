@@ -267,11 +267,38 @@ describe('Public Data Leak Prevention Tests', () => {
     const lessons = element.props.tool.features.lessons;
     const lockedLesson = lessons.find((l: any) => l.id === 2);
     expect(lockedLesson.video_url).toContain('drive.google.com/file/d/LOCKED_SECRET_DRIVE_ID_999');
+    expect(lockedLesson.example_video_url).toContain('drive.google.com/file/d/LOCKED_EXAMPLE_DRIVE_ID_888');
     expect(Array.isArray(lockedLesson.prompts)).toBe(true);
     expect(lockedLesson.prompts[0].prompt).toBe(
       'ULTRA_SECRET_MEMBER_ONLY_PROMPT_TEXT_XYZ_98765'
     );
     expect(serializedProps).toContain('LOCKED_SECRET_DRIVE_ID_999');
+    expect(serializedProps).toContain('LOCKED_EXAMPLE_DRIVE_ID_888');
     expect(serializedProps).toContain('ULTRA_SECRET_MEMBER_ONLY_PROMPT_TEXT_XYZ_98765');
+  });
+
+  test('Revoked tool / Expired trial: sanitizeToolForPublic ไม่คืน flow_url หรือ trial_flow_url เมื่อหมดสิทธิ์', async () => {
+    const { sanitizeToolForPublic } = await import('@/lib/sanitize-tool');
+
+    // Case 1: Revoked or Expired Trial (hasAccess: false, isTrial: false)
+    const sanitizedExpired = sanitizeToolForPublic(MOCK_COURSE_TOOL as any, {
+      session: null,
+      hasAccess: false,
+      isTrial: false,
+    });
+    expect(sanitizedExpired).not.toHaveProperty('flow_url');
+    expect(sanitizedExpired).not.toHaveProperty('trial_flow_url');
+    expect(sanitizedExpired).not.toHaveProperty('password');
+
+    // Case 2: Active Trial (hasAccess: false, isTrial: true) -> only trial_flow_url, NEVER full flow_url
+    const sanitizedActiveTrial = sanitizeToolForPublic(MOCK_COURSE_TOOL as any, {
+      session: null,
+      hasAccess: false,
+      isTrial: true,
+    });
+    expect(sanitizedActiveTrial).not.toHaveProperty('flow_url');
+    expect(sanitizedActiveTrial.trial_flow_url).toBe(
+      'https://labs.google/fx/tools/flow/shared/tool/secret-trial-flow-id'
+    );
   });
 });

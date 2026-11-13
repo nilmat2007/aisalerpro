@@ -435,7 +435,28 @@ export default async function HomePage() {
 
   // Only show pending/rejected banners for tools the user does NOT already own
   const userOrders = (rawOrders || []).filter((o: any) => !ownedSet.has(o.tool_id))
-  const trialSet = new Set((userTrials || []).map((tr: any) => tr.tool_id))
+  const nowMs = Date.now()
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+  const trialSet = new Set(
+    (userTrials || [])
+      .filter((tr: any) => {
+        if (tr?.status !== 'active') return false
+        const startMs = tr?.started_at ? new Date(tr.started_at).getTime() : nowMs
+        const expMs = tr?.expires_at ? new Date(tr.expires_at).getTime() : startMs + SEVEN_DAYS_MS
+        return expMs > nowMs
+      })
+      .map((tr: any) => tr.tool_id)
+  )
+  const sanitizedUserTools = (userTools || []).map((ut: any) => ({
+    ...ut,
+    tools: ut?.tools
+      ? sanitizeToolForPublic(ut.tools as unknown as Tool, {
+          session: null,
+          hasAccess: Boolean(ut.is_active !== false && ownedSet.has(ut.tool_id)),
+          isTrial: false,
+        })
+      : null,
+  }))
   const allTools = ((rawAllTools || []) as unknown as Tool[]).map((t) =>
     sanitizeToolForPublic(t, {
       session: null,
@@ -448,7 +469,7 @@ export default async function HomePage() {
     <DashboardClient 
       user={user} 
       profile={profile} 
-      userTools={userTools || []} 
+      userTools={sanitizedUserTools} 
       allTools={allTools || []} 
       announcements={announcements || []} 
       userTrials={userTrials || []} 

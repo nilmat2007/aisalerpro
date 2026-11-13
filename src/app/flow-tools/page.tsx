@@ -34,7 +34,7 @@ export default async function FlowToolsPage() {
   if (user) {
     const [userToolsRes, userTrialsRes, keysByEmailRes, ordersByEmailRes, bundleAccess] = await Promise.all([
       supabase.from('user_tools').select('id, user_id, tool_id, license_key_id, activated_at, is_active').eq('user_id', user.id),
-      supabase.from('user_trials').select('id, user_id, tool_id, status').eq('user_id', user.id),
+      supabase.from('user_trials').select('id, user_id, tool_id, status, started_at').eq('user_id', user.id),
       user.email
         ? supabase
             .from('license_keys')
@@ -125,7 +125,18 @@ export default async function FlowToolsPage() {
   for (const ut of userTools) {
     if (ut.is_active !== false) ownedSet.add(ut.tool_id);
   }
-  const trialSet = new Set(userTrials.map((tr: any) => tr.tool_id));
+  const nowMs = Date.now();
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  const trialSet = new Set(
+    userTrials
+      .filter((tr: any) => {
+        if (tr?.status !== 'active') return false;
+        const startMs = tr?.started_at ? new Date(tr.started_at).getTime() : nowMs;
+        const expMs = tr?.expires_at ? new Date(tr.expires_at).getTime() : startMs + SEVEN_DAYS_MS;
+        return expMs > nowMs;
+      })
+      .map((tr: any) => tr.tool_id)
+  );
   const sanitizedTools = ((tools || []) as unknown as Tool[]).map((t) =>
     sanitizeToolForPublic(t, {
       session: null,
