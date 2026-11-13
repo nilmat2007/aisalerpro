@@ -128,6 +128,7 @@ const SHORT_TITLE_MAP: Record<string, string> = {
   'puppap-affiliate-factory': 'โกดัง & สายพานป้ายยา',
   'puppap-talking-3d': 'สิ่งของ & อวัยวะ 3D',
   'puppap-transformer-mecha': 'หุ่นรบ & แปลงร่าง',
+  'puppap-story-theatre': 'เรื่องผี & นิทานธรรมะ',
 };
 
 // ตรงกับข้อมูลจริงในตาราง public.tools บน Supabase 100% (ไม่มี dead features.original_price)
@@ -309,6 +310,18 @@ export const DEFAULT_SHOWCASE_TOOLS: any[] = [
     poster_url: '/images/poster-puppap-transformer-mecha.jpg',
     logo_url: '/images/poster-puppap-transformer-mecha.jpg',
     price: '299 บาท',
+    is_active: true,
+    is_coming_soon: false,
+    sort_order: 2,
+  },
+  {
+    id: 'default-story-theatre',
+    slug: 'puppap-story-theatre',
+    name: 'PUP PAP GHOST & GHIBLI / DHAMMA STORY THEATRE (สตูดิโอเรื่องผี & นิทานจิบลิ/ธรรมะ v4.1 Pro)',
+    icon: '👻',
+    poster_url: '/images/poster-puppap-story-theatre.jpg',
+    logo_url: '/images/poster-puppap-story-theatre.jpg',
+    price: '399 บาท',
     is_active: true,
     is_coming_soon: false,
     sort_order: 2,

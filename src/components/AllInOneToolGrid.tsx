@@ -81,7 +81,7 @@ export default function AllInOneToolGrid({
             ? 'grid-cols-6'
             : items.length === 7
               ? 'grid-cols-7'
-              : items.length === 8
+              : items.length === 8 || items.length === 16
                 ? 'grid-cols-4 sm:grid-cols-8'
                 : items.length === 9
                   ? 'grid-cols-3 sm:grid-cols-9'
