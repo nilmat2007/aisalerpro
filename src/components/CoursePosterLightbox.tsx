@@ -65,24 +65,47 @@ export default function CoursePosterLightbox({
         <button
           type="button"
           onClick={handleOpen}
-          className={`w-full py-2 px-3 rounded-xl bg-[var(--bg-deep)] hover:bg-[var(--accent-dim)] border border-[var(--border)] hover:border-[var(--border-accent)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-extrabold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${className}`}
+          className={`group w-full p-2 rounded-2xl bg-[var(--bg-card)] hover:bg-[var(--accent-dim)] border-[1.5px] border-[var(--border-accent)]/70 hover:border-[var(--border-accent)] text-left flex items-center justify-between gap-2.5 shadow-sm hover:shadow-md transition-all cursor-pointer ${className}`}
+          aria-label="แตะเพื่อขยายดูภาพโปสเตอร์สรุปคอร์สเรียน 22 บทเรียนเต็มจอ"
         >
-          <span>🖼️</span>
-          <span>ดูภาพโปสเตอร์สรุป 22 บทเรียน (ซูมอ่านได้)</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden border border-[var(--border-accent)] bg-stone-950 shrink-0 shadow-xs">
+              <img
+                src={src}
+                alt={alt}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] sm:text-xs font-black text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors truncate">
+                🖼️ โปสเตอร์สรุปคอร์ส ฿159
+              </div>
+              <div className="text-[10px] sm:text-[11px] font-bold text-[var(--text-secondary)] truncate">
+                ครบ 22 บทเรียน · แตะเพื่อซูมดูเต็มจอ
+              </div>
+            </div>
+          </div>
+          <span className="px-2 py-1 rounded-lg bg-[var(--accent-dim)] border border-[var(--border-accent)] text-[var(--accent)] text-[10px] sm:text-[11px] font-black shrink-0 flex items-center gap-1 group-hover:scale-105 transition-transform">
+            <span>🔍</span>
+            <span className="hidden xs:inline">ขยาย</span>
+          </span>
         </button>
       ) : (
         <div className={`relative group ${className}`}>
           <button
             type="button"
             onClick={handleOpen}
-            className="w-full relative block overflow-hidden rounded-2xl border-2 border-[var(--border)] shadow-xl bg-[var(--bg-deep)] transition-all duration-300 hover:border-[var(--accent)] hover:shadow-2xl cursor-pointer text-left"
+            className="w-full relative block overflow-hidden rounded-2xl border-2 border-[var(--border-accent)] shadow-xl bg-stone-950 transition-all duration-300 hover:border-[var(--accent)] hover:shadow-2xl cursor-pointer text-left"
             aria-label="แตะเพื่อซูมดูโปสเตอร์คอร์สเรียนและสารบัญ 22 บทเรียนเต็มจอ"
           >
             <img
               src={src}
               alt={alt}
-              loading="eager"
-              className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+              loading="lazy"
+              decoding="async"
+              className="w-full h-auto aspect-square object-cover transition-transform duration-500 group-hover:scale-[1.015]"
             />
 
             {/* Top-left floating authenticity pill */}
@@ -94,7 +117,7 @@ export default function CoursePosterLightbox({
             {/* Bottom-right click-to-zoom prompt */}
             <div className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-bold border border-white/25 shadow-lg flex items-center gap-1.5 transition-transform group-hover:scale-105">
               <span>🔍</span>
-              <span>แตะเพื่อซูมดู 22 บทเรียน</span>
+              <span>แตะเพื่อขยายเต็มจอ</span>
             </div>
           </button>
         </div>

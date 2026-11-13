@@ -467,7 +467,7 @@ export default function FloatingPromoWidget() {
                 source="floating_modal"
               />
             ) : (
-              /* Tab 2 Content: Course ฿159 + Free 2 AI Tools (Dynamic Bonus Value) */
+              /* Tab 2 Content: Course ฿159 Poster + Free 2 AI Tools (Dynamic Bonus Value) */
               <div
                 className="rounded-3xl bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 text-white border-2 border-rose-500/80 p-4 sm:p-5 space-y-4 text-center"
                 data-testid="promo-course-159-panel"
@@ -476,53 +476,73 @@ export default function FloatingPromoWidget() {
                   <span>🎁 โปรเริ่มต้นสุดคุ้ม · แถมฟรี 2 โปรแกรม AI มูลค่ารวม ฿{pricing.courseBonusToolsFormatted}!</span>
                 </div>
 
-                <div>
-                  <h3 className="text-lg sm:text-xl font-black text-amber-300">
-                    คอร์สนายหน้า TikTok ด้วย AI ปักตะกร้า (22 บทเรียน)
-                  </h3>
-                  <div className="mt-1 flex items-baseline justify-center gap-2">
-                    <span className="text-3xl sm:text-4xl font-black text-emerald-400">
-                      ฿{pricing.coursePriceFormatted}
-                    </span>
-                    <span className="text-xs sm:text-sm text-stone-400 line-through font-bold">
-                      จากปกติ ฿799
-                    </span>
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center text-left">
+                  {/* Left: Course 159 Square Poster */}
+                  <div className="sm:col-span-5 max-w-[240px] sm:max-w-none mx-auto w-full">
+                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-amber-400/70 shadow-xl bg-stone-950">
+                      <img
+                        src="/images/poster-course-tiktok-ai.jpg"
+                        alt="คอร์สนายหน้า TikTok ด้วย AI ปักตะกร้า (22 บทเรียน)"
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Dynamic 2 Bonus Tools Visual Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
-                  {bonusTools.map((bt, idx) => (
-                    <div
-                      key={bt.slug}
-                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-stone-900/90 border border-amber-400/35"
-                    >
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-950 border border-white/15 shrink-0 flex items-center justify-center">
-                        {bt.posterUrl ? (
-                          <img
-                            src={bt.posterUrl}
-                            alt={bt.name}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xl">{bt.icon}</span>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[10px] font-black text-emerald-400">
-                          🎁 แถมฟรีตัวที่ #{idx + 1} (มูลค่า {bt.priceLabel})
-                        </div>
-                        <div className="text-xs sm:text-sm font-black text-white truncate">
-                          {bt.name}
-                        </div>
-                        <div className="text-[11px] text-stone-300 truncate">
-                          {bt.shortTitle}
-                        </div>
+                  {/* Right: Price + Dynamic 2 Bonus Tools Visual Cards */}
+                  <div className="sm:col-span-7 space-y-3">
+                    <div className="text-center sm:text-left">
+                      <h3 className="text-base sm:text-lg font-black text-amber-300 leading-snug">
+                        คอร์สนายหน้า TikTok ด้วย AI ปักตะกร้า (22 บทเรียน)
+                      </h3>
+                      <div className="mt-1 flex items-baseline justify-center sm:justify-start gap-2">
+                        <span className="text-3xl sm:text-4xl font-black text-emerald-400">
+                          ฿{pricing.coursePriceFormatted}
+                        </span>
+                        <span className="text-xs sm:text-sm text-stone-400 line-through font-bold">
+                          จากปกติ ฿799
+                        </span>
+                        <span className="text-[11px] font-bold text-amber-200">
+                          • เรียนซ้ำได้ตลอดชีพ
+                        </span>
                       </div>
                     </div>
-                  ))}
+
+                    <div className="space-y-2">
+                      {bonusTools.map((bt, idx) => (
+                        <div
+                          key={bt.slug}
+                          className="flex items-center gap-3 p-2.5 rounded-2xl bg-stone-900/90 border border-amber-400/35"
+                        >
+                          <div className="w-11 h-11 rounded-xl overflow-hidden bg-stone-950 border border-white/15 shrink-0 flex items-center justify-center">
+                            {bt.posterUrl ? (
+                              <img
+                                src={bt.posterUrl}
+                                alt={bt.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-xl">{bt.icon}</span>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-[10px] font-black text-emerald-400">
+                              🎁 แถมฟรีตัวที่ #{idx + 1} (มูลค่า {bt.priceLabel})
+                            </div>
+                            <div className="text-xs sm:text-sm font-black text-white truncate">
+                              {bt.name}
+                            </div>
+                            <div className="text-[11px] text-stone-300 truncate">
+                              {bt.shortTitle}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <Link
