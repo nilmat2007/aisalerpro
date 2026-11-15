@@ -121,6 +121,7 @@ export default function AdminSettingsPage() {
 
   const handleQuickToggleBypass = async (nextEnabled: boolean) => {
     setTogglingBypass(true)
+    const prevEnabled = aiConfig.admin_bypass_enabled
     setAiConfig(prev => ({ ...prev, admin_bypass_enabled: nextEnabled }))
     try {
       const payload = {
@@ -155,9 +156,14 @@ export default function AdminSettingsPage() {
             : '🔒 ปิดโหมดแอดมินเรียบร้อย! (จำลองมุมมองลูกค้าจริง 100% — เห็นเฉพาะที่ซื้อจริง)'
         )
         setTimeout(() => setToast(''), 4000)
+      } else {
+        setAiConfig(prev => ({ ...prev, admin_bypass_enabled: prevEnabled }))
+        alert('เกิดข้อผิดพลาด: ' + (result?.error || 'ไม่สามารถบันทึกการสลับโหมดได้'))
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
+      setAiConfig(prev => ({ ...prev, admin_bypass_enabled: prevEnabled }))
+      alert('เกิดข้อผิดพลาด: ' + (err?.message || 'ไม่สามารถบันทึกการสลับโหมดได้'))
     } finally {
       setTogglingBypass(false)
     }

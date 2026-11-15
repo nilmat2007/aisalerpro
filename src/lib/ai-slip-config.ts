@@ -1,5 +1,6 @@
 import crypto from 'crypto';
-import { supabase as supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { supabase as supabaseAnon } from '@/lib/supabase';
 
 export interface AiSlipConfig {
   ai_slip_enabled: boolean;
@@ -26,7 +27,8 @@ export interface MaskedAiSlipConfig {
 }
 
 const CONFIG_BUCKET = 'slips';
-const CONFIG_PATH = '_config/ai_slip_settings_v1.enc';
+const CONFIG_V2_FOLDER = '_config_v2';
+const LEGACY_CONFIG_PATH = '_config/ai_slip_settings_v1.enc';
 
 const DEFAULT_ADMIN_BYPASS_EMAILS = ['nilmat2007@gmail.com', 'nilmat200757@gmail.com'];
 
@@ -52,6 +54,17 @@ const DEFAULT_CONFIG: AiSlipConfig = {
 let _cachedConfig: AiSlipConfig | null = null;
 let _cachedAtMs = 0;
 const CACHE_TTL_MS = 10_000;
+
+function getStorageClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (url && serviceKey && serviceKey.length > 20) {
+    return createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return supabaseAnon;
+}
 
 function getEncryptionKey(): Buffer {
   const raw = process.env.ADMIN_JWT_SECRET;
@@ -91,36 +104,10 @@ export function maskSecretKey(secret: string): string {
   return `${clean.slice(0, 6)}••••••••${clean.slice(-4)}`;
 }
 
-export async function getAiSlipConfig(opts?: { bypassCache?: boolean }): Promise<AiSlipConfig> {
-  if (!opts?.bypassCache && _cachedConfig && Date.now() - _cachedAtMs < CACHE_TTL_MS) {
-    return _cachedConfig;
-  }
-
+function parseDecryptedJson(jsonStr: string): AiSlipConfig | null {
   try {
-    const { data, error } = await supabaseAdmin.storage
-      .from(CONFIG_BUCKET)
-      .download(CONFIG_PATH);
-
-    if (error || !data) {
-      const fallback: AiSlipConfig = {
-        ...DEFAULT_CONFIG,
-        gemini_api_key: process.env.GEMINI_API_KEY || '',
-        slipok_api_url: process.env.SLIPOK_API_URL || '',
-        slipok_api_key: process.env.SLIPOK_API_KEY || '',
-      };
-      _cachedConfig = fallback;
-      _cachedAtMs = Date.now();
-      return fallback;
-    }
-
-    const rawText = await data.text();
-    const jsonStr = decryptPayload(rawText);
-    if (!jsonStr) {
-      return { ...DEFAULT_CONFIG };
-    }
-
     const parsed = JSON.parse(jsonStr);
-    const result: AiSlipConfig = {
+    return {
       ai_slip_enabled:
         typeof parsed.ai_slip_enabled === 'boolean' ? parsed.ai_slip_enabled : true,
       gemini_api_key: parsed.gemini_api_key || process.env.GEMINI_API_KEY || '',
@@ -132,12 +119,83 @@ export async function getAiSlipConfig(opts?: { bypassCache?: boolean }): Promise
       admin_bypass_enabled:
         typeof parsed.admin_bypass_enabled === 'boolean' ? parsed.admin_bypass_enabled : false,
       admin_bypass_emails: Array.isArray(parsed.admin_bypass_emails)
-        ? parsed.admin_bypass_emails.map((e: any) => String(e || '').trim().toLowerCase()).filter(Boolean)
+        ? parsed.admin_bypass_emails
+            .map((e: any) => String(e || '').trim().toLowerCase())
+            .filter(Boolean)
         : DEFAULT_ADMIN_BYPASS_EMAILS,
     };
-    _cachedConfig = result;
+  } catch {
+    return null;
+  }
+}
+
+export async function getAiSlipConfig(opts?: { bypassCache?: boolean }): Promise<AiSlipConfig> {
+  if (!opts?.bypassCache && _cachedConfig && Date.now() - _cachedAtMs < CACHE_TTL_MS) {
+    return _cachedConfig;
+  }
+
+  const client = getStorageClient();
+
+  try {
+    // 1. Read newest versioned config file from _config_v2/
+    const { data: v2Files } = await client.storage
+      .from(CONFIG_BUCKET)
+      .list(CONFIG_V2_FOLDER, {
+        limit: 5,
+        sortBy: { column: 'name', order: 'desc' },
+      });
+
+    if (Array.isArray(v2Files) && v2Files.length > 0) {
+      const sorted = [...v2Files]
+        .filter((f) => f?.name && f.name.startsWith('cfg_') && f.name.endsWith('.enc'))
+        .sort((a, b) => b.name.localeCompare(a.name));
+
+      for (const fileObj of sorted) {
+        const { data: fileBlob, error: dlErr } = await client.storage
+          .from(CONFIG_BUCKET)
+          .download(`${CONFIG_V2_FOLDER}/${fileObj.name}`);
+        if (!dlErr && fileBlob) {
+          const rawText = await fileBlob.text();
+          const jsonStr = decryptPayload(rawText);
+          if (jsonStr) {
+            const parsedCfg = parseDecryptedJson(jsonStr);
+            if (parsedCfg) {
+              _cachedConfig = parsedCfg;
+              _cachedAtMs = Date.now();
+              return parsedCfg;
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Fallback to legacy _config/ai_slip_settings_v1.enc
+    const { data, error } = await client.storage
+      .from(CONFIG_BUCKET)
+      .download(LEGACY_CONFIG_PATH);
+
+    if (!error && data) {
+      const rawText = await data.text();
+      const jsonStr = decryptPayload(rawText);
+      if (jsonStr) {
+        const parsedCfg = parseDecryptedJson(jsonStr);
+        if (parsedCfg) {
+          _cachedConfig = parsedCfg;
+          _cachedAtMs = Date.now();
+          return parsedCfg;
+        }
+      }
+    }
+
+    const fallback: AiSlipConfig = {
+      ...DEFAULT_CONFIG,
+      gemini_api_key: process.env.GEMINI_API_KEY || '',
+      slipok_api_url: process.env.SLIPOK_API_URL || '',
+      slipok_api_key: process.env.SLIPOK_API_KEY || '',
+    };
+    _cachedConfig = fallback;
     _cachedAtMs = Date.now();
-    return result;
+    return fallback;
   } catch {
     return { ...DEFAULT_CONFIG };
   }
@@ -150,9 +208,10 @@ export async function isAdminBypassActiveForEmail(email?: string | null): Promis
   try {
     const cfg = await getAiSlipConfig();
     if (!cfg.admin_bypass_enabled) return false;
-    const allowed = Array.isArray(cfg.admin_bypass_emails) && cfg.admin_bypass_emails.length > 0
-      ? cfg.admin_bypass_emails
-      : DEFAULT_ADMIN_BYPASS_EMAILS;
+    const allowed =
+      Array.isArray(cfg.admin_bypass_emails) && cfg.admin_bypass_emails.length > 0
+        ? cfg.admin_bypass_emails
+        : DEFAULT_ADMIN_BYPASS_EMAILS;
     return allowed.includes(cleanEmail);
   } catch {
     return false;
@@ -233,16 +292,48 @@ export async function saveAiSlipConfig(updates: {
 
   const encrypted = encryptPayload(JSON.stringify(nextConfig));
   const buffer = Buffer.from(encrypted, 'utf8');
+  const client = getStorageClient();
 
-  const { error } = await supabaseAdmin.storage
+  // Write as a new immutable versioned object (upsert: false) so it only uses INSERT on storage.objects
+  // and never triggers UPDATE RLS violations even when running with the anon key on Vercel.
+  const versionedFileName = `cfg_${String(Date.now()).padStart(15, '0')}_${crypto
+    .randomBytes(4)
+    .toString('hex')}.enc`;
+  const versionedPath = `${CONFIG_V2_FOLDER}/${versionedFileName}`;
+
+  const { error } = await client.storage
     .from(CONFIG_BUCKET)
-    .upload(CONFIG_PATH, buffer, {
+    .upload(versionedPath, buffer, {
       contentType: 'text/plain; charset=utf-8',
-      upsert: true,
+      upsert: false,
     });
 
   if (error) {
     throw new Error(`บันทึกการตั้งค่า AI ไม่สำเร็จ: ${error.message}`);
+  }
+
+  // Best-effort cleanup of older versioned files if SUPABASE_SERVICE_ROLE_KEY is configured
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { data: existingFiles } = await client.storage
+        .from(CONFIG_BUCKET)
+        .list(CONFIG_V2_FOLDER, {
+          limit: 20,
+          sortBy: { column: 'name', order: 'desc' },
+        });
+      if (Array.isArray(existingFiles) && existingFiles.length > 3) {
+        const toDelete = existingFiles
+          .filter((f) => f?.name && f.name.startsWith('cfg_') && f.name !== versionedFileName)
+          .sort((a, b) => b.name.localeCompare(a.name))
+          .slice(2)
+          .map((f) => `${CONFIG_V2_FOLDER}/${f.name}`);
+        if (toDelete.length > 0) {
+          await client.storage.from(CONFIG_BUCKET).remove(toDelete);
+        }
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 
   _cachedConfig = nextConfig;
