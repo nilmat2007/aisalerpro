@@ -314,12 +314,12 @@ export default function AllInOneUpsellBanner({
           </div>
         </div>
 
-        {/* Dynamic 1..N Vertical Columns + Lifetime Updates Ribbon + Thumbnail Strip */}
+        {/* Dynamic 1..N Vertical Columns + Lifetime Updates Ribbon */}
         <div className="relative z-10">
           <AllInOneToolGrid
             items={pricing.items}
             currentItemIndex={pricing.currentItemIndex}
-            showThumbnailStrip={true}
+            showThumbnailStrip={false}
             compact={isCompact}
             renderPosterFooterRibbon={true}
           />

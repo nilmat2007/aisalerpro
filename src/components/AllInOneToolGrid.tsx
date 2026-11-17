@@ -52,7 +52,7 @@ export interface AllInOneToolGridProps {
 export default function AllInOneToolGrid({
   items,
   currentItemIndex = -1,
-  showThumbnailStrip = true,
+  showThumbnailStrip = false,
   compact = false,
   renderPosterFooterRibbon = false,
 }: AllInOneToolGridProps) {
@@ -157,16 +157,25 @@ export default function AllInOneToolGrid({
                   </div>
                 )}
 
-                {/* Price / Free Pill inside Phone Frame */}
-                <span
-                  className={`absolute bottom-0.5 inset-x-0.5 py-[1px] px-0.5 rounded text-[7px] sm:text-[8.5px] font-black tracking-tighter truncate leading-tight ${
-                    item.standalonePrice === 0
-                      ? 'bg-emerald-600/95 text-white'
-                      : 'bg-stone-950/90 text-amber-300'
-                  }`}
-                >
-                  {item.priceLabel}
-                </span>
+                {/* Price / Current Tool Pill inside Phone Frame */}
+                {isCurrent ? (
+                  <span
+                    data-testid="current-tool-badge"
+                    className="absolute bottom-0.5 inset-x-0.5 py-[1px] px-0.5 rounded bg-emerald-500 text-white text-[7.5px] sm:text-[9px] font-bold tracking-tight truncate leading-tight shadow-xs"
+                  >
+                    ★ ตัวนี้
+                  </span>
+                ) : (
+                  <span
+                    className={`absolute bottom-0.5 inset-x-0.5 py-[1px] px-0.5 rounded text-[7px] sm:text-[8.5px] font-black tracking-tighter truncate leading-tight ${
+                      item.standalonePrice === 0
+                        ? 'bg-emerald-600/95 text-white'
+                        : 'bg-stone-950/90 text-amber-300'
+                    }`}
+                  >
+                    {item.priceLabel}
+                  </span>
+                )}
               </div>
             </button>
           );
