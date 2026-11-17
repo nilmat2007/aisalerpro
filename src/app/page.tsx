@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 import FlowToolCard from '@/components/FlowToolCard'
 import CourseHeroVideo from '@/components/CourseHeroVideo'
 import CourseCoreHighlights from '@/components/CourseCoreHighlights'
+import CourseBonusToolsShowcase from '@/components/CourseBonusToolsShowcase'
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer'
 import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner'
 import { getPriceInfo } from '@/lib/price-utils'
@@ -234,6 +235,8 @@ export default async function HomePage() {
                   <div className="text-xs sm:text-sm font-bold text-[var(--text-secondary)] mt-1">
                     ✅ จ่ายครั้งเดียวจบ · ไม่มีค่ารายเดือน · อัปเดตเนื้อหาใหม่ฟรีตลอดชีพ
                   </div>
+
+                  <CourseBonusToolsShowcase />
                 </div>
 
                 {/* Strict Mobile Hierarchy: Primary on top (full width), Secondary Ghost/Outline below on <640px, side-by-side on sm+ */}

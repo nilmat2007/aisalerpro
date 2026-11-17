@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import CoursePosterLightbox from '@/components/CoursePosterLightbox';
+import CourseBonusToolsShowcase from '@/components/CourseBonusToolsShowcase';
 import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
@@ -714,6 +715,7 @@ export default function CheckoutClient({
                           <span>📦 เครื่องมือ AI: PUPPAP AI UGC Product (สร้างคลิปรีวิวสินค้าปักตะกร้า)</span>
                         </li>
                       </ul>
+                      <CourseBonusToolsShowcase compact />
                     </div>
                   )}
 

@@ -6,6 +6,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import CourseHeroVideo from '@/components/CourseHeroVideo';
 import CoursePosterLightbox from '@/components/CoursePosterLightbox';
 import CourseCoreHighlights from '@/components/CourseCoreHighlights';
+import CourseBonusToolsShowcase from '@/components/CourseBonusToolsShowcase';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner';
 import { getPriceInfo } from '@/lib/price-utils';
@@ -244,9 +245,7 @@ export default function CoursesClient({
                   <div className="text-xs sm:text-sm font-bold text-[var(--text-secondary)] mt-1">
                     ✅ จ่ายครั้งเดียวจบ · เรียนได้ครบ {lessons.length || 22} บทตลอดชีพ · ไม่มีค่ารายเดือน
                   </div>
-                  <div className="mt-2 pt-2 border-t border-[var(--border-light)] text-xs font-black text-amber-800 dark:text-amber-300">
-                    🎁 แถมฟรี 2 เครื่องมือ AI Flow Tools: PUP PAP Fashion Studio + PUPPAP AI UGC Product (แยกซื้อชิ้นละ ฿299 มูลค่ารวม ฿598)
-                  </div>
+                  <CourseBonusToolsShowcase />
                 </div>
               )}
 
