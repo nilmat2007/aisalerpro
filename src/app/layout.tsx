@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { Prompt } from "next/font/google";
 import "./globals.css";
 import { createClient } from '@supabase/supabase-js'
 import NavigationProgress from '@/components/NavigationProgress'
 import MetaPixel from '@/components/MetaPixel'
 import FloatingPromoWidgetLoader from '@/components/FloatingPromoWidgetLoader'
+
+const promptFont = Prompt({
+  subsets: ["thai", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-prompt",
+  display: "swap",
+});
 
 async function getSettings() {
   try {
@@ -49,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" suppressHydrationWarning>
+    <html lang="th" className={promptFont.variable} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -65,7 +73,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen antialiased">
+      <body className={`${promptFont.className} min-h-screen antialiased`}>
         <NavigationProgress />
         {children}
         <FloatingPromoWidgetLoader />
