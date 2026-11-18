@@ -4,6 +4,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 let mockCurrentUser: { id: string; email: string } | null = null;
 let mockHasUserToolAccess = false;
+let mockAdminBypassActive = false;
+
+vi.mock('@/lib/ai-slip-config', () => ({
+  isAdminBypassActiveForEmail: vi.fn(async () => mockAdminBypassActive),
+}));
 
 const MOCK_COURSE_TOOL = {
   id: 'course-tool-id',
@@ -184,6 +189,7 @@ describe('Public Data Leak Prevention Tests', () => {
   beforeEach(() => {
     mockCurrentUser = null;
     mockHasUserToolAccess = false;
+    mockAdminBypassActive = false;
   });
 
   test('GET /api/tools ไม่มี key: password|flow_url|trial_flow_url', async () => {

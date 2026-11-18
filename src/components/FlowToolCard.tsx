@@ -120,6 +120,17 @@ export default function FlowToolCard({
           </span>
         </div>
 
+        {/* Bottom Left Showcase Badge for puppap-drama */}
+        {tool.slug === 'puppap-drama' && (
+          <Link
+            href={`/tool/${tool.slug}`}
+            className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-stone-950 text-[11px] font-bold shadow-lg hover:scale-105 transition-transform"
+          >
+            <span>🎬</span>
+            <span>ชมตัวอย่างผลงานจริง 8 แนว</span>
+          </Link>
+        )}
+
         {/* Bottom Right Prominent Price Tag on Poster */}
         {!hasAccess && priceInfo.hasPrice && (
           <div className="absolute bottom-2.5 right-2.5 z-10 flex items-center gap-1.5 px-3 py-1 rounded-xl bg-stone-950/90 backdrop-blur-md border border-amber-400/60 shadow-lg">
