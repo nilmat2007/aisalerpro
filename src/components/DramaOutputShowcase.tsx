@@ -13,7 +13,8 @@ export type ShowcaseToolSlug =
   | 'puppap-ugc-product'
   | 'ugc-batch'
   | 'puppap-fashion-studio'
-  | 'puppap-transformer-mecha';
+  | 'puppap-transformer-mecha'
+  | 'ai-content-factory';
 
 export interface DramaShowcaseItem {
   id: number;
@@ -599,6 +600,47 @@ export const TRANSFORMER_MECHA_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
   },
 ];
 
+export const CONTENT_FACTORY_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
+  {
+    id: 1,
+    key: 'rama2-isan-larb-vlog',
+    title: 'Vlog พารีวิวร้านลาบ-ไก่ย่างเตาถ่านรสเด็ด ย่านพระราม 2 (4 ช็อตต่อเนื่อง)',
+    genreBadge: '🌶️ Vlog รีวิวร้านอาหาร',
+    genreTitle: 'พาทัวร์หน้าร้าน ➔ ชิมเมนูเด็ดในร้าน (4-Shot Food & Street Vlog)',
+    durationLabel: '32 วิ • 4 ช็อตเต็ม',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/content-factory-showcase/rama2-isan-larb-vlog.mp4`,
+    posterUrl: `${STORAGE_ROOT}/content-factory-showcase/rama2-isan-larb-vlog-scene2.jpg`,
+    beforePosterUrl: `${STORAGE_ROOT}/content-factory-showcase/rama2-isan-larb-vlog-scene1.jpg`,
+    afterPosterUrl: `${STORAGE_ROOT}/content-factory-showcase/rama2-isan-larb-vlog-scene2.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1pSL2TXBeQICm-tDGhrF5vgriahYMwxE7/preview',
+    synopsis:
+      'ล็อกหน้าและชุดพิธีกรหนุ่มพาเดินรีวิวตั้งแต่หน้าเตาไก่ย่างควันหอมฉุยและป้ายภาษาไทย “ร้านอาหารอีสาน ถนนพระราม 2” เข้าไปจนถึงโต๊ะอาหาร โชว์จานลาบหมูพริกแห้งและชิมรีวิวครบ 4 ช็อต!',
+    cameraNote: '4-Scene Vlog Continuity • ล็อกใบหน้าและชุดพิธีกรตรงกันทุกฉาก 100%',
+    voiceNote: 'เสียงพากย์ไทยสไตล์บล็อกเกอร์สายกิน พูดชวนหิวและเล่าบรรยากาศร้านสมจริง',
+    accentClass: 'from-amber-500 to-orange-600 text-stone-950',
+  },
+  {
+    id: 2,
+    key: 'lunar-cafe-moon-vlog',
+    title: 'Vlog รีวิวคาเฟ่มินิมอลบนดวงจันทร์ (LUNAR CAFÉ) กาแฟไร้แรงโน้มถ่วงวิวโลก',
+    genreBadge: '🌕 คาเฟ่อวกาศไวรัล',
+    genreTitle: 'คอนเทนต์ไวรัลทะลุล้านวิว (Sci-Fi Fantasy Cafe Vlog 4 ช็อต)',
+    durationLabel: '32 วิ • 4 ช็อตเต็ม',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/content-factory-showcase/lunar-cafe-moon-vlog.mp4`,
+    posterUrl: `${STORAGE_ROOT}/content-factory-showcase/lunar-cafe-moon-vlog-scene2.jpg`,
+    beforePosterUrl: `${STORAGE_ROOT}/content-factory-showcase/lunar-cafe-moon-vlog-scene1.jpg`,
+    afterPosterUrl: `${STORAGE_ROOT}/content-factory-showcase/lunar-cafe-moon-vlog-scene2.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1s2fIQMUjwi7f6Yy30UDRJ5yJe-KJko9W/preview',
+    synopsis:
+      'สร้างคลิปไวรัลที่ถ่ายทำจริงไม่ได้! บาริสต้าหนุ่มชุดอวกาศสวมผ้ากันเปื้อน LUNAR CAFÉ พาเดินจากหน้าร้านบนพื้นผิวดวงจันทร์เข้าไปรีวิวแก้วกาแฟลาเต้ที่หยดกาแฟลอยตัวไร้แรงโน้มถ่วงหน้ากระจกวิวโลก',
+    cameraNote: 'Zero-Gravity Physics + Earthrise Backdrop • ภาพคมชัดระดับภาพยนตร์ไซไฟ',
+    voiceNote: 'พากย์ไทยเล่าเรื่องสนุกชวนติดตาม ดึงคนดูหยุดเลื่อนนิ้วตั้งแต่ช็อตแรก',
+    accentClass: 'from-sky-500 to-indigo-600 text-white',
+  },
+];
+
 export function hasToolOutputShowcase(slug?: string | null): slug is ShowcaseToolSlug {
   return (
     slug === 'puppap-drama' ||
@@ -607,7 +649,8 @@ export function hasToolOutputShowcase(slug?: string | null): slug is ShowcaseToo
     slug === 'puppap-ugc-product' ||
     slug === 'ugc-batch' ||
     slug === 'puppap-fashion-studio' ||
-    slug === 'puppap-transformer-mecha'
+    slug === 'puppap-transformer-mecha' ||
+    slug === 'ai-content-factory'
   );
 }
 
@@ -619,6 +662,7 @@ export function getShowcaseBadgeLabel(slug?: string | null): string | null {
   if (slug === 'ugc-batch') return 'ชมตัวอย่างรีวิวขายดุ 24–40 วิ (4 คลิป)';
   if (slug === 'puppap-fashion-studio') return 'ชมตัวอย่างนางแบบรีวิวชุด 5 คลิป';
   if (slug === 'puppap-transformer-mecha') return 'ชมตัวอย่างหุ่นรบแปลงร่าง A➔B (4 คลิป)';
+  if (slug === 'ai-content-factory') return 'ชมตัวอย่าง Vlog รีวิว 32 วิ (4 ช็อต)';
   return null;
 }
 
@@ -645,6 +689,14 @@ const STUDIO_TABS: Array<{
     countBadge: 'ยาว 24–40 วิ!',
     toolName: 'Ai SALER PRO - UGC Batch',
     toolPrice: '699',
+  },
+  {
+    slug: 'ai-content-factory',
+    icon: '🎥',
+    tabLabel: 'โรงงานผลิตคลิป Vlog',
+    countBadge: '4 ช็อต 32 วิ!',
+    toolName: 'AI Content Factory',
+    toolPrice: '299',
   },
   {
     slug: 'puppap-transformer-mecha',
@@ -817,6 +869,22 @@ const SHOWCASE_META: Record<
     defaultPrice: '299',
     items: TRANSFORMER_MECHA_SHOWCASE_ITEMS,
   },
+  'ai-content-factory': {
+    topBadge: 'AI CONTENT FACTORY VLOG SHOWCASE • คลิป Vlog รีวิวต่อเนื่อง 4 ช็อต (32 วินาทีเต็ม)',
+    headingPrefix: 'ชมตัวอย่างคลิป Vlog พารีวิวร้านอาหาร & คาเฟ่',
+    headingHighlight: 'ต่อเนื่อง 4 ช็อต (SCENE 1 หน้าร้าน ➔ SCENE 2 รีวิวเมนูเด็ด)',
+    subheading:
+      'ทุกคลิปด้านล่างถูกสร้างจาก AI Content Factory — ล็อกใบหน้าและชุดพิธีกร AI พาเดินรีวิวตั้งแต่หน้าร้านไปจนถึงชิมเมนูเด็ดในร้าน พร้อมเสียงพากย์ไทยเล่าเรื่องยาว 32 วินาทีเต็ม!',
+    gridTitle: 'คลิกเลือกชมตัวอย่าง Vlog รีวิว 4 ช็อตต่อเนื่อง (คลิกเพื่อดูคลิปเต็มพร้อมเสียงพากย์)',
+    gridSubtitle: 'ล็อกหน้าพิธีกรต่อเนื่อง 4 ช็อต 32 วินาที',
+    soundOnLabel: '🔊 แตะเปิดฟังเสียงพิธีกรรีวิว Vlog ไทย',
+    recipeTitle: 'สูตรโรงงานผลิตคลิป Vlog 4 ช็อตในคลิปนี้',
+    ctaHeadline:
+      '🎥 สร้างคลิป Vlog พารีวิวร้านอาหาร คาเฟ่ และสินค้าแบบต่อเนื่องหลายช็อตความยาว 32 วินาทีได้ทันที!',
+    toolName: 'AI Content Factory',
+    defaultPrice: '299',
+    items: CONTENT_FACTORY_SHOWCASE_ITEMS,
+  },
 };
 
 interface DramaOutputShowcaseProps {
@@ -932,7 +1000,8 @@ export default function DramaOutputShowcase({
 
   const isRenovate = currentStudio === 'puppap-renovate';
   const isMecha = currentStudio === 'puppap-transformer-mecha';
-  const isSplitMorphCard = isRenovate || isMecha;
+  const isContentFactory = currentStudio === 'ai-content-factory';
+  const isSplitMorphCard = isRenovate || isMecha || isContentFactory;
 
   return (
     <section
@@ -951,7 +1020,7 @@ export default function DramaOutputShowcase({
             <span>🎬</span>
             <span>
               {enableStudioTabs
-                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 32 ผลงานจริงจาก 7 สตูดิโอเรือธง'
+                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 34 ผลงานจริงจาก 8 สตูดิโอเรือธง'
                 : meta.topBadge}
             </span>
           </div>
@@ -961,7 +1030,7 @@ export default function DramaOutputShowcase({
               <>
                 พิสูจน์ด้วยสายตา! ตัวอย่างผลงานจริง{' '}
                 <span className="text-amber-300 underline decoration-rose-500/80">
-                  ระดับมาสเตอร์พีซ 32 คลิปเต็ม
+                  ระดับมาสเตอร์พีซ 34 คลิปเต็ม
                 </span>
               </>
             ) : (
@@ -976,15 +1045,15 @@ export default function DramaOutputShowcase({
 
           <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
             {enableStudioTabs
-              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 7 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวขายดุ 3–5 ช็อต • หุ่นรบแปลงร่าง A➔B • เสื้อผ้า & นางแบบ AI • รีวิวสินค้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
+              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 8 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวขายดุ 3–5 ช็อต • โรงงานผลิตคลิป Vlog 32 วิ • หุ่นรบแปลงร่าง A➔B • เสื้อผ้า & นางแบบ AI • รีวิวสินค้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
               : meta.subheading}
           </p>
         </div>
 
-        {/* 6-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
+        {/* 8-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
         {enableStudioTabs && (
           <div
-            className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
+            className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
             data-testid="multi-studio-tabs"
           >
             {STUDIO_TABS.map((tab) => {
@@ -1190,7 +1259,7 @@ export default function DramaOutputShowcase({
                             className="w-full h-full object-cover"
                           />
                           <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-stone-950/90 text-stone-200 text-[9px] font-bold border border-white/20">
-                            {isMecha ? 'FORM A' : 'BEFORE'}
+                            {isMecha ? 'FORM A' : isContentFactory ? 'SCENE 1' : 'BEFORE'}
                           </span>
                         </div>
 
@@ -1205,7 +1274,7 @@ export default function DramaOutputShowcase({
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-bold shadow-xs">
-                            {isMecha ? 'MECHA B ⚡' : 'AFTER ✨'}
+                            {isMecha ? 'MECHA B ⚡' : isContentFactory ? 'SCENE 2 ✨' : 'AFTER ✨'}
                           </span>
                         </div>
                       </div>
