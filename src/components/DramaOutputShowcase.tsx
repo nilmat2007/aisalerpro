@@ -6,7 +6,11 @@ import Link from 'next/link';
 const STORAGE_ROOT =
   'https://guhdweujxgsbflkvgryb.supabase.co/storage/v1/object/public/tool-images';
 
-export type ShowcaseToolSlug = 'puppap-drama' | 'puppap-talking-3d' | 'puppap-renovate';
+export type ShowcaseToolSlug =
+  | 'puppap-drama'
+  | 'puppap-talking-3d'
+  | 'puppap-renovate'
+  | 'puppap-ugc-product';
 
 export interface DramaShowcaseItem {
   id: number;
@@ -289,11 +293,82 @@ export const RENOVATE_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
   },
 ];
 
+export const UGC_PRODUCT_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
+  {
+    id: 1,
+    key: 'minimal-spin-mop',
+    title: 'รีวิวถังปั่นม็อบมินิมอล ปั่นแห้งง่ายไม่เลอะมือ',
+    genreBadge: '🧹 ของใช้ในบ้าน',
+    genreTitle: 'รีวิวของใช้ในบ้าน & แม่บ้านยุคใหม่ (Home & Living UGC)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/ugc-product-showcase/minimal-spin-mop.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-product-showcase/minimal-spin-mop-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/19XeU1QRovhhajXfz1xK_d8dQLyvPwsFh/preview',
+    synopsis:
+      'พรีเซนเตอร์สาวแว่นสไตล์มินิมอลสาธิตการใช้งานถังปั่นม็อบจริง พร้อมข้อความกราฟิกภาษาไทยชี้จุดเด่น “แถมผ้าม็อบ 2 ชิ้น • ปั่นแห้งง่ายไม่เลอะมือ • เบาแรงถูสะอาดมาก”',
+    cameraNote: 'Warm Minimal Home Studio • มุมกล้องสาธิตสินค้าเห็นฟังก์ชันชัดเจน',
+    voiceNote: 'เสียงพูดรีวิวไทยเป็นธรรมชาติ ป้ายยาเหมือนครีเอเตอร์รีวิวเองหน้ากล้อง',
+    accentClass: 'from-amber-500 to-orange-600 text-stone-950',
+  },
+  {
+    id: 2,
+    key: 'luxury-square-watch',
+    title: 'รีวิวนาฬิกาข้อมือทรงสี่เหลี่ยมเรียบหรู สไตล์คาเฟ่',
+    genreBadge: '⌚ แฟชั่น & นาฬิกา',
+    genreTitle: 'รีวิวเครื่องประดับ & นาฬิกาข้อมือ (Fashion & Accessories UGC)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/ugc-product-showcase/luxury-square-watch.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-product-showcase/luxury-square-watch-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1_KGmJ35saHNaPhETiOpGGfPn-x0TKkLh/preview',
+    synopsis:
+      'ซูมโชว์ดีเทลนาฬิกาข้อมือสายหนังทรงสี่เหลี่ยมเรียบหรูบนข้อมือนางแบบในคาเฟ่โทนอบอุ่น พร้อมข้อความกราฟิกภาษาไทย “✨ ทรงสี่เหลี่ยมเรียบหรู!”',
+    cameraNote: 'Macro Product Close-Up • แสงธรรมชาติคาเฟ่ละมุนขับผิวและตัวเรือนนาฬิกา',
+    voiceNote: 'โทนเสียงป้ายยาสายแฟชั่นลูกคุณหนู ชวนกดตะกร้าทันที',
+    accentClass: 'from-rose-500 to-pink-600 text-white',
+  },
+  {
+    id: 3,
+    key: 'tech-magsafe-case',
+    title: 'นายแบบสายเทครีวิวเคส MagSafe กันกระแทก',
+    genreBadge: '📱 แกตเจ็ตสายเทค',
+    genreTitle: 'รีวิวอุปกรณ์ไอที & เคสมือถือ (Tech & Gadget Male Presenter)',
+    durationLabel: '10 วิ • Master',
+    videoUrl: `${STORAGE_ROOT}/ugc-product-showcase/tech-magsafe-case.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-product-showcase/tech-magsafe-case-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/17PL9Xi4cSfur7ymPKyI665hzxrJUAnna/preview',
+    synopsis:
+      'นายแบบหนุ่มลุคสายเทคคล้องหูฟัง AirPods Max ถือโชว์เคส iPhone MagSafe เห็นวงแหวนแม่เหล็กคมชัด พร้อมป้ายภาษาไทย “เคส MagSafe สายเทค! ⚡”',
+    cameraNote: 'Eye-Level Creator Framing • โฟกัสตัวสินค้าในมือคมชัดไม่บิดเบี้ยว',
+    voiceNote: 'เสียงรีวิวผู้ชายสายแกตเจ็ต ทันสมัย น่าเชื่อถือ',
+    accentClass: 'from-sky-500 to-blue-600 text-white',
+  },
+  {
+    id: 4,
+    key: 'office-magsafe-case',
+    title: 'สาวออฟฟิศป้ายยาเคส MagSafe ลุคทำงานพรีเมียม',
+    genreBadge: '💼 วัยทำงานพรีเมียม',
+    genreTitle: 'รีวิวสินค้าไลฟ์สไตล์วัยทำงาน (Office & Lifestyle Female Presenter)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/ugc-product-showcase/office-magsafe-case.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-product-showcase/office-magsafe-case-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/18pKSSZvZCsjzA0xM-JoRbo3aNBPSfM8K/preview',
+    synopsis:
+      'นางแบบสาวชุดเบลเซอร์วัยทำงานถือรีวิวเคส MagSafe บนโต๊ะทำงานคู่กับแล็ปท็อป พร้อมป้ายภาษาไทย “💼 สายทำงานต้องมี!”',
+    cameraNote: 'Clean Modern Desk Setup • แสงสตูดิโอสดใสขับบุคลิกพรีเซนเตอร์มืออาชีพ',
+    voiceNote: 'เสียงพูดไทยโทนพี่สาวออฟฟิศป้ายยาไอเทมเด็ดประจำวัน',
+    accentClass: 'from-emerald-500 to-teal-600 text-white',
+  },
+];
+
 export function hasToolOutputShowcase(slug?: string | null): slug is ShowcaseToolSlug {
   return (
     slug === 'puppap-drama' ||
     slug === 'puppap-talking-3d' ||
-    slug === 'puppap-renovate'
+    slug === 'puppap-renovate' ||
+    slug === 'puppap-ugc-product'
   );
 }
 
@@ -301,6 +376,7 @@ export function getShowcaseBadgeLabel(slug?: string | null): string | null {
   if (slug === 'puppap-drama') return 'ชมตัวอย่างผลงานจริง 8 แนว';
   if (slug === 'puppap-talking-3d') return 'ชมตัวอย่างสิ่งของพูดได้ 4 คลิป';
   if (slug === 'puppap-renovate') return 'ชมตัวอย่างรีโนเวท Before➔After';
+  if (slug === 'puppap-ugc-product') return 'ชมตัวอย่างคลิปรีวิวสินค้า 4 คลิป';
   return null;
 }
 
@@ -319,6 +395,14 @@ const STUDIO_TABS: Array<{
     countBadge: '8 แนวไวรัล',
     toolName: 'PUP PAP DRAMA',
     toolPrice: '599',
+  },
+  {
+    slug: 'puppap-ugc-product',
+    icon: '📦',
+    tabLabel: 'รีวิวสินค้าปักตะกร้า UGC',
+    countBadge: 'แถมฟรีในคอร์ส!',
+    toolName: 'PUPPAP AI UGC Product',
+    toolPrice: '299',
   },
   {
     slug: 'puppap-talking-3d',
@@ -402,6 +486,22 @@ const SHOWCASE_META: Record<
     toolName: 'PUP PAP RENOVATE',
     defaultPrice: '399',
     items: RENOVATE_SHOWCASE_ITEMS,
+  },
+  'puppap-ugc-product': {
+    topBadge: 'AI UGC PRODUCT REVIEW SHOWCASE • แถมฟรีในคอร์สเรียน ฿159 (หรือซื้อแยก ฿299)',
+    headingPrefix: 'ชมตัวอย่างคลิปรีวิวสินค้าปักตะกร้า UGC',
+    headingHighlight: 'พรีเซนเตอร์ AI ถือสินค้าจริง 4 สไตล์',
+    subheading:
+      'ทุกคลิปด้านล่างถูกสร้างจาก PUPPAP AI UGC Product — แนบรูปสินค้าของคุณ ให้พรีเซนเตอร์ AI ถือรีวิวสาธิตการใช้งานพร้อมป้ายข้อความป้ายยาและเสียงพูดภาษาไทย (เครื่องมือนี้แถมฟรีเมื่อสมัครคอร์สเรียน ฿159!)',
+    gridTitle: 'คลิกเลือกชมตัวอย่างคลิปรีวิวสินค้าปักตะกร้าทั้ง 4 หมวดขายดี (คลิกเพื่อฟังเสียงรีวิว)',
+    gridSubtitle: '🎁 แถมฟรีในคอร์สเรียน ฿159',
+    soundOnLabel: '🔊 แตะเปิดฟังเสียงพรีเซนเตอร์รีวิวไทย',
+    recipeTitle: 'สูตรสร้างคลิปรีวิวสินค้า UGC ที่ใช้ในคลิปนี้',
+    ctaHeadline:
+      '🎁 พิเศษ! เครื่องมือนี้แถมฟรีเมื่อสมัครคอร์สเรียน ฿159 (ได้ครบคอร์ส 22 บท + แถมฟรี 2 เครื่องมือ AI มูลค่า ฿598)',
+    toolName: 'PUPPAP AI UGC Product',
+    defaultPrice: '299',
+    items: UGC_PRODUCT_SHOWCASE_ITEMS,
   },
 };
 
@@ -535,7 +635,7 @@ export default function DramaOutputShowcase({
             <span>🎬</span>
             <span>
               {enableStudioTabs
-                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 15 ผลงานจริงจาก 3 สตูดิโอเรือธง'
+                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 19 ผลงานจริงจาก 4 สตูดิโอเรือธง'
                 : meta.topBadge}
             </span>
           </div>
@@ -545,7 +645,7 @@ export default function DramaOutputShowcase({
               <>
                 พิสูจน์ด้วยสายตา! ตัวอย่างผลงานจริง{' '}
                 <span className="text-amber-300 underline decoration-rose-500/80">
-                  ระดับมาสเตอร์พีซ 15 คลิปเต็ม
+                  ระดับมาสเตอร์พีซ 19 คลิปเต็ม
                 </span>
               </>
             ) : (
@@ -560,15 +660,15 @@ export default function DramaOutputShowcase({
 
           <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
             {enableStudioTabs
-              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 3 สตูดิโอ (ละครสั้น AI 8 แนว • สิ่งของ 3D พูดได้ป้ายยา • รีโนเวทห้องร้าง Before ➔ After)'
+              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 4 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวสินค้าปักตะกร้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
               : meta.subheading}
           </p>
         </div>
 
-        {/* 3-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
+        {/* 4-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
         {enableStudioTabs && (
           <div
-            className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
+            className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
             data-testid="multi-studio-tabs"
           >
             {STUDIO_TABS.map((tab) => {
