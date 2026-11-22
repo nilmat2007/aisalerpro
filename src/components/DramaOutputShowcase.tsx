@@ -10,7 +10,8 @@ export type ShowcaseToolSlug =
   | 'puppap-drama'
   | 'puppap-talking-3d'
   | 'puppap-renovate'
-  | 'puppap-ugc-product';
+  | 'puppap-ugc-product'
+  | 'ugc-batch';
 
 export interface DramaShowcaseItem {
   id: number;
@@ -363,12 +364,82 @@ export const UGC_PRODUCT_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
   },
 ];
 
+export const UGC_BATCH_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
+  {
+    id: 1,
+    key: 'mini-rice-cooker-40s',
+    title: 'รีวิวหม้อหุงข้าวมินิอเนกประสงค์ หุง-ต้ม-นึ่ง จบในใบเดียว',
+    genreBadge: '🍲 เครื่องใช้ไฟฟ้า 5 ช็อต',
+    genreTitle: 'รีวิวขายดุ 5 ช็อตต่อเนื่อง (40 วินาที • Multi-Shot Appliance Demo)',
+    durationLabel: '40 วิ • 5 ช็อตเต็ม',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/ugc-batch-showcase/mini-rice-cooker-40s.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-batch-showcase/mini-rice-cooker-40s-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/15cavVSmGeGYdCaz9b6VRPZJbyrChH19h/preview',
+    synopsis:
+      'คลิปรีวิวความยาวเต็ม 40 วินาที (5 ช็อตต่อเนื่อง!) นางแบบสาวแว่นสไตล์เด็กหอเปิดฝาหม้อโชว์ซึ้งนึ่งสแตนเลส สาธิตการใช้งานจริง ล็อกใบหน้าและชุดตรงกันทุกช็อต 100%',
+    cameraNote: '5-Shot Continuous UGC Storytelling • สลับมุมถือโชว์ & ซูมฟังก์ชันสินค้า',
+    voiceNote: 'เสียงพูดรีวิวไทยยาวต่อเนื่อง 40 วินาที ป้ายยาครบทุกจุดเด่นจนลูกค้ากดซื้อ',
+    accentClass: 'from-rose-600 to-red-600 text-white',
+  },
+  {
+    id: 2,
+    key: 'pet-odor-purifier-24s',
+    title: 'ละครสั้นป้ายยาเครื่องกำจัดกลิ่นอับ & ฟอกอากาศห้องสัตว์เลี้ยง',
+    genreBadge: '🌬️ Hook แก้ปัญหา 3 ช็อต',
+    genreTitle: 'เปิดคลิปด้วยปัญหา ➔ เฉลยตัวช่วยป้ายยา (Problem-Solution Hook)',
+    durationLabel: '24 วิ • 3 ช็อตเต็ม',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/ugc-batch-showcase/pet-odor-purifier-24s.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-batch-showcase/pet-odor-purifier-24s-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/13a5d9VndBepRX2z7QwUq4kvVKzin2RyJ/preview',
+    synopsis:
+      'เปิดคลิปด้วยซีนดึงดูดสายตา แฟนสาวเดินเข้าห้องแล้วบีบจมูกเพราะกลิ่นอับกรงสัตว์เลี้ยงและกองรองเท้า ก่อนพระเอกหยิบเครื่องกำจัดกลิ่นอัจฉริยะขึ้นมาแก้ปัญหาใน 3 ช็อต!',
+    cameraNote: 'Viral Hook Framing + Dynamic Reaction • เล่าเรื่องมีสตอรี่น่าติดตาม',
+    voiceNote: 'พากย์ไทยอารมณ์สมจริง เปิดด้วยคำถามจี้จุดเจ็บ (Pain Point) คนเลี้ยงสัตว์',
+    accentClass: 'from-amber-500 to-orange-600 text-stone-950',
+  },
+  {
+    id: 3,
+    key: 'car-wash-mop-24s',
+    title: 'รีวิวแปรงไมโครไฟเบอร์ล้างรถด้ามยืดหด ถูสะอาดไม่เป็นรอย',
+    genreBadge: '🚗 สาธิตนอกสถานที่ 3 ช็อต',
+    genreTitle: 'รีวิวอุปกรณ์ดูแลรถยนต์หน้าบ้านจริง (Outdoor Car Care Demo)',
+    durationLabel: '24 วิ • 3 ช็อตเต็ม',
+    videoUrl: `${STORAGE_ROOT}/ugc-batch-showcase/car-wash-mop-24s.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-batch-showcase/car-wash-mop-24s-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1C4sdRf0dkAaPK8BlpPiuQcTNl_lCnOJx/preview',
+    synopsis:
+      'นายแบบหนุ่มยืนล้างรถยนต์ SUV หน้าบ้านจริง สาธิตการใช้แปรงไมโครไฟเบอร์ด้ามยืดหดเช็ดกระจกและตัวถังรถอย่างคล่องแคล่วต่อเนื่อง 3 ช็อตเต็ม',
+    cameraNote: 'Outdoor Daylight Realism • แสงแดดและหยดน้ำบนตัวรถสมจริงระดับถ่ายทำจริง',
+    voiceNote: 'เสียงรีวิวผู้ชายสายลุย พูดจาฉะฉาน ชี้จุดเด่นสินค้าเข้าใจง่าย',
+    accentClass: 'from-emerald-500 to-green-600 text-white',
+  },
+  {
+    id: 4,
+    key: 'facial-tissue-pack-24s',
+    title: 'ป้ายยาทิชชู่เช็ดหน้าไร้ฝุ่นแพ็กยกลัง นุ่มเหนียวคุ้มค่า',
+    genreBadge: '🧻 สินค้าขายดียกลัง 3 ช็อต',
+    genreTitle: 'รีวิวสินค้าอุปโภคบริโภคยอดฮิต (High-Volume FMCG Best-Seller)',
+    durationLabel: '24 วิ • 3 ช็อตเต็ม',
+    videoUrl: `${STORAGE_ROOT}/ugc-batch-showcase/facial-tissue-pack-24s.mp4`,
+    posterUrl: `${STORAGE_ROOT}/ugc-batch-showcase/facial-tissue-pack-24s-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1Y78y_Q492xQLI_xifMSlBny7qmA9hLmF/preview',
+    synopsis:
+      'นางแบบสาวสดใสอุ้มห่อทิชชู่เช็ดหน้าแพ็กยกลัง โชว์ความคุ้มค่า ดึงแผ่นทิชชู่โชว์ความเหนียวนุ่มไร้ฝุ่นและปิดการขายชวนกดตะกร้าครบ 3 ช็อต',
+    cameraNote: 'Bright Cozy Living Room Bokeh • โทนสีอบอุ่นสดใสดึงดูดสายช้อปปิ้ง',
+    voiceNote: 'เสียงพากย์ไทยสดใสตื่นเต้น กระตุ้นความรู้สึกคุ้มค่าจนต้องรีบกดสั่ง',
+    accentClass: 'from-pink-500 to-rose-500 text-white',
+  },
+];
+
 export function hasToolOutputShowcase(slug?: string | null): slug is ShowcaseToolSlug {
   return (
     slug === 'puppap-drama' ||
     slug === 'puppap-talking-3d' ||
     slug === 'puppap-renovate' ||
-    slug === 'puppap-ugc-product'
+    slug === 'puppap-ugc-product' ||
+    slug === 'ugc-batch'
   );
 }
 
@@ -377,6 +448,7 @@ export function getShowcaseBadgeLabel(slug?: string | null): string | null {
   if (slug === 'puppap-talking-3d') return 'ชมตัวอย่างสิ่งของพูดได้ 4 คลิป';
   if (slug === 'puppap-renovate') return 'ชมตัวอย่างรีโนเวท Before➔After';
   if (slug === 'puppap-ugc-product') return 'ชมตัวอย่างคลิปรีวิวสินค้า 4 คลิป';
+  if (slug === 'ugc-batch') return 'ชมตัวอย่างรีวิวขายดุ 24–40 วิ (4 คลิป)';
   return null;
 }
 
@@ -397,9 +469,17 @@ const STUDIO_TABS: Array<{
     toolPrice: '599',
   },
   {
+    slug: 'ugc-batch',
+    icon: '🔥',
+    tabLabel: 'รีวิวขายดุ 3–5 ช็อต',
+    countBadge: 'ยาว 24–40 วิ!',
+    toolName: 'Ai SALER PRO - UGC Batch',
+    toolPrice: '699',
+  },
+  {
     slug: 'puppap-ugc-product',
     icon: '📦',
-    tabLabel: 'รีวิวสินค้าปักตะกร้า UGC',
+    tabLabel: 'รีวิวสินค้าปักตะกร้า',
     countBadge: 'แถมฟรีในคอร์ส!',
     toolName: 'PUPPAP AI UGC Product',
     toolPrice: '299',
@@ -502,6 +582,22 @@ const SHOWCASE_META: Record<
     toolName: 'PUPPAP AI UGC Product',
     defaultPrice: '299',
     items: UGC_PRODUCT_SHOWCASE_ITEMS,
+  },
+  'ugc-batch': {
+    topBadge: 'AI SALER PRO MULTI-SHOT SHOWCASE • คลิปรีวิวขายดุต่อเนื่อง 3–5 ช็อต (24–40 วินาที)',
+    headingPrefix: 'ชมตัวอย่างคลิปรีวิวขายดุ Multi-Shot',
+    headingHighlight: 'ยาวต่อเนื่อง 24–40 วินาที (3–5 ช็อตเต็ม)',
+    subheading:
+      'ทุกคลิปด้านล่างถูกสร้างจาก Ai SALER PRO - UGC Batch — ล็อกใบหน้าและชุดของพรีเซนเตอร์ AI ให้ถือสินค้าจริงและสาธิตการใช้งานต่อเนื่องหลายช็อตพร้อมเสียงพูดป้ายยาภาษาไทยแบบมืออาชีพ',
+    gridTitle: 'คลิกเลือกชมตัวอย่างคลิปรีวิวขายดุ Multi-Shot ทั้ง 4 สไตล์ (คลิกเพื่อฟังเสียงรีวิว)',
+    gridSubtitle: 'ล็อกหน้าพรีเซนเตอร์ต่อเนื่อง 3–5 ช็อต',
+    soundOnLabel: '🔊 แตะเปิดฟังเสียงรีวิวขายดุภาษาไทย',
+    recipeTitle: 'สูตรสร้างคลิปรีวิวขายดุ Multi-Shot ในคลิปนี้',
+    ctaHeadline:
+      '🔥 สร้างคลิปรีวิวสินค้าความยาว 24–40 วินาทีแบบต่อเนื่องหลายช็อต เพื่อปิดการขายระดับมืออาชีพได้ทันที!',
+    toolName: 'Ai SALER PRO - UGC Batch',
+    defaultPrice: '699',
+    items: UGC_BATCH_SHOWCASE_ITEMS,
   },
 };
 
@@ -635,7 +731,7 @@ export default function DramaOutputShowcase({
             <span>🎬</span>
             <span>
               {enableStudioTabs
-                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 19 ผลงานจริงจาก 4 สตูดิโอเรือธง'
+                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 23 ผลงานจริงจาก 5 สตูดิโอเรือธง'
                 : meta.topBadge}
             </span>
           </div>
@@ -645,7 +741,7 @@ export default function DramaOutputShowcase({
               <>
                 พิสูจน์ด้วยสายตา! ตัวอย่างผลงานจริง{' '}
                 <span className="text-amber-300 underline decoration-rose-500/80">
-                  ระดับมาสเตอร์พีซ 19 คลิปเต็ม
+                  ระดับมาสเตอร์พีซ 23 คลิปเต็ม
                 </span>
               </>
             ) : (
@@ -660,15 +756,15 @@ export default function DramaOutputShowcase({
 
           <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
             {enableStudioTabs
-              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 4 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวสินค้าปักตะกร้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
+              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 5 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวขายดุ 3–5 ช็อต • รีวิวสินค้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
               : meta.subheading}
           </p>
         </div>
 
-        {/* 4-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
+        {/* 5-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
         {enableStudioTabs && (
           <div
-            className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
+            className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
             data-testid="multi-studio-tabs"
           >
             {STUDIO_TABS.map((tab) => {
