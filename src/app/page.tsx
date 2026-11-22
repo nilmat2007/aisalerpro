@@ -10,6 +10,7 @@ import CourseCoreHighlights from '@/components/CourseCoreHighlights'
 import CourseBonusToolsShowcase from '@/components/CourseBonusToolsShowcase'
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer'
 import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner'
+import DramaOutputShowcase from '@/components/DramaOutputShowcase'
 import { getPriceInfo } from '@/lib/price-utils'
 import {
   PUBLIC_TOOL_SELECT_COLUMNS,
@@ -286,7 +287,7 @@ export default async function HomePage() {
 
         {/* Tools Section */}
         <main className="max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
-          <AllInOneUpsellBanner variant="hero" tools={allTools} source="home_banner" />
+          <DramaOutputShowcase enableStudioTabs />
 
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>

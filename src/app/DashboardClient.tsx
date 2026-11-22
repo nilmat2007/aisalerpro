@@ -12,6 +12,7 @@ import CourseCoreHighlights from '@/components/CourseCoreHighlights';
 import CourseBonusToolsShowcase from '@/components/CourseBonusToolsShowcase';
 import Lesson21PreviewPlayer from '@/components/Lesson21PreviewPlayer';
 import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner';
+import DramaOutputShowcase from '@/components/DramaOutputShowcase';
 import { getPriceInfo } from '@/lib/price-utils';
 
 function AnnouncementCard({ ann, onDismiss }: { ann: any; onDismiss: (id: string) => void }) {
@@ -532,14 +533,8 @@ export default function DashboardClient({ user, profile, userTools, allTools, an
           </div>
         </section>
 
-        {/* All-in-One 999 VIP Package Banner for Members (puppap-all-in-one) */}
-        {!hasAllInOneAccess && (
-          <AllInOneUpsellBanner
-            variant="hero"
-            tools={allTools}
-            source="dashboard_banner"
-          />
-        )}
+        {/* 🎬 Multi-Studio Live Output Theater (15 Masterpiece Videos across 3 Flagship Studios) */}
+        <DramaOutputShowcase enableStudioTabs isUnlocked={hasAllInOneAccess} />
 
         {/* Tools Grid */}
         <div>

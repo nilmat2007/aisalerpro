@@ -304,6 +304,40 @@ export function getShowcaseBadgeLabel(slug?: string | null): string | null {
   return null;
 }
 
+const STUDIO_TABS: Array<{
+  slug: ShowcaseToolSlug;
+  icon: string;
+  tabLabel: string;
+  countBadge: string;
+  toolName: string;
+  toolPrice: string;
+}> = [
+  {
+    slug: 'puppap-drama',
+    icon: '🎭',
+    tabLabel: 'ละครสั้น & ซีรีส์ AI',
+    countBadge: '8 แนวไวรัล',
+    toolName: 'PUP PAP DRAMA',
+    toolPrice: '599',
+  },
+  {
+    slug: 'puppap-talking-3d',
+    icon: '🗣️',
+    tabLabel: 'สิ่งของ 3D พูดได้ป้ายยา',
+    countBadge: '4 คาแรกเตอร์',
+    toolName: 'PUP PAP TALKING 3D',
+    toolPrice: '399',
+  },
+  {
+    slug: 'puppap-renovate',
+    icon: '🏗️',
+    tabLabel: 'รีโนเวทบ้าน Before➔After',
+    countBadge: '3 โปรเจกต์หรู',
+    toolName: 'PUP PAP RENOVATE',
+    toolPrice: '399',
+  },
+];
+
 const SHOWCASE_META: Record<
   ShowcaseToolSlug,
   {
@@ -316,6 +350,8 @@ const SHOWCASE_META: Record<
     soundOnLabel: string;
     recipeTitle: string;
     ctaHeadline: string;
+    toolName: string;
+    defaultPrice: string;
     items: DramaShowcaseItem[];
   }
 > = {
@@ -331,6 +367,8 @@ const SHOWCASE_META: Record<
     recipeTitle: 'สูตรผู้กำกับ AI ที่ใช้เจนเรื่องนี้',
     ctaHeadline:
       '✨ สร้างละครสั้น AI ภาพสวย ล็อกหน้าเป๊ะ + พากย์ไทยครบทั้ง 8 แนวได้ด้วยตัวเอง!',
+    toolName: 'PUP PAP DRAMA',
+    defaultPrice: '599',
     items: DRAMA_SHOWCASE_ITEMS,
   },
   'puppap-talking-3d': {
@@ -345,6 +383,8 @@ const SHOWCASE_META: Record<
     recipeTitle: 'สูตรเสกสินค้า 3D พูดได้ที่ใช้ในคลิปนี้',
     ctaHeadline:
       '✨ เปลี่ยนสินค้าธรรมดาให้กลายเป็นมาสคอต 3D พูดป้ายยาทำยอดขายพุ่งได้ในไม่กี่คลิก!',
+    toolName: 'PUP PAP TALKING 3D',
+    defaultPrice: '399',
     items: TALKING_3D_SHOWCASE_ITEMS,
   },
   'puppap-renovate': {
@@ -359,25 +399,36 @@ const SHOWCASE_META: Record<
     recipeTitle: 'สูตรสถาปนิก AI ที่ใช้สร้างคลิปนี้',
     ctaHeadline:
       '✨ สร้างคลิปรีโนเวทบ้าน Before ➔ After ยอดวิวหลักล้านและป้ายยาของแต่งบ้านได้ทันที!',
+    toolName: 'PUP PAP RENOVATE',
+    defaultPrice: '399',
     items: RENOVATE_SHOWCASE_ITEMS,
   },
 };
 
 interface DramaOutputShowcaseProps {
   toolSlug?: ShowcaseToolSlug;
+  enableStudioTabs?: boolean;
   isUnlocked?: boolean;
   priceFormatted?: string;
   checkoutHref?: string;
+  className?: string;
 }
 
 export default function DramaOutputShowcase({
   toolSlug = 'puppap-drama',
+  enableStudioTabs = false,
   isUnlocked = false,
-  priceFormatted = '599',
-  checkoutHref = '/checkout/puppap-drama',
+  priceFormatted,
+  checkoutHref,
+  className = '',
 }: DramaOutputShowcaseProps) {
-  const meta = SHOWCASE_META[toolSlug] || SHOWCASE_META['puppap-drama'];
+  const [selectedStudio, setSelectedStudio] = useState<ShowcaseToolSlug>(toolSlug);
+  const currentStudio: ShowcaseToolSlug = enableStudioTabs ? selectedStudio : toolSlug;
+
+  const meta = SHOWCASE_META[currentStudio] || SHOWCASE_META['puppap-drama'];
   const items = meta.items;
+  const resolvedPrice = priceFormatted || meta.defaultPrice;
+  const resolvedCheckoutHref = checkoutHref || `/checkout/${currentStudio}`;
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
@@ -389,8 +440,32 @@ export default function DramaOutputShowcase({
   const activeItem = items[safeIndex] || items[0];
 
   useEffect(() => {
-    setActiveIndex(0);
+    setSelectedStudio(toolSlug);
   }, [toolSlug]);
+
+  // Listen to global puppap-media-active so audio never overlaps with CourseHeroVideo or Lesson21PreviewPlayer
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleMediaActive = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail?.id && detail.id !== 'drama-showcase') {
+        setIsMuted(true);
+        if (videoRef.current) {
+          videoRef.current.muted = true;
+        }
+      }
+    };
+    window.addEventListener('puppap-media-active', handleMediaActive);
+    return () => window.removeEventListener('puppap-media-active', handleMediaActive);
+  }, []);
+
+  const announceMediaActive = () => {
+    if (typeof window === 'undefined') return;
+    (window as any).__puppapActiveVideoId = 'drama-showcase';
+    window.dispatchEvent(
+      new CustomEvent('puppap-media-active', { detail: { id: 'drama-showcase' } })
+    );
+  };
 
   useEffect(() => {
     setVideoError(false);
@@ -403,11 +478,17 @@ export default function DramaOutputShowcase({
         .then(() => setIsPlaying(true))
         .catch(() => setIsPlaying(false));
     }
-  }, [safeIndex, toolSlug]);
+  }, [safeIndex, currentStudio]);
+
+  const handleSelectStudioTab = (nextSlug: ShowcaseToolSlug) => {
+    setSelectedStudio(nextSlug);
+    setActiveIndex(0);
+  };
 
   const handleSelectDrama = (idx: number) => {
     setActiveIndex(idx);
     setIsMuted(false);
+    announceMediaActive();
     if (videoRef.current) {
       videoRef.current.muted = false;
     }
@@ -416,6 +497,9 @@ export default function DramaOutputShowcase({
   const toggleMute = () => {
     const nextMuted = !isMuted;
     setIsMuted(nextMuted);
+    if (!nextMuted) {
+      announceMediaActive();
+    }
     if (videoRef.current) {
       videoRef.current.muted = nextMuted;
       if (!nextMuted && videoRef.current.paused) {
@@ -432,13 +516,13 @@ export default function DramaOutputShowcase({
     setActiveIndex((prev) => (prev + 1) % items.length);
   };
 
-  const isRenovate = toolSlug === 'puppap-renovate';
+  const isRenovate = currentStudio === 'puppap-renovate';
 
   return (
     <section
-      aria-label={`โรงภาพยนตร์แสดงผลงานจริงจาก ${toolSlug}`}
+      aria-label={`โรงภาพยนตร์แสดงผลงานจริงจาก ${currentStudio}`}
       data-testid="drama-output-showcase"
-      className="max-w-5xl mx-auto px-4 mb-10"
+      className={`${enableStudioTabs ? 'w-full' : 'max-w-5xl mx-auto px-4 mb-10'} ${className}`}
     >
       <div className="relative rounded-[28px] overflow-hidden bg-gradient-to-b from-[#160b06] via-[#0e0a0f] to-[#140905] text-white border-2 border-amber-400/80 shadow-[0_16px_50px_rgba(0,0,0,0.65)] p-4 sm:p-6 md:p-8 space-y-6">
         {/* Ambient Cinema Spotlights */}
@@ -449,24 +533,92 @@ export default function DramaOutputShowcase({
         <div className="relative z-10 text-center space-y-2.5 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-rose-500/25 to-amber-500/20 border border-amber-400/60 text-amber-300 text-xs sm:text-sm font-bold shadow-sm">
             <span>🎬</span>
-            <span>{meta.topBadge}</span>
+            <span>
+              {enableStudioTabs
+                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 15 ผลงานจริงจาก 3 สตูดิโอเรือธง'
+                : meta.topBadge}
+            </span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight">
-            {meta.headingPrefix}{' '}
-            <span className="text-amber-300 underline decoration-rose-500/80">
-              {meta.headingHighlight}
-            </span>
+            {enableStudioTabs ? (
+              <>
+                พิสูจน์ด้วยสายตา! ตัวอย่างผลงานจริง{' '}
+                <span className="text-amber-300 underline decoration-rose-500/80">
+                  ระดับมาสเตอร์พีซ 15 คลิปเต็ม
+                </span>
+              </>
+            ) : (
+              <>
+                {meta.headingPrefix}{' '}
+                <span className="text-amber-300 underline decoration-rose-500/80">
+                  {meta.headingHighlight}
+                </span>
+              </>
+            )}
           </h2>
 
           <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-            {meta.subheading}
+            {enableStudioTabs
+              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 3 สตูดิโอ (ละครสั้น AI 8 แนว • สิ่งของ 3D พูดได้ป้ายยา • รีโนเวทห้องร้าง Before ➔ After)'
+              : meta.subheading}
           </p>
         </div>
 
+        {/* 3-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
+        {enableStudioTabs && (
+          <div
+            className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
+            data-testid="multi-studio-tabs"
+          >
+            {STUDIO_TABS.map((tab) => {
+              const isTabActive = tab.slug === currentStudio;
+              return (
+                <button
+                  key={tab.slug}
+                  type="button"
+                  onClick={() => handleSelectStudioTab(tab.slug)}
+                  data-testid={`studio-tab-${tab.slug}`}
+                  className={`py-3 px-3.5 rounded-xl text-left flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                    isTabActive
+                      ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-stone-950 font-bold shadow-[0_4px_18px_rgba(251,191,36,0.4)] scale-[1.01]'
+                      : 'bg-white/5 hover:bg-white/10 text-stone-200 border border-white/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-lg sm:text-xl shrink-0">{tab.icon}</span>
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-bold truncate">
+                        {tab.tabLabel}
+                      </div>
+                      <div
+                        className={`text-[10px] font-semibold truncate ${
+                          isTabActive ? 'text-stone-800' : 'text-amber-300/90'
+                        }`}
+                      >
+                        {tab.toolName} (฿{tab.toolPrice})
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                      isTabActive
+                        ? 'bg-stone-950 text-amber-300'
+                        : 'bg-amber-400/15 text-amber-300 border border-amber-400/30'
+                    }`}
+                  >
+                    {tab.countBadge}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Main Interactive Split Cinema Stage */}
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* LEFT COLUMN (lg:col-span-5): 9:16 Vertical Cinema Screen + AI Director Recipe */}
+          {/* LEFT COLUMN (lg:col-span-5): 9:16 Vertical Cinema Screen + Prev/Next */}
           <div className="lg:col-span-5 flex flex-col items-center space-y-3.5">
             {/* 9:16 Vertical Phone / Cinema Screen */}
             <div className="relative w-full max-w-[290px] sm:max-w-[315px] aspect-[9/16] rounded-[26px] overflow-hidden border-[3px] border-amber-400/90 bg-black shadow-[0_0_35px_rgba(245,158,11,0.28)] group">
@@ -493,6 +645,7 @@ export default function DramaOutputShowcase({
                   key={activeItem.videoUrl}
                   src={activeItem.videoUrl}
                   poster={activeItem.posterUrl}
+                  preload="metadata"
                   playsInline
                   autoPlay
                   loop
@@ -679,13 +832,7 @@ export default function DramaOutputShowcase({
                 })}
               </div>
             ) : (
-              <div
-                className={`grid ${
-                  items.length === 4
-                    ? 'grid-cols-2 sm:grid-cols-4 gap-3'
-                    : 'grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3'
-                }`}
-              >
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                 {items.map((item, idx) => {
                   const isSelected = idx === safeIndex;
                   return (
@@ -806,13 +953,30 @@ export default function DramaOutputShowcase({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                  <Link
-                    href={checkoutHref}
-                    className="puppap-btn-primary puppap-cta-animated flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-center whitespace-nowrap shadow-lg"
-                  >
-                    🛒 ซื้อเครื่องมือนี้ ฿{priceFormatted} →
-                  </Link>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full sm:w-auto">
+                  {enableStudioTabs ? (
+                    <>
+                      <Link
+                        href={`/tool/${currentStudio}`}
+                        className="puppap-btn-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-center whitespace-nowrap shadow-md"
+                      >
+                        📖 ดูรายละเอียด {meta.toolName} (฿{resolvedPrice}) →
+                      </Link>
+                      <Link
+                        href="/checkout/puppap-all-in-one"
+                        className="puppap-gold-cta-animated px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-center whitespace-nowrap shadow-lg"
+                      >
+                        👑 เหมาครบทุกตัว ฿799 →
+                      </Link>
+                    </>
+                  ) : (
+                    <Link
+                      href={resolvedCheckoutHref}
+                      className="puppap-btn-primary puppap-cta-animated flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-center whitespace-nowrap shadow-lg"
+                    >
+                      🛒 ซื้อเครื่องมือนี้ ฿{resolvedPrice} →
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
