@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { getPriceInfo } from '@/lib/price-utils';
+import { getShowcaseBadgeLabel } from '@/components/DramaOutputShowcase';
 
 interface FlowToolCardProps {
   tool: any;
@@ -120,14 +121,14 @@ export default function FlowToolCard({
           </span>
         </div>
 
-        {/* Bottom Left Showcase Badge for puppap-drama */}
-        {tool.slug === 'puppap-drama' && (
+        {/* Bottom Left Showcase Badge for tools with real output showcase */}
+        {getShowcaseBadgeLabel(tool.slug) && (
           <Link
             href={`/tool/${tool.slug}`}
             className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-stone-950 text-[11px] font-bold shadow-lg hover:scale-105 transition-transform"
           >
             <span>🎬</span>
-            <span>ชมตัวอย่างผลงานจริง 8 แนว</span>
+            <span>{getShowcaseBadgeLabel(tool.slug)}</span>
           </Link>
         )}
 

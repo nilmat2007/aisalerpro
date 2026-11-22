@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { formatToolUpdateDate } from '@/lib/date-utils';
 import ThemeToggle from '@/components/ThemeToggle';
 import AllInOneUpsellBanner from '@/components/AllInOneUpsellBanner';
-import DramaOutputShowcase from '@/components/DramaOutputShowcase';
+import DramaOutputShowcase, { hasToolOutputShowcase } from '@/components/DramaOutputShowcase';
 import { getPriceInfo } from '@/lib/price-utils';
 import { getToolFlowLink, getToolTutorialEmbedUrl } from '@/lib/sanitize-tool';
 
@@ -239,10 +239,11 @@ export default function ToolGuideClient({
           })()}
         </div>
 
-        {/* 🎬 AI Short-Drama Cinema Stage (8 Viral Genres Showcase for puppap-drama) */}
-        {slug === 'puppap-drama' && (
+        {/* 🎬 Real Output Cinema Stage (puppap-drama, puppap-talking-3d, puppap-renovate) */}
+        {hasToolOutputShowcase(slug) && (
           <div className="mt-8 w-full">
             <DramaOutputShowcase
+              toolSlug={slug}
               isUnlocked={isUnlocked}
               priceFormatted={priceInfo.formattedPrice}
               checkoutHref={`/checkout/${slug}`}
