@@ -12,7 +12,8 @@ export type ShowcaseToolSlug =
   | 'puppap-renovate'
   | 'puppap-ugc-product'
   | 'ugc-batch'
-  | 'puppap-fashion-studio';
+  | 'puppap-fashion-studio'
+  | 'puppap-transformer-mecha';
 
 export interface DramaShowcaseItem {
   id: number;
@@ -520,6 +521,84 @@ export const FASHION_STUDIO_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
   },
 ];
 
+export const TRANSFORMER_MECHA_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
+  {
+    id: 1,
+    key: 'cat-mecha-jetpack',
+    title: 'แมวส้มยืนสองขา ➔ แปลงร่างเป็นหุ่นรบพยัคฆ์เหมียวติดเจ็ทแพ็ก',
+    genreBadge: '🐱 สัตว์เลี้ยงสวมเกราะรบ',
+    genreTitle: 'โหมดสัตว์เลี้ยงกลายร่าง (Pet Mecha Armor Morph A ➔ B)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-mecha-jetpack.mp4`,
+    posterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-mecha-jetpack-formB.jpg`,
+    beforePosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-mecha-jetpack-formA.jpg`,
+    afterPosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-mecha-jetpack-formB.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/17gbIi3abOJHeRnHqWRctZ0XqG5RPjsoF/preview',
+    synopsis:
+      'จากน้องแมวส้มอ้วนกลมยืนสองขาบนระเบียงตึกสูง กลไกเกราะเหล็กสีส้มลายเสือค่อยๆ พับสวมทับทีละชิ้นพร้อมเตาปฏิกรณ์สีเขียวมรกตและไอพ่นเจ็ทแพ็กคู่บนไหล่!',
+    cameraNote: '3-Phase Mechanical Morph A➔B • ล็อกฉากหลังระเบียงตึกเดิมตรงกัน 100%',
+    voiceNote: 'ซาวด์กลไกเหล็กพับประกอบร่าง + เสียงชาร์จเตาปฏิกรณ์และไอพ่นสุดเร้าใจ',
+    accentClass: 'from-amber-500 to-orange-600 text-stone-950',
+  },
+  {
+    id: 2,
+    key: 'cat-excavator-titan',
+    title: 'รถแบคโฮ CAT ไซต์ก่อสร้าง ➔ แปลงร่างเป็นหุ่นรบไททันยักษ์',
+    genreBadge: '🚜 ยานพาหนะกลายร่าง',
+    genreTitle: 'โหมดยานพาหนะเครื่องจักรหนัก (Heavy Vehicle Transformer A ➔ B)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-excavator-titan.mp4`,
+    posterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-excavator-titan-formB.jpg`,
+    beforePosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-excavator-titan-formA.jpg`,
+    afterPosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cat-excavator-titan-formB.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1HfaR6dnS-V2M60mnMshNFWC5uVvwYLrj/preview',
+    synopsis:
+      'รถขุดแบคโฮสีเหลือง CAT 320 กลางไซต์งานก่อสร้างตึกระฟ้า ยกตัวแยกชิ้นส่วนแขนตักและตีนตะขาบไฮดรอลิกประกอบร่างขึ้นเป็นหุ่นยนต์รบไททันยักษ์ตาสีฟ้าเรืองแสง!',
+    cameraNote: 'Low-Angle Cinematic Scale • แสงอาทิตย์อัสดงและควันไอเสียสมจริงระดับฮอลลีวูด',
+    voiceNote: 'ซาวด์ไฮดรอลิกเครื่องจักรหนักแยกชิ้นส่วนและเสียงกระแทกพื้นทรงพลัง',
+    accentClass: 'from-yellow-400 to-amber-600 text-stone-950',
+  },
+  {
+    id: 3,
+    key: 'cyber-vinyl-knight',
+    title: 'อาร์ตทอยมินิหน้าจอคอม ➔ แปลงร่างเป็นอัศวินไซเบอร์ปีกโฮโลแกรม',
+    genreBadge: '🤖 อาร์ตทอยมีชีวิต',
+    genreTitle: 'โหมดของเล่น & Art Toy กลายร่าง (Designer Toy Awakening A ➔ B)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyber-vinyl-knight.mp4`,
+    posterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyber-vinyl-knight-formB.jpg`,
+    beforePosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyber-vinyl-knight-formA.jpg`,
+    afterPosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyber-vinyl-knight-formB.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/14PGNLLqNL3UhId2tPv2yR1f_xLqbbbYM/preview',
+    synopsis:
+      'ตุ๊กตาไวนิลอาร์ตทอยสีม่วงพาสเทลบนโต๊ะคอมเกมมิ่งคีย์บอร์ด RGB ยืดข้อต่อสวมเกราะแปลงร่างเป็นอัศวินไซเบอร์ถือดาบพลังงานพร้อมกางปีกคลื่นเสียงโฮโลแกรมสีทอง!',
+    cameraNote: 'Macro Desk-Scale Depth of Field • แสงไฟ RGB และประกายพลาสมาคมชัดระดับ 4K',
+    voiceNote: 'ซาวด์เอฟเฟกต์ไซไฟพลังงานโฮโลแกรมและเสียงชักดาบเลเซอร์สุดเท่',
+    accentClass: 'from-purple-500 to-indigo-600 text-white',
+  },
+  {
+    id: 4,
+    key: 'cyclone-vacuum-morph',
+    title: 'เครื่องดูดฝุ่นไร้สายมินิมอล ➔ ลอยตัวกางเกราะโชว์ขุมพลังมอเตอร์ไซโคลน',
+    genreBadge: '⚡ สินค้ากางกลไกป้ายยา',
+    genreTitle: 'โหมดสินค้าป้ายยาโชว์ขุมพลังภายใน (Product Exploded Morph A ➔ B)',
+    durationLabel: '8 วิ • Master',
+    videoUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyclone-vacuum-morph.mp4`,
+    posterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyclone-vacuum-morph-formB.jpg`,
+    beforePosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyclone-vacuum-morph-formA.jpg`,
+    afterPosterUrl: `${STORAGE_ROOT}/transformer-mecha-showcase/cyclone-vacuum-morph-formB.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1_ZDmb9tBhHQcf_-JOgm0OnJw_EDJJOgO/preview',
+    synopsis:
+      'เปลี่ยนภาพสินค้าธรรมดาให้กลายเป็นโฆษณา CGI หลักแสน! เครื่องดูดฝุ่นไร้สายลอยตัวขึ้นกลางห้องนั่งเล่นพร้อมวงแหวนพลังงานสีทอง กางฝาครอบโชว์กลไกใบพัดมอเตอร์ไซโคลนด้านใน',
+    cameraNote: 'Floating Exploded-View CGI • โชว์กลไกภายในสินค้าแบบล้ำยุคสะกดทุกสายตา',
+    voiceNote: 'ซาวด์พลังงานแม่เหล็กไฟฟ้าและเสียงเทอร์ไบน์มอเตอร์หมุนความเร็วสูง',
+    accentClass: 'from-sky-500 to-cyan-600 text-white',
+  },
+];
+
 export function hasToolOutputShowcase(slug?: string | null): slug is ShowcaseToolSlug {
   return (
     slug === 'puppap-drama' ||
@@ -527,7 +606,8 @@ export function hasToolOutputShowcase(slug?: string | null): slug is ShowcaseToo
     slug === 'puppap-renovate' ||
     slug === 'puppap-ugc-product' ||
     slug === 'ugc-batch' ||
-    slug === 'puppap-fashion-studio'
+    slug === 'puppap-fashion-studio' ||
+    slug === 'puppap-transformer-mecha'
   );
 }
 
@@ -538,6 +618,7 @@ export function getShowcaseBadgeLabel(slug?: string | null): string | null {
   if (slug === 'puppap-ugc-product') return 'ชมตัวอย่างคลิปรีวิวสินค้า 4 คลิป';
   if (slug === 'ugc-batch') return 'ชมตัวอย่างรีวิวขายดุ 24–40 วิ (4 คลิป)';
   if (slug === 'puppap-fashion-studio') return 'ชมตัวอย่างนางแบบรีวิวชุด 5 คลิป';
+  if (slug === 'puppap-transformer-mecha') return 'ชมตัวอย่างหุ่นรบแปลงร่าง A➔B (4 คลิป)';
   return null;
 }
 
@@ -564,6 +645,14 @@ const STUDIO_TABS: Array<{
     countBadge: 'ยาว 24–40 วิ!',
     toolName: 'Ai SALER PRO - UGC Batch',
     toolPrice: '699',
+  },
+  {
+    slug: 'puppap-transformer-mecha',
+    icon: '🤖',
+    tabLabel: 'หุ่นรบ & สินค้าแปลงร่าง',
+    countBadge: 'กลายร่าง A➔B!',
+    toolName: 'PUP PAP TRANSFORMER',
+    toolPrice: '299',
   },
   {
     slug: 'puppap-fashion-studio',
@@ -712,6 +801,22 @@ const SHOWCASE_META: Record<
     defaultPrice: '299',
     items: FASHION_STUDIO_SHOWCASE_ITEMS,
   },
+  'puppap-transformer-mecha': {
+    topBadge: 'TRANSFORMER & MECHA MORPH SHOWCASE • กลายร่าง A ➔ B ระดับฮอลลีวูด 100%',
+    headingPrefix: 'ชมตัวอย่างหุ่นรบแปลงร่าง & สินค้ากลายร่างป้ายยา',
+    headingHighlight: 'ร่างต้นทาง (FORM A) ➔ ร่างหุ่นรบ (MECHA B)',
+    subheading:
+      'ทุกคลิปด้านล่างถูกสร้างจาก PUP PAP TRANSFORMER & MECHA MORPH BAY — เปลี่ยนสัตว์เลี้ยง รถแบคโฮ อาร์ตทอย และเครื่องใช้ไฟฟ้าให้แยกชิ้นส่วนกลไกไฮดรอลิกแปลงร่างเป็นหุ่นรบสุดอลังการ!',
+    gridTitle: 'คลิกเลือกชมตัวอย่างการแปลงร่าง FORM A ➔ MECHA B ทั้ง 4 โหมด (คลิกเพื่อดูคลิปเต็ม)',
+    gridSubtitle: 'ล็อกฉากและโครงสร้าง A➔B เป๊ะ 100%',
+    soundOnLabel: '🔊 แตะเปิดฟังซาวด์กลไกหุ่นรบแปลงร่าง',
+    recipeTitle: 'สูตรเตาปฏิกรณ์แปลงร่าง AI ในคลิปนี้',
+    ctaHeadline:
+      '🤖 สร้างคลิปหุ่นยนต์แปลงร่าง & สินค้ากางเกราะโชว์ขุมพลังระดับ CGI หลักแสนได้ด้วยตัวเอง!',
+    toolName: 'PUP PAP TRANSFORMER & MECHA MORPH BAY',
+    defaultPrice: '299',
+    items: TRANSFORMER_MECHA_SHOWCASE_ITEMS,
+  },
 };
 
 interface DramaOutputShowcaseProps {
@@ -826,6 +931,8 @@ export default function DramaOutputShowcase({
   };
 
   const isRenovate = currentStudio === 'puppap-renovate';
+  const isMecha = currentStudio === 'puppap-transformer-mecha';
+  const isSplitMorphCard = isRenovate || isMecha;
 
   return (
     <section
@@ -844,7 +951,7 @@ export default function DramaOutputShowcase({
             <span>🎬</span>
             <span>
               {enableStudioTabs
-                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 28 ผลงานจริงจาก 6 สตูดิโอเรือธง'
+                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 32 ผลงานจริงจาก 7 สตูดิโอเรือธง'
                 : meta.topBadge}
             </span>
           </div>
@@ -854,7 +961,7 @@ export default function DramaOutputShowcase({
               <>
                 พิสูจน์ด้วยสายตา! ตัวอย่างผลงานจริง{' '}
                 <span className="text-amber-300 underline decoration-rose-500/80">
-                  ระดับมาสเตอร์พีซ 28 คลิปเต็ม
+                  ระดับมาสเตอร์พีซ 32 คลิปเต็ม
                 </span>
               </>
             ) : (
@@ -869,7 +976,7 @@ export default function DramaOutputShowcase({
 
           <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
             {enableStudioTabs
-              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 6 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวขายดุ 3–5 ช็อต • เสื้อผ้า & นางแบบ AI • รีวิวสินค้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
+              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 7 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวขายดุ 3–5 ช็อต • หุ่นรบแปลงร่าง A➔B • เสื้อผ้า & นางแบบ AI • รีวิวสินค้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
               : meta.subheading}
           </p>
         </div>
@@ -1055,8 +1162,8 @@ export default function DramaOutputShowcase({
               </span>
             </div>
 
-            {/* Grid Layout: 3 Before->After Cards for Renovate, 2/4 Poster Cards for Talking-3D & Drama */}
-            {isRenovate ? (
+            {/* Grid Layout: Side-by-Side Split Morph Cards for Renovate & Transformer Mecha, Poster Cards for others */}
+            {isSplitMorphCard ? (
               <div className="grid grid-cols-1 gap-3">
                 {items.map((item, idx) => {
                   const isSelected = idx === safeIndex;
@@ -1072,7 +1179,7 @@ export default function DramaOutputShowcase({
                           : 'border border-white/15 hover:border-amber-400/70 opacity-90 hover:opacity-100'
                       }`}
                     >
-                      {/* Side-by-Side BEFORE ➔ AFTER Thumbnails */}
+                      {/* Side-by-Side BEFORE ➔ AFTER / FORM A ➔ MECHA B Thumbnails */}
                       <div className="flex items-center gap-1.5 shrink-0">
                         <div className="relative w-20 h-28 sm:w-22 sm:h-30 rounded-xl overflow-hidden border border-white/20 bg-stone-950">
                           <img
@@ -1083,7 +1190,7 @@ export default function DramaOutputShowcase({
                             className="w-full h-full object-cover"
                           />
                           <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-stone-950/90 text-stone-200 text-[9px] font-bold border border-white/20">
-                            BEFORE
+                            {isMecha ? 'FORM A' : 'BEFORE'}
                           </span>
                         </div>
 
@@ -1098,7 +1205,7 @@ export default function DramaOutputShowcase({
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-bold shadow-xs">
-                            AFTER ✨
+                            {isMecha ? 'MECHA B ⚡' : 'AFTER ✨'}
                           </span>
                         </div>
                       </div>
@@ -1133,7 +1240,9 @@ export default function DramaOutputShowcase({
                         >
                           {isSelected
                             ? '🔊 กำลังเล่นคลิปนี้อยู่บนจอซ้าย'
-                            : '▶ คลิกเพื่อดูคลิปรีโนเวทตั้งแต่ต้นจนจบ'}
+                            : isMecha
+                              ? '▶ คลิกเพื่อดูฉากกลไกแปลงร่าง A ➔ B เต็มๆ'
+                              : '▶ คลิกเพื่อดูคลิปรีโนเวทตั้งแต่ต้นจนจบ'}
                         </div>
                       </div>
                     </button>
