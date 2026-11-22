@@ -11,7 +11,8 @@ export type ShowcaseToolSlug =
   | 'puppap-talking-3d'
   | 'puppap-renovate'
   | 'puppap-ugc-product'
-  | 'ugc-batch';
+  | 'ugc-batch'
+  | 'puppap-fashion-studio';
 
 export interface DramaShowcaseItem {
   id: number;
@@ -433,13 +434,100 @@ export const UGC_BATCH_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
   },
 ];
 
+export const FASHION_STUDIO_SHOWCASE_ITEMS: DramaShowcaseItem[] = [
+  {
+    id: 1,
+    key: 'pink-ruffle-blouse',
+    title: 'รีวิวเสื้อเชิ้ตชมพูแขนระบาย 3 ชั้น (สวมจริง + ถือไม้แขวนโชว์ชุดเดียวกัน)',
+    genreBadge: '👚 สวมจริง+ถือโชว์',
+    genreTitle: 'นางแบบสวมชุดจริงบนตัว + ถือไม้แขวนโชว์ชุดเดียวกันเป๊ะ 100%',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/fashion-studio-showcase/pink-ruffle-blouse.mp4`,
+    posterUrl: `${STORAGE_ROOT}/fashion-studio-showcase/pink-ruffle-blouse-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1GwnwSdX3GwT5Av4W-KWo-_bSvxrHr4xL/preview',
+    synopsis:
+      'นางแบบสวมเสื้อเชิ้ตสีชมพูแขนระบาย 3 ชั้นบนตัว พร้อมถือไม้แขวนเสื้อตัวเดียวกันในมือเพื่อชี้โชว์ดีเทลปกเสื้อและกระดุมมุกในโชว์รูมบูติกหรู ตรงปก 100%!',
+    cameraNote: 'Dual Wear & Hanger Lock • ล็อกทรงเสื้อบนตัวและบนไม้แขวนให้ตรงกันทุกจุด',
+    voiceNote: 'เสียงพูดรีวิวแฟชั่นภาษาไทย ชี้จุดเด่นเนื้อผ้าและคัตติ้งอย่างมืออาชีพ',
+    accentClass: 'from-pink-500 to-rose-500 text-white',
+  },
+  {
+    id: 2,
+    key: 'black-crystal-dress',
+    title: 'รีวิวชุดเกาะอกสีดำแต่งขอบเพชร (สวมจริง + ถือไม้แขวนในสตูดิโอ)',
+    genreBadge: '🖤 ลุคออกงานหรู',
+    genreTitle: 'แฟชั่นชุดออกงาน & ปาร์ตี้ (Evening & Boutique Studio)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/fashion-studio-showcase/black-crystal-dress.mp4`,
+    posterUrl: `${STORAGE_ROOT}/fashion-studio-showcase/black-crystal-dress-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1H8cwfjqNuepEwDarCAjhFJ1FpKO7CpWl/preview',
+    synopsis:
+      'นางแบบสาวลุคเกาหลีสวมเสื้อเกาะอกสีดำขอบคริสตัลแมตช์กางเกงขาว พร้อมถือไม้แขวนชุดเดรสสีดำขอบคริสตัลแบบเดียวกันชี้โชว์คัตติ้งหน้าไฟสตูดิโอ',
+    cameraNote: 'High-Fashion Daylight Studio • แสงแฟลชสตูดิโอขับดีเทลขอบเพชรระยิบระยับ',
+    voiceNote: 'โทนเสียงป้ายยาเสื้อผ้าแบรนด์ไอจี ดูแพงและน่าเชื่อถือ',
+    accentClass: 'from-stone-800 to-zinc-950 text-amber-300',
+  },
+  {
+    id: 3,
+    key: 'plus-size-satin-pajamas',
+    title: 'นางแบบสาวอวบรีวิวชุดนอนผ้าซาตินสีชมพูพรีเมียม (Size S–4XL)',
+    genreBadge: '🎀 สาวอวบ Plus-Size',
+    genreTitle: 'รองรับนางแบบทุกหุ่นตั้งแต่ S ถึงสาวอวบ 4XL (Inclusive Sizing)',
+    durationLabel: '10 วิ • Master',
+    isHighlight: true,
+    videoUrl: `${STORAGE_ROOT}/fashion-studio-showcase/plus-size-satin-pajamas.mp4`,
+    posterUrl: `${STORAGE_ROOT}/fashion-studio-showcase/plus-size-satin-pajamas-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/1qswbHTXfIQq9tyJgakTn95_XC8DejQ8g/preview',
+    synopsis:
+      'เลือกหุ่นนางแบบได้ทุกไซส์! นางแบบสาวอวบสวมชุดนอนผ้าซาตินสีชมพูกุ๊นขอบแดง โพสต์โชว์ความพริ้วและใส่สบาย พร้อมป้าย “ผ้าซาตินพรีเมี่ยม ✨ Size S–4XL”',
+    cameraNote: 'Satin Fabric Physics & Sheen • เงาสะท้อนผ้าซาตินและรอยยับสมจริงตามการขยับตัว',
+    voiceNote: 'เสียงรีวิวสดใสเป็นกันเอง เอาใจลูกค้าเสื้อผ้าสาวอวบและชุดนอน',
+    accentClass: 'from-amber-500 to-orange-600 text-stone-950',
+  },
+  {
+    id: 4,
+    key: 'pool-villa-monokini',
+    title: 'รีวิวชุดว่ายน้ำวันพีซสีดำริมสระพูลวิลล่า (สวมจริง + ถือไม้แขวน)',
+    genreBadge: '🏖️ ชุดว่ายน้ำพูลวิลล่า',
+    genreTitle: 'แฟชั่นชุดว่ายน้ำ & รีสอร์ตเอาต์ดอร์ (Pool Villa Swimwear)',
+    durationLabel: '10 วิ • Master',
+    videoUrl: `${STORAGE_ROOT}/fashion-studio-showcase/pool-villa-monokini.mp4`,
+    posterUrl: `${STORAGE_ROOT}/fashion-studio-showcase/pool-villa-monokini-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/19hnfVasRYHHfFtgV-geodQNYfEoVO2Ac/preview',
+    synopsis:
+      'นางแบบสวมชุดว่ายน้ำวันพีซสีดำคลุมเชิ้ตขาวริมสระน้ำพูลวิลล่า พร้อมถือไม้แขวนชุดว่ายน้ำตัวเดียวกันชี้โชว์ดีเทลสายไขว้และระบายอย่างชัดเจน',
+    cameraNote: 'Tropical Poolside Golden Hour • แสงแดดธรรมชาติริมสระน้ำละมุนตา',
+    voiceNote: 'เสียงพูดรีวิวชุดไปทะเล ชวนสาวๆ เอฟชุดใส่ถ่ายรูปสวยๆ',
+    accentClass: 'from-sky-500 to-blue-600 text-white',
+  },
+  {
+    id: 5,
+    key: 'runway-fitting-monokini',
+    title: 'นางแบบเดินฟิตติ้งโชว์ทรงชุดว่ายน้ำวันพีซในห้องเสื้อหรู',
+    genreBadge: '✨ เดินแบบโชว์ทรง',
+    genreTitle: 'โพสต์เดินแบบโชว์คัตติ้งชุด (Boutique Fitting Lookbook)',
+    durationLabel: '10 วิ • Master',
+    videoUrl: `${STORAGE_ROOT}/fashion-studio-showcase/runway-fitting-monokini.mp4`,
+    posterUrl: `${STORAGE_ROOT}/fashion-studio-showcase/runway-fitting-monokini-poster.jpg`,
+    drivePreviewUrl: 'https://drive.google.com/file/d/11nBvJK6xQ_7ExLcp1usb_t9JaVHjQbSz/preview',
+    synopsis:
+      'นางแบบสาวผมสั้นเดินโพสต์โชว์ทรงชุดและการตัดเย็บรอบตัวในห้องเสื้อบูติกหรู เห็นการเคลื่อนไหวของเนื้อผ้าแนบสรีระอย่างเป็นธรรมชาติ',
+    cameraNote: 'Runway Tracking Shot • โฟกัสทรงชุดและบุคลิกนางแบบระดับมืออาชีพ',
+    voiceNote: 'เสียงพากย์ไทยมั่นใจทันสมัย กระตุ้นยอดขายร้านเสื้อผ้าแฟชั่น',
+    accentClass: 'from-emerald-500 to-teal-600 text-white',
+  },
+];
+
 export function hasToolOutputShowcase(slug?: string | null): slug is ShowcaseToolSlug {
   return (
     slug === 'puppap-drama' ||
     slug === 'puppap-talking-3d' ||
     slug === 'puppap-renovate' ||
     slug === 'puppap-ugc-product' ||
-    slug === 'ugc-batch'
+    slug === 'ugc-batch' ||
+    slug === 'puppap-fashion-studio'
   );
 }
 
@@ -449,6 +537,7 @@ export function getShowcaseBadgeLabel(slug?: string | null): string | null {
   if (slug === 'puppap-renovate') return 'ชมตัวอย่างรีโนเวท Before➔After';
   if (slug === 'puppap-ugc-product') return 'ชมตัวอย่างคลิปรีวิวสินค้า 4 คลิป';
   if (slug === 'ugc-batch') return 'ชมตัวอย่างรีวิวขายดุ 24–40 วิ (4 คลิป)';
+  if (slug === 'puppap-fashion-studio') return 'ชมตัวอย่างนางแบบรีวิวชุด 5 คลิป';
   return null;
 }
 
@@ -475,6 +564,14 @@ const STUDIO_TABS: Array<{
     countBadge: 'ยาว 24–40 วิ!',
     toolName: 'Ai SALER PRO - UGC Batch',
     toolPrice: '699',
+  },
+  {
+    slug: 'puppap-fashion-studio',
+    icon: '👗',
+    tabLabel: 'เสื้อผ้า & นางแบบ AI',
+    countBadge: 'แถมฟรีในคอร์ส!',
+    toolName: 'PUP PAP Fashion Studio',
+    toolPrice: '299',
   },
   {
     slug: 'puppap-ugc-product',
@@ -598,6 +695,22 @@ const SHOWCASE_META: Record<
     toolName: 'Ai SALER PRO - UGC Batch',
     defaultPrice: '699',
     items: UGC_BATCH_SHOWCASE_ITEMS,
+  },
+  'puppap-fashion-studio': {
+    topBadge: 'AI FASHION & MODEL STUDIO SHOWCASE • แถมฟรีในคอร์สเรียน ฿159 (หรือซื้อแยก ฿299)',
+    headingPrefix: 'ชมตัวอย่างนางแบบ AI รีวิวเสื้อผ้าแฟชั่น',
+    headingHighlight: 'สวมชุดจริง + ถือไม้แขวนโชว์ชุด ครบทุกไซส์ (S–4XL)',
+    subheading:
+      'ทุกคลิปด้านล่างถูกสร้างจาก PUP PAP Fashion Studio — แนบรูปเสื้อผ้าชุดเดียว ระบบเสกนางแบบ AI ทั้งสวมชุดจริงบนตัวและถือไม้แขวนโชว์ชุดเดียวกันในมือ รองรับหุ่นทุกไซส์ตั้งแต่ S ถึงสาวอวบ 4XL (แถมฟรีเมื่อสมัครคอร์สเรียน ฿159!)',
+    gridTitle: 'คลิกเลือกชมตัวอย่างนางแบบรีวิวเสื้อผ้าแฟชั่นทั้ง 5 สไตล์ (คลิกเพื่อฟังเสียงรีวิว)',
+    gridSubtitle: '🎁 แถมฟรีในคอร์สเรียน ฿159',
+    soundOnLabel: '🔊 แตะเปิดฟังเสียงนางแบบรีวิวชุดไทย',
+    recipeTitle: 'สูตรสตูดิโอแฟชั่น AI ที่ใช้ในคลิปนี้',
+    ctaHeadline:
+      '🎁 พิเศษ! เครื่องมือนี้แถมฟรีเมื่อสมัครคอร์สเรียน ฿159 (ได้ครบคอร์ส 22 บท + แถมฟรี 2 เครื่องมือ AI มูลค่า ฿598)',
+    toolName: 'PUP PAP Fashion Studio',
+    defaultPrice: '299',
+    items: FASHION_STUDIO_SHOWCASE_ITEMS,
   },
 };
 
@@ -731,7 +844,7 @@ export default function DramaOutputShowcase({
             <span>🎬</span>
             <span>
               {enableStudioTabs
-                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 23 ผลงานจริงจาก 5 สตูดิโอเรือธง'
+                ? 'PUP PAP AI LIVE OUTPUT THEATER • รวม 28 ผลงานจริงจาก 6 สตูดิโอเรือธง'
                 : meta.topBadge}
             </span>
           </div>
@@ -741,7 +854,7 @@ export default function DramaOutputShowcase({
               <>
                 พิสูจน์ด้วยสายตา! ตัวอย่างผลงานจริง{' '}
                 <span className="text-amber-300 underline decoration-rose-500/80">
-                  ระดับมาสเตอร์พีซ 23 คลิปเต็ม
+                  ระดับมาสเตอร์พีซ 28 คลิปเต็ม
                 </span>
               </>
             ) : (
@@ -756,15 +869,15 @@ export default function DramaOutputShowcase({
 
           <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
             {enableStudioTabs
-              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 5 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวขายดุ 3–5 ช็อต • รีวิวสินค้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
+              ? 'กดสลับแท็บด้านล่างเพื่อชมผลงานจริงจากเครื่องมือยอดฮิตทั้ง 6 สตูดิโอ (ละครสั้น AI 8 แนว • รีวิวขายดุ 3–5 ช็อต • เสื้อผ้า & นางแบบ AI • รีวิวสินค้า UGC • สิ่งของ 3D พูดได้ • รีโนเวทบ้าน Before ➔ After)'
               : meta.subheading}
           </p>
         </div>
 
-        {/* 5-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
+        {/* 6-Studio Interactive Tab Switcher (Homepage / Multi-Studio Mode) */}
         {enableStudioTabs && (
           <div
-            className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
+            className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 p-2 rounded-2xl bg-stone-950/90 border border-amber-400/35"
             data-testid="multi-studio-tabs"
           >
             {STUDIO_TABS.map((tab) => {
