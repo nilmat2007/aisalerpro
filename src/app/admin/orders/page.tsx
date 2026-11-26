@@ -66,6 +66,36 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleOverrideApprove = async (id: string) => {
+    const confirmed = await showConfirm(
+      'ยืนยันการอนุมัติย้อนหลัง (Override) และปลดล็อกสิทธิ์ให้ลูกค้ารายนี้ใช่หรือไม่?'
+    );
+    if (!confirmed) return;
+    setProcessingId(id);
+    showLoading('กำลังอนุมัติและปลดล็อกสิทธิ์ให้ลูกค้า...');
+    try {
+      const res = await fetch(`/api/admin/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'override_approve' }),
+      });
+      closeLoading();
+      if (res.ok) {
+        await showSuccess('อนุมัติย้อนหลังและปลดล็อกสิทธิ์สำเร็จ!');
+        fetchOrders();
+      } else {
+        const data = await res.json();
+        showError('เกิดข้อผิดพลาด', data.message || data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      closeLoading();
+      showError('เกิดข้อผิดพลาด', 'ไม่สามารถอนุมัติคำสั่งซื้อได้');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const handleRetryGrant = async (id: string) => {
     setProcessingId(id);
     showLoading('กำลังซ่อมสิทธิ์และอนุมัติคำสั่งซื้อ...');
@@ -296,14 +326,23 @@ export default function AdminOrdersPage() {
                             </button>
                           </div>
                         )}
-                        {order.status === 'rejected' && order.admin_note && (
-                          <div className="text-xs text-red-400 space-y-1">
-                            <div>เหตุผล: {order.admin_note}</div>
-                            {order.admin_note.includes('kept_active_via_order_id=') && (
+                        {order.status === 'rejected' && (
+                          <div className="text-xs text-red-400 space-y-2">
+                            {order.admin_note && <div>เหตุผล: {order.admin_note}</div>}
+                            {order.admin_note?.includes('kept_active_via_order_id=') && (
                               <span className="inline-block px-2 py-0.5 bg-emerald-500/15 text-emerald-300 text-[11px] rounded border border-emerald-500/30">
                                 🛡️ สิทธิ์ยังใช้งานได้จากคำสั่งซื้ออื่น (Surviving Key)
                               </span>
                             )}
+                            <div>
+                              <button
+                                onClick={() => handleOverrideApprove(order.id)}
+                                disabled={processingId === order.id}
+                                className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 rounded text-xs font-semibold transition-colors disabled:opacity-50"
+                              >
+                                ✅ อนุมัติย้อนหลัง (ปลดล็อก)
+                              </button>
+                            </div>
                           </div>
                         )}
                       </td>

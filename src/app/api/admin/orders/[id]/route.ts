@@ -52,7 +52,21 @@ export async function PATCH(
       );
     }
 
-    if (action === 'approve' || action === 'retry_grant') {
+    if (action === 'approve' || action === 'retry_grant' || action === 'override_approve') {
+      if (action === 'override_approve' && order.status === 'rejected') {
+        const reopenTag = `[ADMIN_OVERRIDE_REOPENED at ${new Date().toISOString()} by ${adminActor}]`;
+        const reopenedNote = order.admin_note?.trim()
+          ? `${order.admin_note.trim()} | ${reopenTag}`
+          : reopenTag;
+        await supabase
+          .from('orders')
+          .update({
+            status: 'pending',
+            admin_note: reopenedNote,
+          })
+          .eq('id', id);
+      }
+
       if (action === 'retry_grant') {
         await supabase
           .from('orders')
