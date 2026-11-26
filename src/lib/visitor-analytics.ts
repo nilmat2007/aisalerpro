@@ -26,24 +26,77 @@ export function isValidTrackPathname(pathname: string | null | undefined): pathn
   return ALLOWED_PATH_REGEX.test(pathname);
 }
 
-export function encodePvEndpoint(pathname: string, utmContent?: string | null): string {
+export interface PvEndpointExtra {
+  source?: string | null;
+  device?: string | null;
+}
+
+export function encodePvEndpoint(
+  pathname: string,
+  utmContent?: string | null,
+  extra?: PvEndpointExtra
+): string {
   const cleanUtm =
     utmContent && typeof utmContent === 'string' && /^[a-zA-Z0-9_-]{1,32}$/.test(utmContent.trim())
       ? utmContent.trim()
       : '';
-  return cleanUtm ? `pv:${pathname}|utm=${cleanUtm}` : `pv:${pathname}`;
+  const cleanSrc =
+    extra?.source && typeof extra.source === 'string' && /^[a-z0-9_-]{1,20}$/.test(extra.source.trim())
+      ? extra.source.trim()
+      : '';
+  const cleanDev =
+    extra?.device && (extra.device === 'mobile' || extra.device === 'desktop')
+      ? extra.device
+      : '';
+
+  let result = `pv:${pathname}`;
+  if (cleanUtm) result += `|utm=${cleanUtm}`;
+  if (cleanSrc) result += `|src=${cleanSrc}`;
+  if (cleanDev) result += `|dev=${cleanDev}`;
+  return result;
+}
+
+export function parsePvEndpointExtended(endpoint: string): {
+  pathname: string;
+  utmContent: string | null;
+  source: string | null;
+  device: 'mobile' | 'desktop' | null;
+} | null {
+  if (!endpoint || !endpoint.startsWith('pv:')) return null;
+  const raw = endpoint.slice(3);
+  const segments = raw.split('|');
+  const pathname = segments[0]?.trim();
+  if (!pathname) return null;
+
+  let utmContent: string | null = null;
+  let source: string | null = null;
+  let device: 'mobile' | 'desktop' | null = null;
+
+  for (let i = 1; i < segments.length; i++) {
+    const seg = segments[i];
+    if (seg.startsWith('utm=')) {
+      const val = seg.slice(4).trim();
+      if (val) utmContent = val;
+    } else if (seg.startsWith('src=')) {
+      const val = seg.slice(4).trim();
+      if (val) source = val;
+    } else if (seg.startsWith('dev=')) {
+      const val = seg.slice(4).trim();
+      if (val === 'mobile' || val === 'desktop') device = val;
+    }
+  }
+
+  return { pathname, utmContent, source, device };
 }
 
 export function parsePvEndpoint(
   endpoint: string
 ): { pathname: string; utmContent: string | null } | null {
-  if (!endpoint || !endpoint.startsWith('pv:')) return null;
-  const raw = endpoint.slice(3);
-  const [pathname, utmPart] = raw.split('|utm=');
-  if (!pathname) return null;
+  const parsed = parsePvEndpointExtended(endpoint);
+  if (!parsed) return null;
   return {
-    pathname,
-    utmContent: utmPart ? utmPart.trim() : null,
+    pathname: parsed.pathname,
+    utmContent: parsed.utmContent,
   };
 }
 

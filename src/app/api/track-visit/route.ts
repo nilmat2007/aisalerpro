@@ -255,7 +255,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { pathname, utmContent } = body || {};
+    const { pathname, utmContent, source, device } = body || {};
 
     if (!isValidTrackPathname(pathname)) {
       return NextResponse.json({ error: 'Invalid pathname' }, { status: 400 });
@@ -265,7 +265,27 @@ export async function POST(request: Request) {
     const ipHash = hashIpHmac(ip);
     const nowMs = Date.now();
     const oneMinAgoIso = new Date(nowMs - PV_RATE_LIMIT_WINDOW_MS).toISOString();
-    const endpointKey = encodePvEndpoint(pathname, utmContent);
+    const inferredDevice =
+      device === 'mobile' || device === 'desktop'
+        ? device
+        : ua && /Android|iPhone|iPad|iPod|Mobile|Line\//i.test(ua)
+          ? 'mobile'
+          : ua
+            ? 'desktop'
+            : undefined;
+    const inferredSource =
+      typeof source === 'string' && source.trim()
+        ? source.trim().toLowerCase()
+        : ua && /Line\/\d+/i.test(ua)
+          ? 'line'
+          : undefined;
+    const endpointKey = encodePvEndpoint(
+      pathname,
+      utmContent,
+      source || device
+        ? { source: inferredSource, device: inferredDevice }
+        : undefined
+    );
 
     // 1. Check per-IP rate limit (max 30 PV/min) & 30-second same-page de-dup
     const { data: recentVisits, error: selectErr } = await supabaseAdmin
@@ -288,7 +308,7 @@ export async function POST(request: Request) {
 
     const thirtySecCutoffMs = nowMs - PV_DEDUP_WINDOW_MS;
     const isDuplicateWithin30s = recentList.some((row: any) => {
-      const rowPathname = String(row.endpoint || '').split('|utm=')[0];
+      const rowPathname = String(row.endpoint || '').split('|')[0];
       const targetPathname = `pv:${pathname}`;
       return (
         rowPathname === targetPathname &&

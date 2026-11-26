@@ -172,6 +172,70 @@ export function captureUtmContent(): string {
   }
 }
 
+export function detectTrafficSource(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const rawUtmSrc = (params.get('utm_source') || '').trim().toLowerCase();
+    if (rawUtmSrc) {
+      if (rawUtmSrc.includes('fb') || rawUtmSrc.includes('facebook') || rawUtmSrc.includes('meta')) return 'facebook';
+      if (rawUtmSrc.includes('tiktok') || rawUtmSrc === 'tt') return 'tiktok';
+      if (rawUtmSrc.includes('line')) return 'line';
+      if (rawUtmSrc.includes('ig') || rawUtmSrc.includes('instagram')) return 'instagram';
+      if (rawUtmSrc.includes('yt') || rawUtmSrc.includes('youtube')) return 'youtube';
+      if (rawUtmSrc.includes('google')) return 'google';
+      const cleaned = rawUtmSrc.replace(/[^a-z0-9_-]/g, '').slice(0, 20);
+      if (cleaned) {
+        sessionStorage.setItem('puppap_traffic_src', cleaned);
+        return cleaned;
+      }
+    }
+    if (params.get('fbclid')) {
+      sessionStorage.setItem('puppap_traffic_src', 'facebook');
+      return 'facebook';
+    }
+    if (params.get('ttclid')) {
+      sessionStorage.setItem('puppap_traffic_src', 'tiktok');
+      return 'tiktok';
+    }
+    if (/Line\/\d+/i.test(navigator.userAgent || '')) {
+      sessionStorage.setItem('puppap_traffic_src', 'line');
+      return 'line';
+    }
+
+    const saved = sessionStorage.getItem('puppap_traffic_src');
+    if (saved) return saved;
+
+    const ref = (document.referrer || '').toLowerCase();
+    if (ref && !ref.includes(window.location.hostname)) {
+      let detected = 'referral';
+      if (ref.includes('facebook.com') || ref.includes('fb.com') || ref.includes('messenger.com')) detected = 'facebook';
+      else if (ref.includes('tiktok.com')) detected = 'tiktok';
+      else if (ref.includes('line.me')) detected = 'line';
+      else if (ref.includes('instagram.com')) detected = 'instagram';
+      else if (ref.includes('youtube.com') || ref.includes('youtu.be')) detected = 'youtube';
+      else if (ref.includes('google.')) detected = 'google';
+      sessionStorage.setItem('puppap_traffic_src', detected);
+      return detected;
+    }
+    return 'direct';
+  } catch {
+    return '';
+  }
+}
+
+export function detectDeviceType(): 'mobile' | 'desktop' {
+  if (typeof window === 'undefined') return 'desktop';
+  try {
+    if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') || window.innerWidth < 768) {
+      return 'mobile';
+    }
+  } catch {
+    // ignore
+  }
+  return 'desktop';
+}
+
 /**
  * Non-blocking first-party beacon helper (`/api/track-visit`).
  * Uses `navigator.sendBeacon` first, falling back to `fetch(..., { keepalive: true })`.
@@ -183,6 +247,8 @@ export function sendFirstPartyTrackBeacon(pathname: string, utmContent?: string)
   const payload = JSON.stringify({
     pathname,
     utmContent: utmContent || '',
+    source: detectTrafficSource(),
+    device: detectDeviceType(),
   });
 
   try {
